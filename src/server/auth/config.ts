@@ -1,5 +1,5 @@
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
+import GitHub from "next-auth/providers/github";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -11,6 +11,8 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      accessToken: string;
+      repositories: any;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
@@ -29,7 +31,13 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    DiscordProvider,
+    GitHub({
+      authorization: {
+        params: {
+          scope: "read:user repo",
+        },
+      },
+    }),
     /**
      * ...add more providers here.
      *
@@ -41,11 +49,22 @@ export const authConfig = {
      */
   ],
   callbacks: {
+    async jwt({ token, account }) {
+      if (account) {
+        return {
+          ...token,
+          access_token: account.access_token,
+          expires_at: account.expires_at,
+          refresh_token: account.refresh_token,
+        };
+      }
+      return token;
+    },
     session: ({ session, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: token.sub,
+        accessToken: token.accessToken,
       },
     }),
   },
