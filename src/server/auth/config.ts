@@ -13,6 +13,7 @@ declare module "next-auth" {
       id: string
       accessToken: string
       authorizedProvider: string
+      gitUsername: string
     } & DefaultSession["user"];
   }
 }
@@ -50,6 +51,7 @@ export const authConfig = {
           authorized_provider: account.provider,
           expires_at: account.expires_at,
           refresh_token: account.refresh_token,
+          git_username: profile.login
         };
       }
       return token;
@@ -59,7 +61,8 @@ export const authConfig = {
       user: {
         ...session.user,
         accessToken: token.access_token,
-        authorizedProvider: token.authorized_provider
+        authorizedProvider: token.authorized_provider,
+        gitUsername: token.git_username
       },
     }),
   },
