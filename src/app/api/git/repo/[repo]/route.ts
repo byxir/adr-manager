@@ -1,18 +1,24 @@
-import {auth} from "@/server/auth";
-import {getGitAdapter} from "@/services/git/GitAdapterFactory";
-import {type NextRequest} from "next/server";
+import { auth } from '@/server/auth'
+import { getGitAdapter } from '@/services/git/GitAdapterFactory'
+import { type NextRequest } from 'next/server'
 
-export async function GET(request: NextRequest, {params}: { params: Promise<{ repo: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ repo: string }> },
+) {
   const session = await auth()
 
   if (!session) {
     const statusCode = 401
-    return Response.json({
-      code: statusCode,
-      message: 'Unauthorized, please sign in.'
-    }, {
-      status: statusCode
-    })
+    return Response.json(
+      {
+        code: statusCode,
+        message: 'Unauthorized, please sign in.',
+      },
+      {
+        status: statusCode,
+      },
+    )
   }
 
   const provider = session.user.authorizedProvider
@@ -24,20 +30,23 @@ export async function GET(request: NextRequest, {params}: { params: Promise<{ re
 
   if (!branch) {
     const statusCode = 400
-    return Response.json({
-      code: statusCode,
-      message: 'Bad request, missing branch parameter.'
-    }, {
-      status: statusCode
-    })
+    return Response.json(
+      {
+        code: statusCode,
+        message: 'Bad request, missing branch parameter.',
+      },
+      {
+        status: statusCode,
+      },
+    )
   }
 
   const repoContent = await gitAdapter.fetchRepoContent({
-    accessToken: session?.user?.accessToken ?? "",
-    username: session?.user.gitUsername ?? "",
+    accessToken: session?.user?.accessToken ?? '',
+    username: session?.user.gitUsername ?? '',
     repository: repo,
-    branch: branch
-  });
+    branch: branch,
+  })
 
-  return Response.json({code: 200, data: repoContent})
+  return Response.json({ code: 200, data: repoContent })
 }

@@ -7,6 +7,7 @@ export interface GitAdapterFetchRepoContent extends GitAdapterMethodInterface {
   repository: string
   branch: string
 }
+
 export interface GitAdapter {
   pushToRepo(params: {
     repoName: string

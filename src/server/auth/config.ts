@@ -1,5 +1,5 @@
-import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import GitHub from "next-auth/providers/github";
+import { type DefaultSession, type NextAuthConfig } from 'next-auth'
+import GitHub from 'next-auth/providers/github'
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -7,14 +7,14 @@ import GitHub from "next-auth/providers/github";
  *
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
-declare module "next-auth" {
+declare module 'next-auth' {
   interface Session extends DefaultSession {
     user: {
       id: string
       accessToken: string
       authorizedProvider: string
       gitUsername: string
-    } & DefaultSession["user"];
+    } & DefaultSession['user']
   }
 }
 
@@ -28,7 +28,7 @@ export const authConfig = {
     GitHub({
       authorization: {
         params: {
-          scope: "read:user repo",
+          scope: 'read:user repo',
         },
       },
     }),
@@ -51,10 +51,10 @@ export const authConfig = {
           authorized_provider: account.provider,
           expires_at: account.expires_at,
           refresh_token: account.refresh_token,
-          git_username: profile.login
-        };
+          git_username: profile.login,
+        }
       }
-      return token;
+      return token
     },
     session: ({ session, token }) => ({
       ...session,
@@ -62,8 +62,8 @@ export const authConfig = {
         ...session.user,
         accessToken: token.access_token,
         authorizedProvider: token.authorized_provider,
-        gitUsername: token.git_username
+        gitUsername: token.git_username,
       },
     }),
   },
-} satisfies NextAuthConfig;
+} satisfies NextAuthConfig
