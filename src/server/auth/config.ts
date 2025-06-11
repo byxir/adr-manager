@@ -10,18 +10,11 @@ import GitHub from "next-auth/providers/github";
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
-      id: string;
-      accessToken: string;
-      repositories: any;
-      // ...other properties
-      // role: UserRole;
+      id: string
+      accessToken: string
+      authorizedProvider: string
     } & DefaultSession["user"];
   }
-
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
 }
 
 /**
@@ -49,11 +42,12 @@ export const authConfig = {
      */
   ],
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile }) {
       if (account) {
         return {
           ...token,
           access_token: account.access_token,
+          authorized_provider: account.provider,
           expires_at: account.expires_at,
           refresh_token: account.refresh_token,
         };
@@ -64,7 +58,8 @@ export const authConfig = {
       ...session,
       user: {
         ...session.user,
-        accessToken: token.accessToken,
+        accessToken: token.access_token,
+        authorizedProvider: token.authorized_provider
       },
     }),
   },
