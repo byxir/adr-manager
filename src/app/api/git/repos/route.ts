@@ -1,5 +1,5 @@
 import { auth } from "@/server/auth";
-import {getGitAdapter} from "@/services/GitAdapterFactory";
+import {getGitAdapter} from "@/services/git/GitAdapterFactory";
 
 export async function GET() {
   const session = await auth()
@@ -15,7 +15,6 @@ export async function GET() {
   }
 
   const provider = session.user.authorizedProvider
-  console.log(provider)
 
   const gitAdapter = getGitAdapter(provider)
 
@@ -23,5 +22,5 @@ export async function GET() {
     accessToken: session?.user?.accessToken ?? "",
   });
 
-  return Response.json({ code: 200, repositories: userRepos })
+  return Response.json({ code: 200, data: userRepos })
 }

@@ -1,6 +1,5 @@
-// lib/gitAdapters/factory.ts
 import { type GitAdapter } from './GitAdapter';
-import {GitHubProvider} from "@/services/providers/GitHubProvider";
+import {GitHubProvider} from "@/services/git/providers/GitHubProvider";
 export function getGitAdapter(
     provider: string,
 ): GitAdapter {
