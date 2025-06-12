@@ -2,10 +2,16 @@ export interface GitAdapterMethodInterface {
   accessToken: string
 }
 
-export interface GitAdapterFetchRepoContent extends GitAdapterMethodInterface {
-  username: string
+export interface GitAdapterFetchTree extends GitAdapterMethodInterface {
+  owner: string
   repository: string
   branch: string
+}
+
+export interface GitAdapterFetchFile extends GitAdapterMethodInterface {
+  owner: string
+  repository: string
+  path: string
 }
 
 export interface GitAdapter {
@@ -16,7 +22,9 @@ export interface GitAdapter {
     token: string
   }): Promise<void>
 
-  fetchUserRepos(params: GitAdapterMethodInterface): Promise<unknown[]>
+  getUserRepos(params: GitAdapterMethodInterface): Promise<unknown[]>
 
-  fetchRepoContent(params: GitAdapterFetchRepoContent): Promise<unknown[]>
+  getRepoTree(params: GitAdapterFetchTree): Promise<unknown[]>
+
+  getFileContent(params: GitAdapterFetchFile): Promise<unknown[]>
 }

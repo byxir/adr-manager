@@ -26,10 +26,11 @@ export async function GET(
 
   const searchParams = request.nextUrl.searchParams
   const repo = (await params).repo
-  const branch = searchParams.get('branch')
+
+  const filePath = searchParams.get('path')
   const owner = searchParams.get('owner')
 
-  if (!branch || !owner) {
+  if (!filePath || !owner) {
     const statusCode = 400
     return Response.json(
       {
@@ -42,12 +43,13 @@ export async function GET(
     )
   }
 
-  const repoTree = await gitAdapter.getRepoTree({
+  console.log(filePath)
+  const file = await gitAdapter.getFileContent({
     accessToken: session?.user?.accessToken ?? '',
     owner,
     repository: repo,
-    branch: branch,
+    path: filePath,
   })
 
-  return Response.json({ code: 200, data: repoTree })
+  return Response.json({ code: 200, data: file })
 }

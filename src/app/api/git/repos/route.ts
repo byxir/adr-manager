@@ -21,7 +21,7 @@ export async function GET() {
 
   const gitAdapter = getGitAdapter(provider)
 
-  const userRepos = await gitAdapter.fetchUserRepos({
+  const userRepos = await gitAdapter.getUserRepos({
     accessToken: session?.user?.accessToken ?? '',
   })
 
