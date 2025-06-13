@@ -1,0 +1,129 @@
+/* Editor styles */
+.mdxeditor {
+  --editor-font-family: var(--font-geist-sans);
+  --editor-font-size: 1rem;
+  --editor-line-height: 1.5;
+  --editor-color: var(--foreground);
+  --editor-background: var(--background);
+}
+
+/* Heading styles */
+.mdxeditor h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.mdxeditor h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.mdxeditor h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.mdxeditor h4 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.mdxeditor h5 {
+  font-size: 1em;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.mdxeditor h6 {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+/* Quote styles */
+.mdxeditor blockquote {
+  border-left: 4px solid var(--border);
+  padding-left: 1em;
+  margin-left: 0;
+  margin-right: 0;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+/* Paragraph styles */
+.mdxeditor p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  line-height: var(--editor-line-height);
+}
+
+/* Code block styles */
+.mdxeditor pre {
+  background-color: var(--muted);
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  font-family: var(--font-geist-mono);
+  font-size: 0.9em;
+}
+
+.mdxeditor code {
+  font-family: var(--font-geist-mono);
+  font-size: 0.9em;
+  background-color: var(--muted);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25em;
+}
+
+/* List styles */
+.mdxeditor ul,
+.mdxeditor ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  padding-left: 1.5em;
+}
+
+.mdxeditor li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Table styles */
+.mdxeditor table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.mdxeditor th,
+.mdxeditor td {
+  border: 1px solid var(--border);
+  padding: 0.5em;
+}
+
+.mdxeditor th {
+  background-color: var(--muted);
+  font-weight: 600;
+}
+
+/* Link styles */
+.mdxeditor a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mdxeditor a:hover {
+  color: var(--primary-foreground);
+}

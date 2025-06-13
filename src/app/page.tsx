@@ -34,8 +34,8 @@ export default function Home() {
   const { data } = useQuery({ queryKey: ['todos'], queryFn: getRepos })
 
   const markdown = `
-Hello **world**!
-`
+    Hello **world**!
+    `
 
   console.log(data)
   return (
