@@ -12,6 +12,10 @@ import { Github, Gitlab } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 import SignInButton from '@/components/auth/signInButton'
 
+console.log(
+  process.env.NEXT_PUBLIC_GITHUB_LOGIN_ENABLED,
+  process.env.NEXT_PUBLIC_GITLAB_LOGIN_ENABLED,
+)
 export function LoginForm({
   className,
   ...props
@@ -30,13 +34,17 @@ export function LoginForm({
             <div className="flex flex-col gap-4">
               <SignInButton
                 action={() => signIn('github', { redirectTo: '/dashboard' })}
+                disabled={
+                  process.env.NEXT_PUBLIC_GITHUB_LOGIN_ENABLED === 'false'
+                }
               >
                 <Github />
                 Login with GitHub
               </SignInButton>
               <SignInButton
-                disabledReason={'GitLab integration is not currently enabled.'}
-                disabled={true}
+                disabled={
+                  process.env.NEXT_PUBLIC_GITLAB_LOGIN_ENABLED === 'false'
+                }
               >
                 <Gitlab />
                 Login with GitLab

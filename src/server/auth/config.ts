@@ -23,9 +23,15 @@ declare module 'next-auth' {
  *
  * @see https://next-auth.js.org/configuration/options
  */
+
+const enterpriseUrl = process.env.GITHUB_ENTERPRISE_URL ?? undefined
+
 export const authConfig = {
   providers: [
     GitHub({
+      ...(enterpriseUrl && {
+        issuer: enterpriseUrl,
+      }),
       authorization: {
         params: {
           scope: 'read:user repo',

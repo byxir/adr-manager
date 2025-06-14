@@ -15,16 +15,9 @@ export interface GitAdapterFetchFile extends GitAdapterMethodInterface {
 }
 
 export interface GitAdapter {
-  pushToRepo(params: {
-    repoName: string
-    branch: string
-    content: string
-    token: string
-  }): Promise<void>
+  getUserRepos(params: GitAdapterMethodInterface): Promise<any>
 
-  getUserRepos(params: GitAdapterMethodInterface): Promise<unknown[]>
+  getRepoTree(params: GitAdapterFetchTree): Promise<any>
 
-  getRepoTree(params: GitAdapterFetchTree): Promise<unknown[]>
-
-  getFileContent(params: GitAdapterFetchFile): Promise<unknown[]>
+  getFileContent(params: GitAdapterFetchFile): Promise<any>
 }

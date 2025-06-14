@@ -4,11 +4,11 @@ import {
   type GitAdapterFetchTree,
   type GitAdapterMethodInterface,
 } from './../GitAdapter'
-import { Octokit } from 'octokit'
+import { createOctokit } from '@/lib/git/Octokit'
 
 export class GitHubProvider implements GitAdapter {
   static async getUserRepos({ accessToken }: GitAdapterMethodInterface) {
-    const octokit = new Octokit({ auth: accessToken })
+    const octokit = createOctokit(accessToken)
 
     return (await octokit.rest.repos.listForAuthenticatedUser())?.data
   }
@@ -19,7 +19,7 @@ export class GitHubProvider implements GitAdapter {
     repository,
     branch,
   }: GitAdapterFetchTree) {
-    const octokit = new Octokit({ auth: accessToken })
+    const octokit = createOctokit(accessToken)
 
     return (
       await octokit.rest.git.getTree({
@@ -37,7 +37,7 @@ export class GitHubProvider implements GitAdapter {
     repository,
     path,
   }: GitAdapterFetchFile) {
-    const octokit = new Octokit({ auth: accessToken })
+    const octokit = createOctokit(accessToken)
 
     return (
       await octokit.rest.repos.getContent({
