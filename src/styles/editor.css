@@ -126,22 +126,108 @@
 
 /* Code block styles */
 .mdxeditor pre {
-  background-color: var(--muted);
+  background-color: hsl(var(--muted));
   padding: 1em;
   border-radius: 0.5em;
   overflow-x: auto;
   font-family: var(--font-geist-mono);
   font-size: 0.9em;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
 }
 
 .mdxeditor code {
   font-family: var(--font-geist-mono);
   font-size: 0.9em;
-  background-color: var(--muted);
+  background-color: hsl(var(--muted));
   padding: 0.2em 0.4em;
   border-radius: 0.25em;
-  color: var(--foreground);
+  color: hsl(var(--foreground));
+}
+
+/* CodeMirror specific styles for dark mode */
+.dark .mdxeditor .cm-editor {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .mdxeditor .cm-content {
+  color: #e6edf3 !important;
+}
+
+.dark .mdxeditor .cm-line {
+  color: #e6edf3 !important;
+}
+
+.dark .mdxeditor .cm-activeLine {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .mdxeditor .cm-gutters {
+  background-color: hsl(var(--muted)) !important;
+  border-right: 1px solid hsl(var(--border)) !important;
+  color: #8b949e !important;
+}
+
+.dark .mdxeditor .cm-activeLineGutter {
+  background-color: hsl(var(--muted)) !important;
+  color: #e6edf3 !important;
+}
+
+/* Syntax highlighting colors for dark mode */
+.dark .mdxeditor .cm-keyword {
+  color: #ff7b72 !important;
+}
+
+.dark .mdxeditor .cm-string {
+  color: #a5d6ff !important;
+}
+
+.dark .mdxeditor .cm-comment {
+  color: #8b949e !important;
+}
+
+.dark .mdxeditor .cm-number {
+  color: #79c0ff !important;
+}
+
+.dark .mdxeditor .cm-operator {
+  color: #ff7b72 !important;
+}
+
+.dark .mdxeditor .cm-variable {
+  color: #ffa657 !important;
+}
+
+.dark .mdxeditor .cm-property {
+  color: #79c0ff !important;
+}
+
+.dark .mdxeditor .cm-definition {
+  color: #d2a8ff !important;
+}
+
+.dark .mdxeditor .cm-type {
+  color: #ff7b72 !important;
+}
+
+.dark .mdxeditor .cm-function {
+  color: #d2a8ff !important;
+}
+
+.dark .mdxeditor .cm-attribute {
+  color: #79c0ff !important;
+}
+
+.dark .mdxeditor .cm-tag {
+  color: #7ee787 !important;
+}
+
+.dark .mdxeditor .cm-bracket {
+  color: #ff7b72 !important;
+}
+
+.dark .mdxeditor .cm-punctuation {
+  color: #e6edf3 !important;
 }
 
 /* List styles */

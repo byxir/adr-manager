@@ -297,7 +297,7 @@ function FileTree({
           </Button>
         </div>
         <Tree
-          className="relative before:absolute before:inset-0 before:-ms-1 before:bg-[repeating-linear-gradient(to_right,transparent_0,transparent_calc(var(--tree-indent)-1px),var(--border)_calc(var(--tree-indent)-1px),var(--border)_calc(var(--tree-indent)))]"
+          className="relative overflow-scroll before:absolute before:inset-0 before:-ms-1 before:bg-[repeating-linear-gradient(to_right,transparent_0,transparent_calc(var(--tree-indent)-1px),var(--border)_calc(var(--tree-indent)-1px),var(--border)_calc(var(--tree-indent)))]"
           indent={indent}
           tree={tree}
         >
@@ -313,11 +313,12 @@ function FileTree({
                   {isFile ? (
                     <Link
                       href={{
-                        pathname: '/file',
+                        pathname: `/file/${activeRepo?.name}/${filePath.replaceAll(
+                          '/',
+                          '~',
+                        )}`,
                         query: {
                           owner: activeRepo?.owner.login,
-                          repo: activeRepo?.name,
-                          path: filePath,
                         },
                       }}
                       className="flex items-center gap-2 w-full"
@@ -373,7 +374,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
             setActiveRepo={setActiveRepo}
           />
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className="overflow-x-hidden">
           {activeRepo && repoTree?.data ? (
             <FileTree activeRepo={activeRepo} repoTree={repoTree.data} />
           ) : (
