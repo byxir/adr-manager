@@ -1,5 +1,6 @@
 import { type DefaultSession, type NextAuthConfig } from 'next-auth'
 import GitHub from 'next-auth/providers/github'
+import GitLab from 'next-auth/providers/gitlab'
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -24,19 +25,32 @@ declare module 'next-auth' {
  * @see https://next-auth.js.org/configuration/options
  */
 
-const enterpriseUrl = process.env.GITHUB_ENTERPRISE_URL ?? undefined
+const gitHubUrl = process.env.GITHUB_ENTERPRISE_URL ?? undefined
+const gitLabUrl = process.env.GITLAB_URL ?? undefined
+const GITLAB_AUTH_URL = 'https://gitlab.com/oauth/authorize'
 
 export const authConfig = {
   providers: [
     GitHub({
-      ...(enterpriseUrl && {
-        issuer: enterpriseUrl,
+      ...(gitHubUrl && {
+        issuer: gitHubUrl,
       }),
       authorization: {
         params: {
           scope: 'read:user repo',
         },
       },
+    }),
+    GitLab({
+      authorization: {
+        url: GITLAB_AUTH_URL,
+        params: {
+          scope: 'read_user api write_repository',
+        },
+      },
+      ...(gitLabUrl && {
+        issuer: gitLabUrl,
+      }),
     }),
     /**
      * ...add more providers here.
@@ -57,7 +71,6 @@ export const authConfig = {
           authorized_provider: account.provider,
           expires_at: account.expires_at,
           refresh_token: account.refresh_token,
-          git_username: profile.login,
         }
       }
       return token
@@ -68,7 +81,6 @@ export const authConfig = {
         ...session.user,
         accessToken: token.access_token,
         authorizedProvider: token.authorized_provider,
-        gitUsername: token.git_username,
       },
     }),
   },

@@ -364,7 +364,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         activeRepo?.default_branch ?? '',
         activeRepo?.owner?.login ?? '',
       ),
-    enabled: !!activeRepo && !!session?.user?.gitUsername,
+    enabled: !!activeRepo,
   })
 
   return (

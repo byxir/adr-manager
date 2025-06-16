@@ -36,7 +36,7 @@ export default function Home() {
     enabled: !!repo && !!path && !!owner,
   })
 
-  console.log('file ->', fileResponse?.content)
+  console.log('file ->', fileResponse)
 
   const markdown = fileResponse?.data
     ? `\`\`\`${path?.split('.').pop() ?? ''}\n${fileResponse.data}\n\`\`\``

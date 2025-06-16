@@ -12,10 +12,6 @@ import { Github, Gitlab } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 import SignInButton from '@/components/auth/signInButton'
 
-console.log(
-  process.env.NEXT_PUBLIC_GITHUB_LOGIN_ENABLED,
-  process.env.NEXT_PUBLIC_GITLAB_LOGIN_ENABLED,
-)
 export function LoginForm({
   className,
   ...props
@@ -33,7 +29,7 @@ export function LoginForm({
           <div className="grid gap-6">
             <div className="flex flex-col gap-4">
               <SignInButton
-                action={() => signIn('github', { redirectTo: '/dashboard' })}
+                action={() => signIn('github', { redirectTo: '/' })}
                 disabled={
                   process.env.NEXT_PUBLIC_GITHUB_LOGIN_ENABLED === 'false'
                 }
@@ -42,6 +38,7 @@ export function LoginForm({
                 Login with GitHub
               </SignInButton>
               <SignInButton
+                action={() => signIn('gitlab', { redirectTo: '/' })}
                 disabled={
                   process.env.NEXT_PUBLIC_GITLAB_LOGIN_ENABLED === 'false'
                 }
@@ -54,8 +51,8 @@ export function LoginForm({
         </CardContent>
       </Card>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        Can't find the git provider you would like to login with? Help us add
-        more by contributing to our{' '}
+        Can&apos;t find the git provider you would like to login with? Help us
+        add more by contributing to our{' '}
         <a target={'_blank'} href="https://github.com/adr/adr-manager">
           GitHub Repository
         </a>

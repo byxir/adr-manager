@@ -40,7 +40,6 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  console.log(filePath)
   const file = await gitAdapter.getFileContent({
     accessToken: session?.user?.accessToken ?? '',
     owner,
