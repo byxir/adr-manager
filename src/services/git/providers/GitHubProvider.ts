@@ -63,8 +63,7 @@ export class GitHubProvider {
       })
     )?.data
 
-    const decoded = Buffer.from(result.data.content, 'base64').toString('utf-8')
-    console.log(1, decoded)
-    return decoded
+    console.log(result)
+    return result
   }
 }
