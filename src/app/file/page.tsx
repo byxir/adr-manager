@@ -14,13 +14,37 @@ import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 
 import '@mdxeditor/editor/style.css'
 import { ForwardRefEditor } from '@/components/MDXEditor/ForwardRefEditor'
+import { getFileContent } from '../actions'
+import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'next/navigation'
+import { type ApiResponse } from '../types'
 
 export default function Home() {
   const { data: session } = useSession()
+  const searchParams = useSearchParams()
 
-  const markdown = `
-    Hello **world**!
-    `
+  const repo = searchParams.get('repo')
+  const path = searchParams.get('path')
+  const owner = searchParams.get('owner')
+
+  console.log('repo ->', repo)
+  console.log('path ->', path)
+
+  const { data: fileResponse, error } = useQuery<ApiResponse<string>>({
+    queryKey: ['file', repo, path],
+    queryFn: () => getFileContent(repo ?? '', path ?? '', owner ?? ''),
+    enabled: !!repo && !!path && !!owner,
+  })
+
+  console.log('file ->', fileResponse?.content)
+
+  const markdown = fileResponse?.data
+    ? `\`\`\`${path?.split('.').pop() ?? ''}\n${fileResponse.data}\n\`\`\``
+    : ''
+
+  if (error) {
+    console.error('Error fetching file:', error)
+  }
 
   return (
     <SidebarInset>
@@ -35,12 +59,12 @@ export default function Home() {
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
                 <BreadcrumbLink href="#">
-                  Building Your Application
+                  {owner}/{repo}
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                <BreadcrumbPage>{path}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

@@ -2,10 +2,7 @@ import { auth } from '@/server/auth'
 import { getGitAdapter } from '@/services/git/GitAdapterFactory'
 import { type NextRequest } from 'next/server'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ repo: string }> },
-) {
+export async function GET(request: NextRequest) {
   const session = await auth()
 
   if (!session) {
@@ -25,7 +22,7 @@ export async function GET(
   const gitAdapter = getGitAdapter(provider)
 
   const searchParams = request.nextUrl.searchParams
-  const repo = (await params).repo
+  const repo = searchParams.get('repo')
 
   const filePath = searchParams.get('path')
   const owner = searchParams.get('owner')

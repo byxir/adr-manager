@@ -7,6 +7,15 @@ import {
 import { createOctokit } from '@/lib/git/Octokit'
 
 export class GitHubProvider implements GitAdapter {
+  getUserRepos(params: GitAdapterMethodInterface): Promise<any> {
+    throw new Error('Method not implemented.')
+  }
+  getRepoTree(params: GitAdapterFetchTree): Promise<any> {
+    throw new Error('Method not implemented.')
+  }
+  getFileContent(params: GitAdapterFetchFile): Promise<any> {
+    throw new Error('Method not implemented.')
+  }
   static async getUserRepos({ accessToken }: GitAdapterMethodInterface) {
     const octokit = createOctokit(accessToken)
 

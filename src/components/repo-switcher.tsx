@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import * as React from 'react'
@@ -18,20 +19,27 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import type { Repo } from '@/app/types'
+import { useEffect } from 'react'
 
-export function TeamSwitcher({
-  teams,
+export function RepoSwitcher({
+  repos,
+  activeRepo,
+  setActiveRepo,
 }: {
-  teams: {
-    name: string
-    logo: React.ElementType
-    plan: string
-  }[]
+  repos: Repo[]
+  activeRepo: Repo | null
+  setActiveRepo: (repo: Repo) => void
 }) {
   const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(teams[0])
 
-  if (!activeTeam) {
+  useEffect(() => {
+    if (repos?.[0]) {
+      setActiveRepo(repos[0])
+    }
+  }, [repos, setActiveRepo])
+
+  if (!activeRepo) {
     return null
   }
 
@@ -45,44 +53,43 @@ export function TeamSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <activeTeam.logo className="size-4" />
+                {/* <activeRepo.owner.avatar_url className="size-4" /> */}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeTeam.name}</span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
+                <span className="truncate font-medium">{activeRepo.name}</span>
+                <span className="truncate text-xs">
+                  {activeRepo.owner.login}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg max-h-96"
             align="start"
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Teams
+              Repos
             </DropdownMenuLabel>
-            {teams.map((team, index) => (
+            {repos.map((repo, index) => (
               <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
+                key={repo.name}
+                onClick={() => setActiveRepo(repo)}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
-                  <team.logo className="size-3.5 shrink-0" />
+                  <img
+                    src={repo.owner.avatar_url}
+                    alt={repo.owner.login}
+                    className="size-3.5 shrink-0"
+                  />
                 </div>
-                {team.name}
+                {repo.name}
                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                <Plus className="size-4" />
-              </div>
-              <div className="text-muted-foreground font-medium">Add team</div>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

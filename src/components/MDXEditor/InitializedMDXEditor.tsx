@@ -68,7 +68,7 @@ export default function App() {
         name: 'react',
         meta: 'live react',
         sandpackTemplate: 'react',
-        sandpackTheme: 'light',
+        sandpackTheme: 'dark',
         snippetFileName: '/App.js',
         snippetLanguage: 'jsx',
         initialSnippetContent: defaultSnippetContent,
