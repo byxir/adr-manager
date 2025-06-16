@@ -9,7 +9,6 @@ import {
   createOnDropHandler,
   dragAndDropFeature,
   hotkeysCoreFeature,
-  insertItemsAtTarget,
   keyboardDragAndDropFeature,
   selectionFeature,
   syncDataLoaderFeature,
@@ -151,7 +150,6 @@ function FileTree({
   activeRepo: Repo | null
   repoTree: RepoTree
 }) {
-  const { data: session } = useSession()
   const [items, setItems] = useState<Record<string, Item> | null>({
     ...transformTreeData(repoTree?.tree),
     adrs: {
@@ -308,8 +306,6 @@ function FileTree({
             const itemData = item.getItemData()
             const isFile = !item.isFolder()
             const filePath = item.getId()
-            const isAdrsFolder = filePath === 'adrs'
-            const isAdrFile = filePath.startsWith('adrs/')
 
             return (
               <TreeItem key={item.getId()} item={item} className="pb-0!">
@@ -319,7 +315,7 @@ function FileTree({
                       href={{
                         pathname: '/file',
                         query: {
-                          author: session?.user?.gitUsername,
+                          owner: activeRepo?.owner.login,
                           repo: activeRepo?.name,
                           path: filePath,
                         },
