@@ -40,7 +40,7 @@ export default function FilePage() {
   useEffect(() => {
     if (fileResponse) {
       setMarkdown(
-        `\`\`\`${path?.split('.').pop() ?? ''}\n${fileResponse.data}\n\`\`\``,
+        `\`\`\`${path?.split('.').pop() ?? ''}\n${fileResponse.data?.content}\n\`\`\``,
       )
     }
   }, [fileResponse])

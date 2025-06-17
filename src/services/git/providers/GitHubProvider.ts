@@ -1,4 +1,5 @@
 import {
+  type GitAdapterDeleteFile,
   type GitAdapterFetchFile,
   type GitAdapterFetchTree,
   type GitAdapterMethodInterface,
@@ -26,6 +27,7 @@ export class GitHubProvider {
 
     return (await octokit.rest.repos.listForAuthenticatedUser())?.data
   }
+
   static async getRepoTree({
     accessToken,
     owner,
@@ -52,18 +54,16 @@ export class GitHubProvider {
   }: GitAdapterFetchFile) {
     const octokit = this.createClient(accessToken)
 
-    const result = (
-      await octokit.rest.repos.getContent({
-        mediaType: {
-          format: 'raw',
-        },
-        owner,
-        repo: repository,
-        path: path,
-      })
-    )?.data
+    const file = await octokit.rest.repos.getContent({
+      owner,
+      repo: repository,
+      path: path,
+    })
 
-    console.log(result)
-    return result
+    const content = file.data.content
+    const sha = file.data.sha
+    const parsedContent = Buffer.from(content, 'base64').toString('utf-8')
+
+    return { sha, content: parsedContent }
   }
 }
