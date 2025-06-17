@@ -100,6 +100,7 @@ export async function DELETE(request: NextRequest) {
       repository: repo,
       path: filePath,
       sha,
+      message: 'ADR Deleted',
     })
   } catch (error: unknown) {
     const statusCode = 500

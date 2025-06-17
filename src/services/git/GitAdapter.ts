@@ -19,6 +19,7 @@ export interface GitAdapterDeleteFile extends GitAdapterMethodInterface {
   repository: string
   path: string
   sha: string
+  message: string
 }
 
 export interface GitAdapter {
