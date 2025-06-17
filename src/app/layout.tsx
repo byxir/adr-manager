@@ -7,6 +7,7 @@ import QueryProvider from '@/components/providers/QueryClientProvider'
 import { ThemeProvider } from 'next-themes'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
+import { Toaster } from 'sonner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -42,7 +43,10 @@ export default function RootLayout({
           <SessionProvider>
             <QueryProvider>
               <SidebarProvider>
-                <AppSidebar>{children}</AppSidebar>
+                <AppSidebar>
+                  {children}
+                  <Toaster richColors />
+                </AppSidebar>
               </SidebarProvider>
             </QueryProvider>
           </SessionProvider>
