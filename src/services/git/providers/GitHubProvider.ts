@@ -46,7 +46,7 @@ export class GitHubProvider {
     )?.data
   }
 
-  static async getFileContent({
+  static async getFile({
     accessToken,
     owner,
     repository,
@@ -60,10 +60,9 @@ export class GitHubProvider {
       path: path,
     })
 
-    const content = file.data.content
-    const sha = file.data.sha
+    const { content, sha, name } = file.data
     const parsedContent = Buffer.from(content, 'base64').toString('utf-8')
 
-    return { sha, content: parsedContent }
+    return { name, path, sha, content: parsedContent }
   }
 }

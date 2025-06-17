@@ -22,16 +22,17 @@ export async function GET(request: NextRequest) {
   const gitAdapter = getGitAdapter(provider)
 
   const searchParams = request.nextUrl.searchParams
-  const repo = searchParams.get('repo')
+  const repo = searchParams.get('repo')!
   const branch = searchParams.get('branch')
-  const owner = searchParams.get('owner')
+  const owner = searchParams.get('owner')!
 
-  if (!branch || !owner) {
+  if (!branch || !owner || !repo) {
     const statusCode = 400
     return Response.json(
       {
         code: statusCode,
-        message: 'Bad request, missing branch parameter.',
+        message:
+          'Bad request, missing one of the following parameters: branch, owner or repo.',
       },
       {
         status: statusCode,

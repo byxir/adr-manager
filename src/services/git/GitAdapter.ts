@@ -14,10 +14,19 @@ export interface GitAdapterFetchFile extends GitAdapterMethodInterface {
   path: string
 }
 
+export interface GitAdapterDeleteFile extends GitAdapterMethodInterface {
+  owner: string
+  repository: string
+  path: string
+  sha: string
+}
+
 export interface GitAdapter {
   getUserRepos(params: GitAdapterMethodInterface): Promise<unknown>
 
   getRepoTree(params: GitAdapterFetchTree): Promise<unknown>
 
-  getFileContent(params: GitAdapterFetchFile): Promise<unknown>
+  getFile(params: GitAdapterFetchFile): Promise<unknown>
+
+  deleteFile(params: GitAdapterDeleteFile): Promise<unknown>
 }

@@ -34,7 +34,7 @@ export class GitLabProvider {
     })
   }
 
-  static async getFileContent({
+  static async getFile({
     accessToken,
     repository,
     path,
