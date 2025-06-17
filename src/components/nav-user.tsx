@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 'use client'
 
 import {
@@ -34,16 +31,18 @@ import {
 import { useTheme } from 'next-themes'
 import { signIn, signOut } from 'next-auth/react'
 import type { User } from 'next-auth'
+import { useRouter } from 'next/navigation'
 
 export function NavUser({ user }: { user: User | null }) {
   const { isMobile } = useSidebar()
   const { theme, setTheme } = useTheme()
+  const router = useRouter()
 
   if (!user) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <Button onClick={() => signIn('github')} className="w-full">
+          <Button onClick={() => router.push('/login')} className="w-full">
             Sign in
           </Button>
         </SidebarMenuItem>

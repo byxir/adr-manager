@@ -45,7 +45,7 @@ export default function RootLayout({
               <SidebarProvider>
                 <AppSidebar>
                   {children}
-                  <Toaster richColors />
+                  <Toaster position={'top-right'} richColors />
                 </AppSidebar>
               </SidebarProvider>
             </QueryProvider>
