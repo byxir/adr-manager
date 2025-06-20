@@ -12,9 +12,20 @@ const Editor = dynamic(() => import('./InitializedMDXEditor'), {
 
 // This is what is imported by other components. Pre-initialized with plugins, and ready
 // to accept other props, including a ref.
-export const ForwardRefEditor = forwardRef<MDXEditorMethods, MDXEditorProps>(
-  (props, ref) => <Editor {...props} editorRef={ref} />,
-)
+export const ForwardRefEditor = forwardRef<
+  MDXEditorMethods,
+  MDXEditorProps & { onEditorReady?: (element: HTMLElement) => void }
+>((props, ref) => (
+  <Editor
+    {...props}
+    editorRef={ref}
+    className={props.className}
+    onEditorReady={props.onEditorReady}
+    placeholder={
+      <span className="text-muted-foreground/30">Write your ADR here...</span>
+    }
+  />
+))
 
 // TS complains without the following line
 ForwardRefEditor.displayName = 'ForwardRefEditor'

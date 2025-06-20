@@ -39,8 +39,13 @@ import type { Item, Repo } from '@/app/types'
 import { transformAndAppendTreeData } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from './ui/button'
-import { createAdr, getAdrsByRepository } from '@/lib/adr-db-actions'
+import {
+  createAdr,
+  getAdrsByRepository,
+  getAdrByNameAndRepository,
+} from '@/lib/adr-db-actions'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useRouter } from 'next/navigation'
 
 interface ApiResponse<T> {
   code: number
@@ -161,6 +166,26 @@ function FileTree({
   ) => void
   addNewAdr: () => void
 }) {
+  const router = useRouter()
+
+  // Function to handle file clicks and check for ADRs
+  const handleFileClick = async (filePath: string, fileName: string) => {
+    if (!activeRepo?.name) return
+
+    // Check if this file is an ADR in the database
+    const adr = await getAdrByNameAndRepository(fileName, activeRepo.name)
+
+    if (adr && !adr.hasMatch) {
+      // Redirect to ADR page
+      router.push(`/adr/${activeRepo.name}/${fileName}`)
+    } else {
+      // Navigate to regular file page
+      router.push(
+        `/file/${activeRepo.name}/${filePath.replaceAll('/', '~')}?owner=${activeRepo.owner.login}`,
+      )
+    }
+  }
+
   // Find any adrs folder to expand it
   const adrsFolderId = items
     ? Object.keys(items).find(
@@ -308,24 +333,18 @@ function FileTree({
               <TreeItem key={item.getId()} item={item} className="pb-0!">
                 <TreeItemLabel className="rounded-none py-1">
                   {isFile ? (
-                    <Link
-                      href={{
-                        pathname: `/file/${activeRepo?.name}/${filePath.replaceAll(
-                          '/',
-                          '~',
-                        )}`,
-                        query: {
-                          owner: activeRepo?.owner.login,
-                        },
-                      }}
-                      className="flex items-center gap-2 w-full"
+                    <div
+                      onClick={() =>
+                        handleFileClick(filePath, item.getItemName())
+                      }
+                      className="flex items-center gap-2 w-full text-left hover:bg-accent hover:text-accent-foreground rounded-sm px-2 py-1"
                     >
                       {getFileIcon(
                         itemData?.fileExtension,
                         'text-muted-foreground pointer-events-none size-4',
                       )}
                       {item.getItemName()}
-                    </Link>
+                    </div>
                   ) : (
                     <span className="flex items-center gap-2">
                       {item.getItemName()}
@@ -381,15 +400,8 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
       }
     }
 
-    console.log('transforming tree')
-    console.log('repoTree', repoTree)
-    console.log('adrs', adrs)
-    console.log('activeRepo', activeRepo)
-
     void transformTree()
   }, [repoTree?.data?.tree, adrs, activeRepo?.name])
-
-  console.log('items', items)
 
   const addNewAdr = () => {
     const newAdrName = `000${(adrs?.length ?? 0) + 1}-adr-${(adrs?.length ?? 0) + 1}.md`
@@ -412,8 +424,6 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   ) => {
     setItems(items)
   }
-
-  console.log('items', items)
 
   return (
     <div className="flex h-screen w-full">

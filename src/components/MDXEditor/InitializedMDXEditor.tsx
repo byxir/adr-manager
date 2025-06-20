@@ -1,6 +1,7 @@
 'use client'
 // InitializedMDXEditor.tsx
 import type { ForwardedRef } from 'react'
+import { useEffect, useRef } from 'react'
 import type {
   CodeBlockEditorDescriptor,
   MDXEditorMethods,
@@ -47,8 +48,12 @@ import '@/styles/editor.css'
 // Only import this to the next file
 export default function InitializedMDXEditor({
   editorRef,
+  onEditorReady,
   ...props
-}: { editorRef: ForwardedRef<MDXEditorMethods> | null } & MDXEditorProps) {
+}: {
+  editorRef: ForwardedRef<MDXEditorMethods> | null
+  onEditorReady?: (element: HTMLElement) => void
+} & MDXEditorProps) {
   const defaultSnippetContent = `
 export default function App() {
   return (
@@ -98,112 +103,124 @@ export default function App() {
     },
   }
 
+  const editorElementRef = useRef<HTMLDivElement>(null)
+
+  // Call onEditorReady when the editor element is available
+  useEffect(() => {
+    if (onEditorReady && editorElementRef.current) {
+      onEditorReady(editorElementRef.current)
+    }
+  }, [onEditorReady])
+
   return (
-    <MDXEditor
-      plugins={[
-        // Basic formatting plugins
-        headingsPlugin({
-          allowedHeadingLevels: [1, 2, 3, 4, 5, 6],
-        }),
-        listsPlugin({
-          defaultListType: 'bullet',
-        }),
-        quotePlugin(),
-        thematicBreakPlugin(),
-        markdownShortcutPlugin(),
+    <div ref={editorElementRef}>
+      <MDXEditor
+        plugins={[
+          // Basic formatting plugins
+          headingsPlugin({
+            allowedHeadingLevels: [1, 2, 3, 4, 5, 6],
+          }),
+          listsPlugin({
+            defaultListType: 'bullet',
+          }),
+          quotePlugin(),
+          thematicBreakPlugin(),
+          markdownShortcutPlugin(),
 
-        // Link handling
-        linkPlugin(),
-        linkDialogPlugin({
-          linkAutocompleteSuggestions: [
-            'https://',
-            'http://',
-            'mailto:',
-            'tel:',
-          ],
-        }),
+          // Link handling
+          linkPlugin(),
+          linkDialogPlugin({
+            linkAutocompleteSuggestions: [
+              'https://',
+              'http://',
+              'mailto:',
+              'tel:',
+            ],
+          }),
 
-        // Media handling
-        imagePlugin(),
+          // Media handling
+          imagePlugin(),
 
-        // Table support
-        tablePlugin(),
+          // Table support
+          tablePlugin(),
 
-        // Code block support
-        // codeBlockPlugin({
-        //   codeBlockEditorDescriptors: [PlainTextCodeEditorDescriptor],
-        // }),
+          // Code block support
+          // codeBlockPlugin({
+          //   codeBlockEditorDescriptors: [PlainTextCodeEditorDescriptor],
+          // }),
 
-        codeBlockPlugin({
-          codeBlockEditorDescriptors: [
-            { priority: -10, match: (_) => true, Editor: CodeMirrorEditor },
-          ],
-          defaultCodeBlockLanguage: 'js',
-        }),
+          codeBlockPlugin({
+            codeBlockEditorDescriptors: [
+              { priority: -10, match: (_) => true, Editor: CodeMirrorEditor },
+            ],
+            defaultCodeBlockLanguage: 'js',
+          }),
 
-        // View modes
-        diffSourcePlugin(),
+          // View modes
+          diffSourcePlugin(),
 
-        // Advanced features
-        frontmatterPlugin(),
-        codeMirrorPlugin({
-          codeBlockLanguages: {
-            js: 'JavaScript',
-            css: 'CSS',
-            html: 'HTML',
-            json: 'JSON',
-            yaml: 'YAML',
-            ts: 'TypeScript',
-          },
-        }),
-        // codeBlockPlugin({
-        //   defaultCodeBlockLanguage: 'JavaScript',
-        // }),
-        sandpackPlugin({ sandpackConfig: simpleSandpackConfig }),
+          // Advanced features
+          frontmatterPlugin(),
+          codeMirrorPlugin({
+            codeBlockLanguages: {
+              js: 'JavaScript',
+              css: 'CSS',
+              html: 'HTML',
+              json: 'JSON',
+              yaml: 'YAML',
+              ts: 'TypeScript',
+            },
+          }),
+          // codeBlockPlugin({
+          //   defaultCodeBlockLanguage: 'JavaScript',
+          // }),
+          sandpackPlugin({ sandpackConfig: simpleSandpackConfig }),
 
-        // Toolbar configuration
-        toolbarPlugin({
-          toolbarContents: () => (
-            <>
-              <UndoRedo />
-              <BoldItalicUnderlineToggles />
-              <BlockTypeSelect />
-              <CreateLink />
-              <InsertImage />
-              <InsertTable />
-              <InsertThematicBreak />
-              <ListsToggle />
-              <CodeToggle />
-              <InsertCodeBlock />
-              <InsertFrontmatter />
+          // Toolbar configuration
+          toolbarPlugin({
+            toolbarContents: () => (
+              <>
+                <UndoRedo />
+                <BoldItalicUnderlineToggles />
+                <BlockTypeSelect />
+                <CreateLink />
+                <InsertImage />
+                <InsertTable />
+                <InsertThematicBreak />
+                <ListsToggle />
+                <CodeToggle />
+                <InsertCodeBlock />
+                <InsertFrontmatter />
 
-              <ConditionalContents
-                options={[
-                  {
-                    when: (editor) => editor?.editorType === 'codeblock',
-                    contents: () => <ChangeCodeMirrorLanguage />,
-                  },
-                  {
-                    when: (editor) => editor?.editorType === 'sandpack',
-                    contents: () => <ShowSandpackInfo />,
-                  },
-                  {
-                    fallback: () => (
-                      <>
-                        <InsertCodeBlock />
-                        <InsertSandpack />
-                      </>
-                    ),
-                  },
-                ]}
-              />
-            </>
-          ),
-        }),
-      ]}
-      contentEditableClassName="prose prose-sm dark:prose-invert max-w-none mdxeditor"
-      {...props}
-      ref={editorRef}
-    />
+                <ConditionalContents
+                  options={[
+                    {
+                      when: (editor) => editor?.editorType === 'codeblock',
+                      contents: () => <ChangeCodeMirrorLanguage />,
+                    },
+                    {
+                      when: (editor) => editor?.editorType === 'sandpack',
+                      contents: () => <ShowSandpackInfo />,
+                    },
+                    {
+                      fallback: () => (
+                        <>
+                          <InsertCodeBlock />
+                          <InsertSandpack />
+                        </>
+                      ),
+                    },
+                  ]}
+                />
+              </>
+            ),
+          }),
+        ]}
+        className={`mdxeditor ${props.className}`}
+        contentEditableClassName="prose prose-sm dark:prose-invert max-w-none mdxeditor"
+        {...props}
+        ref={editorRef}
+      />
+    </div>
   )
 }

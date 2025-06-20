@@ -13,8 +13,8 @@ class AdrDatabase extends Dexie {
 
   constructor() {
     super('AdrDatabase')
-    this.version(2).stores({
-      adrs: 'name, path, repository, hasMatch',
+    this.version(3).stores({
+      adrs: 'name, path, repository, hasMatch, [name+repository]',
     })
     this.adrs = this.table('adrs')
   }

@@ -14,6 +14,16 @@ export async function getAdrsByRepository(repository: string): Promise<Adr[]> {
   return res
 }
 
+export async function getAdrByNameAndRepository(
+  name: string,
+  repository: string,
+): Promise<Adr | undefined> {
+  return await adrDB.adrs
+    .where(['name', 'repository'])
+    .equals([name, repository])
+    .first()
+}
+
 export async function updateAdrPath(id: string, path: string) {
   await adrDB.adrs.update(id, { path })
 }
@@ -39,4 +49,15 @@ export async function bulkUpdateAdrHasMatch(
       await adrDB.adrs.update(adr.name, { hasMatch: adr.hasMatch })
     }
   })
+}
+
+export async function updateAdrContents(
+  name: string,
+  repository: string,
+  contents: string,
+) {
+  await adrDB.adrs
+    .where(['name', 'repository'])
+    .equals([name, repository])
+    .modify({ contents })
 }

@@ -8,6 +8,7 @@ import {
   updateAdrHasMatch,
   bulkUpdateAdrHasMatch,
 } from './adr-db-actions'
+import { useEffect, useState } from 'react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -201,7 +202,21 @@ export const transformAndAppendTreeData = async ({
     }
   }
 
-  console.log('result', result)
-
   return result
+}
+
+export function useDebounce(input: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(input)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(input)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [input, delay])
+
+  return debouncedValue
 }
