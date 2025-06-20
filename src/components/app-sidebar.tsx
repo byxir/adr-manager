@@ -4,7 +4,7 @@ import * as React from 'react'
 
 import { useSession } from 'next-auth/react'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   createOnDropHandler,
   dragAndDropFeature,
@@ -24,7 +24,6 @@ import {
   RiAddLine,
 } from '@remixicon/react'
 import Link from 'next/link'
-
 import { NavUser } from '@/components/nav-user'
 import { RepoSwitcher } from '@/components/repo-switcher'
 import {
@@ -37,9 +36,11 @@ import {
 import { Tree, TreeItem, TreeItemLabel } from '@/components/tree'
 import { getRepos, getRepoTree } from '@/app/actions'
 import type { Item, Repo } from '@/app/types'
-import { transformTreeData } from '@/lib/utils'
+import { transformAndAppendTreeData } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from './ui/button'
+import { createAdr, getAdrsByRepository } from '@/lib/adr-db-actions'
+import { useLiveQuery } from 'dexie-react-hooks'
 
 interface ApiResponse<T> {
   code: number
@@ -145,59 +146,33 @@ function SkeletonTree() {
 
 function FileTree({
   activeRepo,
-  repoTree,
+  items,
+  setItems,
+  addNewAdr,
 }: {
   activeRepo: Repo | null
-  repoTree: RepoTree
+  items: Record<string, Item> | null
+  setItems: (
+    items:
+      | Record<string, Item>
+      | ((
+          prevItems: Record<string, Item> | null,
+        ) => Record<string, Item> | null),
+  ) => void
+  addNewAdr: () => void
 }) {
-  const [items, setItems] = useState<Record<string, Item> | null>({
-    ...transformTreeData(repoTree?.tree),
-    adrs: {
-      name: 'adrs',
-      children: ['adrs/0001-initial-adr.md'],
-    },
-    'adrs/0001-initial-adr.md': {
-      name: '0001-initial-adr.md',
-      fileExtension: 'md',
-    },
-  })
-  const [adrCount, setAdrCount] = useState(1)
-
-  const addNewAdr = () => {
-    setItems((prevItems) => {
-      if (!prevItems) return null
-      const newCount = adrCount + 1
-      const newAdrName = `000${newCount}-adr-${newCount}.md`
-      const adrsFolder = prevItems.adrs
-
-      const newItems: Record<string, Item> = {
-        ...prevItems,
-        adrs: {
-          name: 'adrs',
-          children: [...(adrsFolder?.children ?? []), `adrs/${newAdrName}`],
-        },
-        [`adrs/${newAdrName}`]: {
-          name: newAdrName,
-          fileExtension: 'md',
-        },
-      }
-      return newItems
-    })
-
-    const adrsItem = tree.getItems().find((item) => item.getId() === 'adrs')
-    if (!adrsItem) return
-
-    adrsItem.collapse()
-    setTimeout(() => {
-      adrsItem.expand()
-    }, 0)
-
-    setAdrCount(adrCount + 1)
-  }
+  // Find any adrs folder to expand it
+  const adrsFolderId = items
+    ? Object.keys(items).find(
+        (key) =>
+          items[key]?.name?.startsWith('adrs') &&
+          (items[key]?.children?.length ?? 0) > 0,
+      )
+    : null
 
   const tree = useTree<Item>({
     initialState: {
-      expandedItems: ['root', 'adrs'],
+      expandedItems: ['root', ...(adrsFolderId ? [adrsFolderId] : [])],
       selectedItems: [],
     },
     indent,
@@ -206,16 +181,20 @@ function FileTree({
     isItemFolder: (item) => (item.getItemData()?.children?.length ?? 0) > 0,
     canReorder: true,
     onDrop: createOnDropHandler((parentItem, newChildrenIds) => {
-      setItems((prevItems) => {
+      setItems((prevItems: Record<string, Item> | null) => {
         if (!prevItems) return null
-        // Sort the children alphabetically
+        // Sort the children with "adrs" folder first, then folders, then files
         const sortedChildren = [...newChildrenIds].sort((a, b) => {
           const itemA = prevItems[a]
           const itemB = prevItems[b]
 
           if (!itemA || !itemB || newChildrenIds.length === 0) return 0
 
-          // First sort folders before files
+          // First, put "adrs" folder at the top
+          if (itemA?.name === 'adrs') return -1
+          if (itemB?.name === 'adrs') return 1
+
+          // Then sort folders before files
           const isAFolder = (itemA?.children?.length ?? 0) > 0
           const isBFolder = (itemB?.children?.length ?? 0) > 0
 
@@ -246,9 +225,8 @@ function FileTree({
             name: activeRepo?.name ?? 'Root',
             children: items
               ? [
-                  'adrs',
                   ...Object.keys(items).filter(
-                    (key) => !key.includes('/') && key !== 'adrs',
+                    (key) => !key.includes('/') && key !== 'root',
                   ),
                 ]
               : [],
@@ -262,13 +240,32 @@ function FileTree({
         if (itemId === 'root') {
           const rootChildren = items
             ? [
-                'adrs',
                 ...Object.keys(items).filter(
-                  (key) => !key.includes('/') && key !== 'adrs',
+                  (key) => !key.includes('/') && key !== 'root',
                 ),
               ]
             : []
-          return rootChildren
+          // Sort root children with "adrs" folder first
+          return rootChildren.sort((a, b) => {
+            const itemA = items?.[a]
+            const itemB = items?.[b]
+
+            if (!itemA || !itemB) return 0
+
+            // First, put "adrs" folder at the top
+            if (itemA?.name === 'adrs') return -1
+            if (itemB?.name === 'adrs') return 1
+
+            // Then sort folders before files
+            const isAFolder = (itemA?.children?.length ?? 0) > 0
+            const isBFolder = (itemB?.children?.length ?? 0) > 0
+
+            if (isAFolder && !isBFolder) return -1
+            if (!isAFolder && isBFolder) return 1
+
+            // Then sort alphabetically by name
+            return (itemA?.name ?? '').localeCompare(itemB?.name ?? '')
+          })
         }
         const children = items?.[itemId]?.children ?? []
         return children
@@ -352,6 +349,11 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   })
   const [activeRepo, setActiveRepo] = useState<Repo | null>(null)
 
+  const adrs = useLiveQuery(
+    () => getAdrsByRepository(activeRepo?.name ?? ''),
+    [activeRepo?.name],
+  )
+
   // Query for repo tree when activeRepo changes
   const { data: repoTree } = useQuery<ApiResponse<RepoTree> | null>({
     queryKey: ['repoTree', activeRepo?.name, activeRepo?.owner?.login],
@@ -364,6 +366,55 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     enabled: !!activeRepo,
   })
 
+  const [items, setItems] = useState<Record<string, Item> | null>(null)
+
+  // Effect to handle async tree transformation
+  useEffect(() => {
+    const transformTree = async () => {
+      if (repoTree?.data?.tree && activeRepo?.name) {
+        const transformedItems = await transformAndAppendTreeData({
+          tree: repoTree.data.tree,
+          adrs: adrs ?? [],
+          repository: activeRepo.name,
+        })
+        setItems(transformedItems)
+      }
+    }
+
+    console.log('transforming tree')
+    console.log('repoTree', repoTree)
+    console.log('adrs', adrs)
+    console.log('activeRepo', activeRepo)
+
+    void transformTree()
+  }, [repoTree?.data?.tree, adrs, activeRepo?.name])
+
+  console.log('items', items)
+
+  const addNewAdr = () => {
+    const newAdrName = `000${(adrs?.length ?? 0) + 1}-adr-${(adrs?.length ?? 0) + 1}.md`
+
+    void createAdr({
+      name: newAdrName,
+      path: `adrs/${newAdrName}`,
+      contents: '',
+      repository: activeRepo?.name ?? '',
+      hasMatch: false,
+    })
+  }
+
+  const handleSetItems = (
+    items:
+      | Record<string, Item>
+      | ((
+          prevItems: Record<string, Item> | null,
+        ) => Record<string, Item> | null),
+  ) => {
+    setItems(items)
+  }
+
+  console.log('items', items)
+
   return (
     <div className="flex h-screen w-full">
       <Sidebar collapsible="icon" className="h-screen">
@@ -375,8 +426,13 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           />
         </SidebarHeader>
         <SidebarContent className="overflow-x-hidden">
-          {activeRepo && repoTree?.data ? (
-            <FileTree activeRepo={activeRepo} repoTree={repoTree.data} />
+          {items ? (
+            <FileTree
+              activeRepo={activeRepo}
+              items={items}
+              setItems={handleSetItems}
+              addNewAdr={addNewAdr}
+            />
           ) : (
             <SkeletonTree />
           )}

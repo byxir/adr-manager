@@ -1,12 +1,32 @@
 import type { Item, RepoTree } from '@/app/types'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import type { Adr } from './dexie-db'
+import {
+  createAdr,
+  updateAdrPath,
+  updateAdrHasMatch,
+  bulkUpdateAdrHasMatch,
+} from './adr-db-actions'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const transformTreeData = (tree: RepoTree['tree']) => {
+export const transformAndAppendTreeData = async ({
+  tree,
+  adrs,
+  repository,
+}: {
+  tree: RepoTree['tree'] | undefined
+  adrs: Adr[]
+  repository: string
+}) => {
+  if (!tree) return null
+
+  // Filter ADRs to only include those belonging to the current repository
+  const repositoryAdrs = adrs.filter((adr) => adr.repository === repository)
+
   const result: Record<string, Item> = {}
 
   // Helper to ensure parent directories exist
@@ -23,6 +43,26 @@ export const transformTreeData = (tree: RepoTree['tree']) => {
         children: [],
       }
     }
+  }
+
+  // Helper to find a unique ADRs folder name
+  const findUniqueAdrsFolderName = () => {
+    let folderName = 'adrs'
+    let counter = 1
+
+    while (result[folderName]) {
+      folderName = `adrs-${counter}`
+      counter++
+    }
+
+    return folderName
+  }
+
+  // Helper to check if a file exists in the tree
+  const fileExistsInTree = (filename: string) => {
+    return tree.some(
+      (item) => item.path === filename || item.path.endsWith(`/${filename}`),
+    )
   }
 
   // First pass: create all items
@@ -53,6 +93,115 @@ export const transformTreeData = (tree: RepoTree['tree']) => {
       parent?.children?.push(path)
     }
   })
+
+  // Handle ADRs based on the four scenarios
+  if (repositoryAdrs.length === 0) {
+    // Scenario 1: No ADRs - create root-level "adrs" folder with default ADR
+    const adrsFolderName = findUniqueAdrsFolderName()
+
+    // Create the ADRs folder
+    result[adrsFolderName] = {
+      name: adrsFolderName,
+      children: [],
+    }
+
+    // Create default ADR file
+    const defaultAdrPath = `${adrsFolderName}/0001-adr-1.md`
+    result[defaultAdrPath] = {
+      name: '0001-adr-1.md',
+      fileExtension: 'md',
+    }
+
+    // Add to parent folder's children
+    result[adrsFolderName].children?.push(defaultAdrPath)
+
+    // Create ADR in database
+    await createAdr({
+      name: '0001-adr-1.md',
+      path: defaultAdrPath,
+      contents:
+        '# ADR-0001: Initial Architecture Decision Record\n\n## Status\n\nProposed\n\n## Context\n\nThis is the initial ADR for this project.\n\n## Decision\n\nWe will use this format for all future ADRs.\n\n## Consequences\n\n- Positive: Consistent documentation\n- Negative: None identified',
+      repository,
+      hasMatch: false,
+    })
+  } else {
+    // Check which ADRs have matching files in the tree
+    const matchingAdrs: Adr[] = []
+    const nonMatchingAdrs: Adr[] = []
+
+    repositoryAdrs.forEach((adr) => {
+      if (fileExistsInTree(adr.path)) {
+        matchingAdrs.push(adr)
+      } else {
+        nonMatchingAdrs.push(adr)
+      }
+    })
+
+    if (nonMatchingAdrs.length === 0) {
+      // Scenario 3: All ADRs have matches - update hasMatch to true
+      await bulkUpdateAdrHasMatch(
+        repositoryAdrs.map((adr) => ({ name: adr.name, hasMatch: true })),
+      )
+    } else if (matchingAdrs.length === 0) {
+      // Scenario 2: No ADRs have matches - create ADRs folder with all ADRs
+      const adrsFolderName = findUniqueAdrsFolderName()
+
+      // Create the ADRs folder
+      result[adrsFolderName] = {
+        name: adrsFolderName,
+        children: [],
+      }
+
+      // Add all ADRs to the folder
+      for (const adr of repositoryAdrs) {
+        const adrPath = `${adrsFolderName}/${adr.name}`
+        result[adrPath] = {
+          name: adr.name,
+          fileExtension: adr.name.split('.').pop(),
+        }
+        result[adrsFolderName].children?.push(adrPath)
+
+        // Update the ADR path in database
+        await updateAdrPath(adr.name, adrPath)
+      }
+    } else {
+      // Scenario 4: Some ADRs have matches, some don't
+      // Update matching ADRs to hasMatch = true
+      await bulkUpdateAdrHasMatch(
+        matchingAdrs.map((adr) => ({ name: adr.name, hasMatch: true })),
+      )
+
+      // Create ADRs folder for non-matching ADRs
+      const adrsFolderName = findUniqueAdrsFolderName()
+
+      // Create the ADRs folder
+      result[adrsFolderName] = {
+        name: adrsFolderName,
+        children: [],
+      }
+
+      // Add non-matching ADRs to the folder
+      for (const adr of nonMatchingAdrs) {
+        const adrPath = `${adrsFolderName}/${adr.name}`
+        result[adrPath] = {
+          name: adr.name,
+          fileExtension: adr.name.split('.').pop(),
+        }
+        result[adrsFolderName].children?.push(adrPath)
+
+        // Update the ADR path in database
+        await updateAdrPath(adr.name, adrPath)
+      }
+
+      // Return error information about mismatched files
+      const mismatchedFiles = nonMatchingAdrs.map((adr) => adr.path).join(', ')
+      console.error(
+        `Some ADRs could not find matching files in the repository: ${mismatchedFiles}`,
+      )
+    }
+  }
+
+  console.log('result', result)
 
   return result
 }

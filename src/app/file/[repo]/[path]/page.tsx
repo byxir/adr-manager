@@ -31,7 +31,14 @@ export default function FilePage() {
 
   const [markdown, setMarkdown] = useState<string | null>(null)
 
-  const { data: fileResponse, error } = useQuery<ApiResponse<string>>({
+  const { data: fileResponse, error } = useQuery<
+    ApiResponse<{
+      content: string
+      name: string
+      path: string
+      sha: string
+    }>
+  >({
     queryKey: ['file', repo, formattedPath],
     queryFn: () => getFileContent(repo ?? '', formattedPath ?? '', owner ?? ''),
     enabled: !!repo && !!path && !!owner,
@@ -40,7 +47,7 @@ export default function FilePage() {
   useEffect(() => {
     if (fileResponse) {
       setMarkdown(
-        `\`\`\`${path?.split('.').pop() ?? ''}\n${fileResponse.data?.content}\n\`\`\``,
+        `\`\`\`${path?.split('.').pop() ?? ''}\n${fileResponse.data.content}\n\`\`\``,
       )
     }
   }, [fileResponse])
