@@ -3,7 +3,6 @@
 import * as React from 'react'
 
 import { useSession } from 'next-auth/react'
-import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
 import {
   createOnDropHandler,
@@ -14,16 +13,7 @@ import {
   syncDataLoaderFeature,
 } from '@headless-tree/core'
 import { AssistiveTreeDescription, useTree } from '@headless-tree/react'
-import {
-  RiBracesLine,
-  RiCodeSSlashLine,
-  RiFileLine,
-  RiFileTextLine,
-  RiImageLine,
-  RiReactjsLine,
-  RiAddLine,
-} from '@remixicon/react'
-import Link from 'next/link'
+import { RiAddLine } from '@remixicon/react'
 import { NavUser } from '@/components/nav-user'
 import { RepoSwitcher } from '@/components/repo-switcher'
 import {
@@ -34,61 +24,16 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { Tree, TreeItem, TreeItemLabel } from '@/components/tree'
-import { getRepos, getRepoTree } from '@/app/actions'
-import type { Item, Repo } from '@/app/types'
+import type { Item, RepoTree } from '@/app/types'
 import { transformAndAppendTreeData } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from './ui/button'
-import {
-  createAdr,
-  getAdrsByRepository,
-  getAdrByNameAndRepository,
-} from '@/lib/adr-db-actions'
-import { useLiveQuery } from 'dexie-react-hooks'
+import { createAdr, getAdrByNameAndRepository } from '@/lib/adr-db-actions'
 import { useRouter } from 'next/navigation'
-
-interface ApiResponse<T> {
-  code: number
-  data: T
-  message?: string
-}
-
-interface RepoTree {
-  sha: string
-  url: string
-  tree: Array<{
-    path: string
-    mode: string
-    type: string
-    sha: string
-    url: string
-    size?: number
-  }>
-}
-
-// Helper function to get icon based on file extension
-function getFileIcon(extension: string | undefined, className: string) {
-  switch (extension) {
-    case 'tsx':
-    case 'jsx':
-      return <RiReactjsLine className={className} />
-    case 'ts':
-    case 'js':
-    case 'mjs':
-      return <RiCodeSSlashLine className={className} />
-    case 'json':
-      return <RiBracesLine className={className} />
-    case 'svg':
-    case 'ico':
-    case 'png':
-    case 'jpg':
-      return <RiImageLine className={className} />
-    case 'md':
-      return <RiFileTextLine className={className} />
-    default:
-      return <RiFileLine className={className} />
-  }
-}
+import type { Adr } from '@/lib/dexie-db'
+import { getFileIcon } from '@/lib/helpers'
+import { useRepos } from '@/hooks/use-repo-queries'
+import { v4 as uuidv4 } from 'uuid'
 
 const indent = 20
 
@@ -154,8 +99,9 @@ function FileTree({
   items,
   setItems,
   addNewAdr,
+  owner,
 }: {
-  activeRepo: Repo | null
+  activeRepo: string | null
   items: Record<string, Item> | null
   setItems: (
     items:
@@ -165,23 +111,24 @@ function FileTree({
         ) => Record<string, Item> | null),
   ) => void
   addNewAdr: () => void
+  owner: string | null
 }) {
   const router = useRouter()
 
   // Function to handle file clicks and check for ADRs
   const handleFileClick = async (filePath: string, fileName: string) => {
-    if (!activeRepo?.name) return
+    if (!activeRepo) return
 
     // Check if this file is an ADR in the database
-    const adr = await getAdrByNameAndRepository(fileName, activeRepo.name)
+    const adr = await getAdrByNameAndRepository(fileName, activeRepo)
 
     if (adr && !adr.hasMatch) {
       // Redirect to ADR page
-      router.push(`/adr/${activeRepo.name}/${fileName}`)
+      router.push(`/${activeRepo}/adr/${fileName}`)
     } else {
       // Navigate to regular file page
       router.push(
-        `/file/${activeRepo.name}/${filePath.replaceAll('/', '~')}?owner=${activeRepo.owner.login}`,
+        `/${activeRepo}/file/${filePath.replaceAll('/', '~')}?owner=${owner}`,
       )
     }
   }
@@ -247,7 +194,7 @@ function FileTree({
       getItem: (itemId) => {
         if (itemId === 'root') {
           const rootItem = {
-            name: activeRepo?.name ?? 'Root',
+            name: activeRepo ?? 'Root',
             children: items
               ? [
                   ...Object.keys(items).filter(
@@ -360,57 +307,50 @@ function FileTree({
   )
 }
 
-export function AppSidebar({ children }: { children: React.ReactNode }) {
+export function AppSidebar({
+  children,
+  repoTree,
+  activeRepo,
+  owner,
+  adrs,
+}: {
+  children: React.ReactNode
+  repoTree: RepoTree | null
+  activeRepo: string | null
+  owner: string | null
+  adrs: Adr[] | null
+}) {
   const { data: session } = useSession()
-  const { data: reposData } = useQuery({
-    queryKey: ['repos'],
-    queryFn: getRepos,
-  })
-  const [activeRepo, setActiveRepo] = useState<Repo | null>(null)
-
-  const adrs = useLiveQuery(
-    () => getAdrsByRepository(activeRepo?.name ?? ''),
-    [activeRepo?.name],
-  )
-
-  // Query for repo tree when activeRepo changes
-  const { data: repoTree } = useQuery<ApiResponse<RepoTree> | null>({
-    queryKey: ['repoTree', activeRepo?.name, activeRepo?.owner?.login],
-    queryFn: () =>
-      getRepoTree(
-        activeRepo?.name ?? '',
-        activeRepo?.default_branch ?? '',
-        activeRepo?.owner?.login ?? '',
-      ),
-    enabled: !!activeRepo,
-  })
 
   const [items, setItems] = useState<Record<string, Item> | null>(null)
+
+  const { data: reposData, isLoading, error } = useRepos()
 
   // Effect to handle async tree transformation
   useEffect(() => {
     const transformTree = async () => {
-      if (repoTree?.data?.tree && activeRepo?.name) {
+      if (repoTree?.tree && adrs && activeRepo) {
         const transformedItems = await transformAndAppendTreeData({
-          tree: repoTree.data.tree,
+          tree: repoTree.tree,
           adrs: adrs ?? [],
-          repository: activeRepo.name,
+          repository: activeRepo,
         })
         setItems(transformedItems)
       }
     }
 
     void transformTree()
-  }, [repoTree?.data?.tree, adrs, activeRepo?.name])
+  }, [repoTree?.tree, adrs])
 
   const addNewAdr = () => {
     const newAdrName = `000${(adrs?.length ?? 0) + 1}-adr-${(adrs?.length ?? 0) + 1}.md`
 
     void createAdr({
+      id: uuidv4(),
       name: newAdrName,
       path: `adrs/${newAdrName}`,
       contents: '',
-      repository: activeRepo?.name ?? '',
+      repository: activeRepo ?? '',
       hasMatch: false,
     })
   }
@@ -432,7 +372,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           <RepoSwitcher
             repos={reposData?.data ?? []}
             activeRepo={activeRepo}
-            setActiveRepo={setActiveRepo}
+            owner={owner}
           />
         </SidebarHeader>
         <SidebarContent className="overflow-x-hidden">
@@ -442,6 +382,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
               items={items}
               setItems={handleSetItems}
               addNewAdr={addNewAdr}
+              owner={owner}
             />
           ) : (
             <SkeletonTree />

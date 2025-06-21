@@ -2,14 +2,13 @@
 'use client'
 
 import * as React from 'react'
-import { ChevronsUpDown, Plus } from 'lucide-react'
+import { ChevronsUpDown } from 'lucide-react'
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -20,27 +19,28 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import type { Repo } from '@/app/types'
-import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export function RepoSwitcher({
   repos,
   activeRepo,
-  setActiveRepo,
+  owner,
 }: {
   repos: Repo[]
-  activeRepo: Repo | null
-  setActiveRepo: (repo: Repo) => void
+  activeRepo: string | null
+  owner: string | null
 }) {
   const { isMobile } = useSidebar()
-
-  useEffect(() => {
-    if (repos?.[0]) {
-      setActiveRepo(repos[0])
-    }
-  }, [repos, setActiveRepo])
+  const router = useRouter()
 
   if (!activeRepo) {
     return null
+  }
+
+  const handleSwitchRepo = (repo: Repo) => {
+    router.push(
+      `/${repo.name}?owner=${repo.owner.login}&branch=${repo.default_branch}`,
+    )
   }
 
   return (
@@ -56,10 +56,8 @@ export function RepoSwitcher({
                 {/* <activeRepo.owner.avatar_url className="size-4" /> */}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeRepo.name}</span>
-                <span className="truncate text-xs">
-                  {activeRepo.owner.login}
-                </span>
+                <span className="truncate font-medium">{activeRepo}</span>
+                <span className="truncate text-xs">{owner}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -76,7 +74,7 @@ export function RepoSwitcher({
             {repos.map((repo, index) => (
               <DropdownMenuItem
                 key={repo.name}
-                onClick={() => setActiveRepo(repo)}
+                onClick={() => handleSwitchRepo(repo)}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">

@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,7 +14,6 @@ import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import '@mdxeditor/editor/style.css'
 import { useParams } from 'next/navigation'
-import DisplayFileContents from '../../../file/[repo]/[path]/display-file-contents'
 import {
   getAdrByNameAndRepository,
   updateAdrContents,
@@ -21,12 +21,12 @@ import {
 import { useDebounce } from '@/lib/utils'
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
-import { useLiveQuery } from 'dexie-react-hooks'
+import DisplayFileContents from './display-file-contents'
 
 export default function AdrPage() {
   const { data: session } = useSession()
   const { repo, adrName }: { repo: string; adrName: string } = useParams()
-  // const [adr, setAdr] = useState<Adr | null>(null)
+  const queryClient = useQueryClient()
   const [markdown, setMarkdown] = useState<string>('')
   const [currentAdrKey, setCurrentAdrKey] = useState<string>('')
   const editorRef = useRef<MDXEditorMethods>(null)
@@ -36,7 +36,10 @@ export default function AdrPage() {
 
   const debouncedAdrContent = useDebounce(markdown ?? '', 500)
 
-  const adr = useLiveQuery(() => getAdrByNameAndRepository(adrName, repo))
+  const adr = useQuery({
+    queryKey: ['adr', repo, adrName],
+    queryFn: () => getAdrByNameAndRepository(adrName, repo),
+  })
 
   // Create a unique key for the current ADR to force re-render
   const adrKey = `${repo}-${adrName}`
@@ -46,9 +49,19 @@ export default function AdrPage() {
   useEffect(() => {
     if (debouncedAdrContent) {
       console.log('debouncedAdrContent', debouncedAdrContent)
+      // Save to database and invalidate cache
       void updateAdrContents(adrName, repo, debouncedAdrContent)
+        .then(() => {
+          // Invalidate the query to refetch fresh data
+          void queryClient.invalidateQueries({
+            queryKey: ['adr', repo, adrName],
+          })
+        })
+        .catch((error) => {
+          console.error('Failed to update ADR contents:', error)
+        })
     }
-  }, [debouncedAdrContent, currentAdrKey, adrKey, adrName, repo])
+  }, [debouncedAdrContent, currentAdrKey, adrKey, adrName, repo, queryClient])
 
   // Function to get content from editor
   const getEditorContent = useCallback(() => {
@@ -93,7 +106,7 @@ export default function AdrPage() {
 
       // Set up listeners if all conditions are met
       if (
-        adr &&
+        adr.data &&
         session?.user &&
         typeof markdown === 'string' &&
         currentAdrKey === adrKey
@@ -124,7 +137,7 @@ export default function AdrPage() {
       }
     },
     [
-      adr,
+      adr.data,
       session?.user,
       markdown,
       currentAdrKey,
@@ -144,15 +157,11 @@ export default function AdrPage() {
   }, [cleanupEventListeners])
 
   useEffect(() => {
-    if (adr) {
-      setMarkdown(adr.contents)
+    if (adr.data) {
+      setMarkdown(adr.data.contents ?? '')
       setCurrentAdrKey(adrKey)
     }
-  }, [adr, adrKey])
-
-  console.log('markdown', markdown, typeof markdown)
-  console.log('user', session?.user)
-  console.log('currentAdrKey', currentAdrKey, 'adrKey', adrKey)
+  }, [adr.data, adrKey])
 
   return (
     <SidebarInset>

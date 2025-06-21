@@ -17,7 +17,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useParams, useSearchParams } from 'next/navigation'
 import { type ApiResponse } from '../../../types'
 import DisplayFileContents from './display-file-contents'
-import { Skeleton } from '@/components/ui/skeleton'
 import { SkeletonEditor } from '@/lib/helpers'
 
 export default function FilePage() {

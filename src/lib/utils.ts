@@ -5,10 +5,10 @@ import type { Adr } from './dexie-db'
 import {
   createAdr,
   updateAdrPath,
-  updateAdrHasMatch,
   bulkUpdateAdrHasMatch,
 } from './adr-db-actions'
 import { useEffect, useState } from 'react'
+import { v4 as uuidv4 } from 'uuid'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -26,7 +26,13 @@ export const transformAndAppendTreeData = async ({
   if (!tree) return null
 
   // Filter ADRs to only include those belonging to the current repository
-  const repositoryAdrs = adrs.filter((adr) => adr.repository === repository)
+  const repositoryAdrs = adrs.filter((adr) => {
+    console.log('ADR REPO', adr.repository)
+    console.log('REPO IN UTILS', repository)
+    return adr.repository === repository
+  })
+
+  console.log('REPOSITORY ADRS', repositoryAdrs)
 
   const result: Record<string, Item> = {}
 
@@ -118,6 +124,7 @@ export const transformAndAppendTreeData = async ({
 
     // Create ADR in database
     await createAdr({
+      id: uuidv4(),
       name: '0001-adr-1.md',
       path: defaultAdrPath,
       contents:
@@ -219,4 +226,9 @@ export function useDebounce(input: string, delay: number) {
   }, [input, delay])
 
   return debouncedValue
+}
+
+export function getFileExtension(filename: string): string | undefined {
+  const lastDot = filename.lastIndexOf('.')
+  return lastDot !== -1 ? filename.slice(lastDot + 1) : undefined
 }

@@ -1,6 +1,7 @@
 import Dexie, { liveQuery } from 'dexie'
 
 export interface Adr {
+  id: string
   name: string
   path: string
   contents: string
@@ -13,8 +14,8 @@ class AdrDatabase extends Dexie {
 
   constructor() {
     super('AdrDatabase')
-    this.version(3).stores({
-      adrs: 'name, path, repository, hasMatch, [name+repository]',
+    this.version(4).stores({
+      adrs: '&id, name, path, repository, hasMatch, [name+repository]',
     })
     this.adrs = this.table('adrs')
   }

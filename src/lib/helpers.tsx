@@ -1,4 +1,12 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  RiFileLine,
+  RiBracesLine,
+  RiCodeSSlashLine,
+  RiFileTextLine,
+  RiImageLine,
+  RiReactjsLine,
+} from '@remixicon/react'
 
 export const SkeletonEditor = () => {
   return (
@@ -75,4 +83,28 @@ export const SkeletonEditor = () => {
       </div>
     </div>
   )
+}
+
+// Helper function to get icon based on file extension
+export function getFileIcon(extension: string | undefined, className: string) {
+  switch (extension) {
+    case 'tsx':
+    case 'jsx':
+      return <RiReactjsLine className={className} />
+    case 'ts':
+    case 'js':
+    case 'mjs':
+      return <RiCodeSSlashLine className={className} />
+    case 'json':
+      return <RiBracesLine className={className} />
+    case 'svg':
+    case 'ico':
+    case 'png':
+    case 'jpg':
+      return <RiImageLine className={className} />
+    case 'md':
+      return <RiFileTextLine className={className} />
+    default:
+      return <RiFileLine className={className} />
+  }
 }
