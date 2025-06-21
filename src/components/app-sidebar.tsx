@@ -4,6 +4,7 @@ import * as React from 'react'
 
 import { useSession } from 'next-auth/react'
 import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   createOnDropHandler,
   dragAndDropFeature,
@@ -98,8 +99,8 @@ function FileTree({
   activeRepo,
   items,
   setItems,
-  addNewAdr,
   owner,
+  adrs,
 }: {
   activeRepo: string | null
   items: Record<string, Item> | null
@@ -110,10 +111,11 @@ function FileTree({
           prevItems: Record<string, Item> | null,
         ) => Record<string, Item> | null),
   ) => void
-  addNewAdr: () => void
   owner: string | null
+  adrs: Adr[] | null
 }) {
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   // Function to handle file clicks and check for ADRs
   const handleFileClick = async (filePath: string, fileName: string) => {
@@ -155,6 +157,11 @@ function FileTree({
     onDrop: createOnDropHandler((parentItem, newChildrenIds) => {
       setItems((prevItems: Record<string, Item> | null) => {
         if (!prevItems) return null
+
+        const dropParentId = parentItem.getId()
+        const isAdrsFolder =
+          dropParentId === 'adrs' || prevItems[dropParentId]?.name === 'adrs'
+
         // Sort the children with "adrs" folder first, then folders, then files
         const sortedChildren = [...newChildrenIds].sort((a, b) => {
           const itemA = prevItems[a]
@@ -162,9 +169,29 @@ function FileTree({
 
           if (!itemA || !itemB || newChildrenIds.length === 0) return 0
 
-          // First, put "adrs" folder at the top
+          // First, put "adrs" folder at the top (only for root level)
           if (itemA?.name === 'adrs') return -1
           if (itemB?.name === 'adrs') return 1
+
+          // Special sorting for ADR files
+          if (isAdrsFolder && adrs) {
+            const isAFile = (itemA?.children?.length ?? 0) === 0
+            const isBFile = (itemB?.children?.length ?? 0) === 0
+
+            if (isAFile && isBFile) {
+              // Both are files in adrs folder, sort by createdAt
+              const adrA = adrs.find((adr) => adr.name === itemA?.name)
+              const adrB = adrs.find((adr) => adr.name === itemB?.name)
+
+              if (adrA && adrB) {
+                // Sort by createdAt (oldest first)
+                return (
+                  new Date(adrA.createdAt).getTime() -
+                  new Date(adrB.createdAt).getTime()
+                )
+              }
+            }
+          }
 
           // Then sort folders before files
           const isAFolder = (itemA?.children?.length ?? 0) > 0
@@ -240,6 +267,46 @@ function FileTree({
           })
         }
         const children = items?.[itemId]?.children ?? []
+
+        // Sort children - special handling for adrs folder
+        const isAdrsFolder =
+          itemId === 'adrs' || items?.[itemId]?.name === 'adrs'
+
+        if (isAdrsFolder && adrs) {
+          return [...children].sort((a, b) => {
+            const itemA = items?.[a]
+            const itemB = items?.[b]
+
+            if (!itemA || !itemB) return 0
+
+            const isAFile = (itemA?.children?.length ?? 0) === 0
+            const isBFile = (itemB?.children?.length ?? 0) === 0
+
+            if (isAFile && isBFile) {
+              // Both are files in adrs folder, sort by createdAt
+              const adrA = adrs.find((adr) => adr.name === itemA?.name)
+              const adrB = adrs.find((adr) => adr.name === itemB?.name)
+
+              if (adrA && adrB) {
+                // Sort by createdAt (oldest first)
+                return (
+                  new Date(adrA.createdAt).getTime() -
+                  new Date(adrB.createdAt).getTime()
+                )
+              }
+            }
+
+            // Default sorting for non-files or if ADR not found
+            const isAFolder = (itemA?.children?.length ?? 0) > 0
+            const isBFolder = (itemB?.children?.length ?? 0) > 0
+
+            if (isAFolder && !isBFolder) return -1
+            if (!isAFolder && isBFolder) return 1
+
+            return (itemA?.name ?? '').localeCompare(itemB?.name ?? '')
+          })
+        }
+
         return children
       },
     },
@@ -252,6 +319,65 @@ function FileTree({
     ],
   })
 
+  const addNewAdr = async () => {
+    const newAdrName = `000${(adrs?.length ?? 0) + 1}-adr-${(adrs?.length ?? 0) + 1}.md`
+
+    const preparedAdr = {
+      id: uuidv4(),
+      name: newAdrName,
+      path: `adrs/${newAdrName}`,
+      contents: '',
+      repository: activeRepo ?? '',
+      hasMatch: false,
+      createdAt: new Date(),
+    }
+
+    try {
+      console.log(
+        'Creating new ADR:',
+        newAdrName,
+        'for repository:',
+        activeRepo,
+      )
+      console.log('Current ADRs count:', adrs?.length ?? 0)
+
+      await createAdr(preparedAdr)
+
+      // Give a small delay to ensure the database operation is fully committed
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      // Invalidate any React Query caches that might be related to ADRs
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey
+          // Invalidate ADR-related queries
+          return (
+            queryKey.includes('adr') ||
+            queryKey.includes('ADR') ||
+            (Array.isArray(queryKey) &&
+              queryKey.some(
+                (key) =>
+                  typeof key === 'string' &&
+                  (key.includes('adr') || key === activeRepo),
+              ))
+          )
+        },
+      })
+
+      const adrsItem = tree.getItems().find((item) => item.getId() === 'adrs')
+      if (!adrsItem) return
+
+      adrsItem.collapse()
+      setTimeout(() => {
+        adrsItem.expand()
+      }, 0)
+
+      console.log('ADR created and queries invalidated, should update soon')
+    } catch (error) {
+      console.error('Error creating ADR:', error)
+    }
+  }
+
   if (!items) {
     return <SkeletonTree />
   }
@@ -260,7 +386,11 @@ function FileTree({
     <div className="flex h-full flex-col gap-2 *:first:grow">
       <div>
         <div className="py-4 px-3">
-          <Button onClick={addNewAdr} className="w-full" variant="default">
+          <Button
+            onClick={() => void addNewAdr()}
+            className="w-full"
+            variant="default"
+          >
             <RiAddLine className="size-4" />
             Add ADR
           </Button>
@@ -342,19 +472,6 @@ export function AppSidebar({
     void transformTree()
   }, [repoTree?.tree, adrs])
 
-  const addNewAdr = () => {
-    const newAdrName = `000${(adrs?.length ?? 0) + 1}-adr-${(adrs?.length ?? 0) + 1}.md`
-
-    void createAdr({
-      id: uuidv4(),
-      name: newAdrName,
-      path: `adrs/${newAdrName}`,
-      contents: '',
-      repository: activeRepo ?? '',
-      hasMatch: false,
-    })
-  }
-
   const handleSetItems = (
     items:
       | Record<string, Item>
@@ -381,7 +498,7 @@ export function AppSidebar({
               activeRepo={activeRepo}
               items={items}
               setItems={handleSetItems}
-              addNewAdr={addNewAdr}
+              adrs={adrs}
               owner={owner}
             />
           ) : (

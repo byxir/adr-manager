@@ -35,8 +35,11 @@ export function useRepoTree(
 }
 
 export function useRepoAdrs(activeRepo: string | null) {
-  return useLiveQuery(() => {
+  return useLiveQuery(async () => {
     if (!activeRepo || typeof activeRepo !== 'string') return null
-    return getAdrsByRepository(activeRepo)
+    console.log('useRepoAdrs: Fetching ADRs for repository:', activeRepo)
+    const adrs = await getAdrsByRepository(activeRepo)
+    console.log('useRepoAdrs: Found ADRs:', adrs)
+    return adrs
   }, [activeRepo])
 }

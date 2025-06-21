@@ -131,6 +131,7 @@ export const transformAndAppendTreeData = async ({
         '# ADR-0001: Initial Architecture Decision Record\n\n## Status\n\nProposed\n\n## Context\n\nThis is the initial ADR for this project.\n\n## Decision\n\nWe will use this format for all future ADRs.\n\n## Consequences\n\n- Positive: Consistent documentation\n- Negative: None identified',
       repository,
       hasMatch: false,
+      createdAt: new Date(),
     })
   } else {
     // Check which ADRs have matching files in the tree

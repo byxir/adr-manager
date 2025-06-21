@@ -35,6 +35,19 @@ export async function deleteAdr(id: string) {
 export async function createAdr(adr: Adr) {
   console.log('Creating ADR:', adr)
   await adrDB.adrs.add(adr)
+  console.log('ADR created successfully in database')
+
+  // Force a query to make sure the change is committed
+  const verifyCount = await adrDB.adrs
+    .where('repository')
+    .equals(adr.repository)
+    .count()
+  console.log(
+    'ADR count after creation for repository',
+    adr.repository,
+    ':',
+    verifyCount,
+  )
 }
 
 export async function updateAdrHasMatch(id: string, hasMatch: boolean) {

@@ -67,27 +67,33 @@ const RepoPage = () => {
             Architecture Decision Records
           </h2> */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {adrs.map((adr) => (
-              <Card
-                key={adr.name}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => router.push(`/${activeRepo}/adr/${adr.name}`)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <RiFileTextLine className="size-4 text-blue-600" />
-                    <CardTitle className="text-sm font-medium truncate">
-                      {adr.name}
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-xs">
-                    ADR • {adr.path}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            ))}
+            {adrs
+              .sort(
+                (a, b) =>
+                  new Date(a.createdAt).getTime() -
+                  new Date(b.createdAt).getTime(),
+              )
+              .map((adr) => (
+                <Card
+                  key={adr.name}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => router.push(`/${activeRepo}/adr/${adr.name}`)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <RiFileTextLine className="size-4 text-blue-600" />
+                      <CardTitle className="text-sm font-medium truncate">
+                        {adr.name}
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-xs">
+                      ADR • {adr.path}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         </div>
       )}
