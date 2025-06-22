@@ -1,51 +1,29 @@
-import { auth } from '@/server/auth'
 import { getGitAdapter } from '@/services/git/GitAdapterFactory'
 import { type NextRequest } from 'next/server'
+import { errorResponse, getParams, withAuth } from '@/lib/api-helpers'
 
 export async function GET(request: NextRequest) {
-  const session = await auth()
+  try {
+    const session = await withAuth()
+    const { repo, branch, owner } = getParams(request, [
+      'repo',
+      'branch',
+      'owner',
+    ])
+    const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
-  if (!session) {
-    const statusCode = 401
-    return Response.json(
-      {
-        code: statusCode,
-        message: 'Unauthorized, please sign in.',
-      },
-      {
-        status: statusCode,
-      },
+    const repoTree = await gitAdapter.getRepoTree({
+      accessToken: session.user.accessToken ?? '',
+      owner,
+      repository: repo,
+      branch,
+    })
+
+    return Response.json({ code: 200, data: repoTree })
+  } catch (error: any) {
+    return errorResponse(
+      error.status ?? 500,
+      error.message ?? 'Something went wrong.',
     )
   }
-
-  const provider = session.user.authorizedProvider
-  const gitAdapter = getGitAdapter(provider)
-
-  const searchParams = request.nextUrl.searchParams
-  const repo = searchParams.get('repo')!
-  const branch = searchParams.get('branch')
-  const owner = searchParams.get('owner')!
-
-  if (!branch || !owner || !repo) {
-    const statusCode = 400
-    return Response.json(
-      {
-        code: statusCode,
-        message:
-          'Bad request, missing one of the following parameters: branch, owner or repo.',
-      },
-      {
-        status: statusCode,
-      },
-    )
-  }
-
-  const repoTree = await gitAdapter.getRepoTree({
-    accessToken: session?.user?.accessToken ?? '',
-    owner,
-    repository: repo,
-    branch: branch,
-  })
-
-  return Response.json({ code: 200, data: repoTree })
 }

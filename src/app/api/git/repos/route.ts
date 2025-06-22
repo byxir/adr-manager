@@ -1,29 +1,19 @@
-import { auth } from '@/server/auth'
 import { getGitAdapter } from '@/services/git/GitAdapterFactory'
-
+import { errorResponse, withAuth } from '@/lib/api-helpers'
 export async function GET() {
-  const session = await auth()
+  try {
+    const session = await withAuth()
+    const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
-  if (!session) {
-    const statusCode = 401
-    return Response.json(
-      {
-        code: statusCode,
-        message: 'Unauthorized, please sign in.',
-      },
-      {
-        status: statusCode,
-      },
+    const userRepos = await gitAdapter.getUserRepos({
+      accessToken: session.user.accessToken ?? '',
+    })
+
+    return Response.json({ code: 200, data: userRepos })
+  } catch (error: any) {
+    return errorResponse(
+      error.status ?? 500,
+      error.message ?? 'Something went wrong.',
     )
   }
-
-  const provider = session.user.authorizedProvider
-
-  const gitAdapter = getGitAdapter(provider)
-
-  const userRepos = await gitAdapter.getUserRepos({
-    accessToken: session?.user?.accessToken ?? '',
-  })
-
-  return Response.json({ code: 200, data: userRepos })
 }

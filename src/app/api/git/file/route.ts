@@ -1,190 +1,88 @@
-import { auth } from '@/server/auth'
 import { getGitAdapter } from '@/services/git/GitAdapterFactory'
 import { type NextRequest } from 'next/server'
+import { errorResponse, getParams, withAuth } from '@/lib/api-helpers'
 
 export async function GET(request: NextRequest) {
-  const session = await auth()
+  try {
+    const session = await withAuth()
+    const { repo, path, owner } = getParams(request, ['repo', 'path', 'owner'])
+    const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
-  if (!session) {
-    const statusCode = 401
-    return Response.json(
-      {
-        code: statusCode,
-        message: 'Unauthorized, please sign in.',
-      },
-      {
-        status: statusCode,
-      },
+    const file = await gitAdapter.getFile({
+      accessToken: session.user.accessToken ?? '',
+      owner,
+      repository: repo,
+      path,
+    })
+
+    return Response.json({ code: 200, data: file })
+  } catch (error: any) {
+    console.error(error)
+    return errorResponse(
+      error.status ?? 500,
+      error.message ?? 'Something went wrong.',
     )
   }
-
-  const provider = session.user.authorizedProvider
-  const gitAdapter = getGitAdapter(provider)
-
-  const searchParams = request.nextUrl.searchParams
-  const repo = searchParams.get('repo')!
-
-  const filePath = searchParams.get('path')!
-  const owner = searchParams.get('owner')!
-
-  if (!filePath || !owner || !repo) {
-    const statusCode = 400
-    return Response.json(
-      {
-        code: statusCode,
-        message:
-          'Bad request, missing one of the following parameters: path, owner or repo.',
-      },
-      {
-        status: statusCode,
-      },
-    )
-  }
-
-  const file = await gitAdapter.getFile({
-    accessToken: session?.user?.accessToken ?? '',
-    owner,
-    repository: repo,
-    path: filePath,
-  })
-
-  return Response.json({ code: 200, data: file })
 }
 
 export async function DELETE(request: NextRequest) {
-  const session = await auth()
-
-  if (!session) {
-    const statusCode = 401
-    return Response.json(
-      {
-        code: statusCode,
-        message: 'Unauthorized, please sign in.',
-      },
-      {
-        status: statusCode,
-      },
-    )
-  }
-
-  const provider = session.user.authorizedProvider
-  const gitAdapter = getGitAdapter(provider)
-
-  const searchParams = request.nextUrl.searchParams
-  const repo = searchParams.get('repo')!
-  const filePath = searchParams.get('path')!
-  const owner = searchParams.get('owner')!
-  const sha = searchParams.get('sha')!
-
-  if (!filePath || !owner || !sha || !repo) {
-    const statusCode = 400
-    return Response.json(
-      {
-        code: statusCode,
-        message:
-          'Bad request, missing one of the following parameters: path, owner, repo or sha.',
-      },
-      {
-        status: statusCode,
-      },
-    )
-  }
-
-  const accessToken = session?.user?.accessToken ?? ''
-
   try {
+    const session = await withAuth(request)
+    const { repo, path, owner, sha } = getParams(request, [
+      'repo',
+      'path',
+      'owner',
+      'sha',
+    ])
+    const gitAdapter = getGitAdapter(session.user.authorizedProvider)
+
     await gitAdapter.deleteFile({
-      accessToken,
+      accessToken: session.user.accessToken ?? '',
       owner,
       repository: repo,
-      path: filePath,
+      path,
       sha,
       message: 'ADR Deleted',
     })
-  } catch (error: unknown) {
-    const statusCode = 500
-    const message =
-      error instanceof Error ? error.message : 'Something went wrong.'
-    return Response.json(
-      {
-        code: statusCode,
-        message,
-      },
-      {
-        status: statusCode,
-      },
+
+    return Response.json({ code: 200 })
+  } catch (error: any) {
+    console.error(error)
+    return errorResponse(
+      error.status ?? 500,
+      error.message ?? 'Something went wrong.',
     )
   }
-
-  return Response.json({ code: 200 })
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth()
-
-  if (!session) {
-    const statusCode = 401
-    return Response.json(
-      {
-        code: statusCode,
-        message: 'Unauthorized, please sign in.',
-      },
-      {
-        status: statusCode,
-      },
-    )
-  }
-
-  const provider = session.user.authorizedProvider
-  const gitAdapter = getGitAdapter(provider)
-
-  const searchParams = request.nextUrl.searchParams
-  const repo = searchParams.get('repo')!
-  const branch = searchParams.get('branch')!
-  const filePath = searchParams.get('path')!
-  const owner = searchParams.get('owner')!
-  const sha = searchParams.get('sha')!
-
-  if (!filePath || !owner || !sha || !repo || !branch) {
-    const statusCode = 400
-    return Response.json(
-      {
-        code: statusCode,
-        message:
-          'Bad request, missing one of the following parameters: repo, branch, path, owner, repo or sha.',
-      },
-      {
-        status: statusCode,
-      },
-    )
-  }
-
-  const accessToken = session?.user?.accessToken ?? ''
-
   try {
+    const session = await withAuth(request)
+    const { repo, path, owner, sha, branch } = getParams(request, [
+      'repo',
+      'path',
+      'owner',
+      'sha',
+      'branch',
+    ])
+    const gitAdapter = getGitAdapter(session.user.authorizedProvider)
+
     await gitAdapter.createOrUpdateFile({
-      accessToken,
+      accessToken: session.user.accessToken ?? '',
       owner,
       repository: repo,
-      branch,
-      path: filePath,
+      path,
       sha,
-      message: 'ADR Deleted',
+      branch,
+      message: 'ADR Updated',
     })
-  } catch (error: unknown) {
-    const statusCode = 500
-    const message =
-      error instanceof Error ? error.message : 'Something went wrong.'
-    return Response.json(
-      {
-        code: statusCode,
-        message,
-      },
-      {
-        status: statusCode,
-      },
+
+    return Response.json({ code: 200 })
+  } catch (error: any) {
+    console.error(error)
+    return errorResponse(
+      error.status ?? 500,
+      error.message ?? 'Something went wrong.',
     )
   }
-
-  return Response.json({ code: 200 })
 }
