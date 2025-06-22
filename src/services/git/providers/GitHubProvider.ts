@@ -37,8 +37,6 @@ export class GitHubProvider {
       refresh_token?: string
     }
 
-    console.log(newTokens)
-
     return {
       ...token,
       access_token: newTokens.access_token,
@@ -114,6 +112,7 @@ export class GitHubProvider {
     accessToken,
     owner,
     repository,
+    branch,
     path,
     content,
     sha,
@@ -121,9 +120,10 @@ export class GitHubProvider {
     const octokit = this.createClient(accessToken)
 
     await octokit.rest.repos.createOrUpdateFileContents({
-      owner: owner,
+      owner,
       repo: repository,
-      path: path,
+      branch,
+      path,
       message: 'Create or update ADR',
       content: Buffer.from(content).toString('base64'),
       sha: sha,

@@ -27,11 +27,11 @@ export interface GitAdapterDeleteFile extends GitAdapterMethodInterface {
 export interface GitAdapterCreateOrUpdateFile
   extends GitAdapterMethodInterface {
   owner: string
-  repository: string
   path: string
-  sha: string
-  content: string
+  repository: string
   message: string
+  branch: string
+  sha: string
 }
 
 export interface GitAdapter {
@@ -42,6 +42,8 @@ export interface GitAdapter {
   getRepoTree(params: GitAdapterFetchTree): Promise<unknown>
 
   getFile(params: GitAdapterFetchFile): Promise<unknown>
+
+  createOrUpdateFile(params: GitAdapterCreateOrUpdateFile): Promise<unknown>
 
   deleteFile(params: GitAdapterDeleteFile): Promise<unknown>
 }
