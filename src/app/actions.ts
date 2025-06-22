@@ -1,10 +1,11 @@
+import axios from 'axios'
 import type { Repo } from '@/app/types'
 
 export function getRepos(): Promise<{
   code: number
   data: Repo[]
 }> {
-  return fetch('/api/git/repos').then((r) => r.json())
+  return axios.get('/api/git/repos').then((res) => res.data)
 }
 
 export function getRepoTree(
@@ -15,9 +16,11 @@ export function getRepoTree(
   code: number
   data: any
 }> {
-  return fetch(
-    `/api/git/repo?repo=${repo}&branch=${branch}&owner=${owner}`,
-  ).then((r) => r.json())
+  return axios
+    .get('/api/git/repo', {
+      params: { repo, branch, owner },
+    })
+    .then((res) => res.data)
 }
 
 export function getFileContent(
@@ -28,7 +31,9 @@ export function getFileContent(
   code: number
   data: any
 }> {
-  return fetch(`/api/git/file?repo=${repo}&path=${path}&owner=${owner}`).then(
-    (r) => r.json(),
-  )
+  return axios
+    .get('/api/git/file', {
+      params: { repo, path, owner },
+    })
+    .then((res) => res.data)
 }
