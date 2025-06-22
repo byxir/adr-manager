@@ -31,6 +31,9 @@ const gitLabUrl = process.env.GITLAB_URL ?? undefined
 const GITLAB_AUTH_URL = 'https://gitlab.com/oauth/authorize'
 
 export const authConfig = {
+  pages: {
+    signIn: '/login',
+  },
   providers: [
     GitHub({
       ...(gitHubUrl && {
