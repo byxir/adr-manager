@@ -29,10 +29,8 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
         defaultOptions: {
           queries: {
             retry: 1,
-            // With SSR, we usually want to set some default staleTime
-            // above 0 to avoid refetching immediately on the client
             staleTime: 120 * 1000,
-            gcTime: 60 * 1000,
+            gcTime: 120 * 1000,
           },
         },
       }),
