@@ -12,12 +12,12 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import '@mdxeditor/editor/style.css'
-import { getFileContent } from '../../../actions'
+import { getFileContent } from '@/app/actions'
 import { useQuery } from '@tanstack/react-query'
 import { useParams, useSearchParams } from 'next/navigation'
-import { type ApiResponse } from '../../../types'
 import DisplayFileContents from './display-file-contents'
 import { SkeletonEditor } from '@/lib/helpers'
+import type { ApiResponse } from '@/definitions/types'
 
 export default function FilePage() {
   const { data: session } = useSession()
