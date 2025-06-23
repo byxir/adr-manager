@@ -42,6 +42,7 @@ export const authConfig = {
       authorization: {
         params: {
           scope: 'read:user repo',
+          prompt: 'consent',
         },
       },
     }),
@@ -73,12 +74,15 @@ export const authConfig = {
         return {
           ...token,
           access_token: account.access_token,
-          expires_at: account.expires_at - 288e7,
+          expires_at: account.expires_at,
           refresh_token: account.refresh_token,
           authorized_provider: account.provider,
         }
-      } else if (Date.now() < token.expires_at * 1000) {
-        // Subsequent logins, but the `access_token` is still valid
+      } else if (
+        Date.now() < token.expires_at * 1000 ||
+        token.expires_at === undefined
+      ) {
+        // Subsequent logins, but the `access_token` is still valid or if expires_at is undefined, meaning the app does not allow for refresh tokens.
         return token
       } else {
         // Subsequent logins, but the `access_token` has expired, try to refresh it
