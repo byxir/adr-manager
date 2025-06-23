@@ -7,7 +7,7 @@ export function getGitAdapter(provider: string): GitAdapter {
     case 'github':
       return GitHubProvider
     case 'gitlab':
-    //return GitLabProvider
+      return GitLabProvider
     default:
       throw new Error(`Unsupported Git provider: ${provider}`)
   }
