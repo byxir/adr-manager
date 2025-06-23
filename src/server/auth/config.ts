@@ -41,7 +41,7 @@ export const authConfig = {
       }),
       authorization: {
         params: {
-          scope: 'read:user repo',
+          scope: 'read:user user:email read:org repo gist workflow',
           prompt: 'consent',
         },
       },

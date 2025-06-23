@@ -152,7 +152,7 @@ export class GitLabProvider {
 
     return {
       name: path.split('/').pop(),
-      path,
+      path: decodeURIComponent(path),
       sha: file.last_commit_id,
       content: Buffer.from(file.content, 'base64').toString('utf-8'),
     }

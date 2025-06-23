@@ -141,7 +141,7 @@ export class GitHubProvider {
     const file = await octokit.rest.repos.getContent({
       owner,
       repo: repository,
-      path: path,
+      path: decodeURIComponent(path),
     })
 
     const { content, sha, name } = file.data
