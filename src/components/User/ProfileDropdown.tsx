@@ -25,13 +25,13 @@ import { signOut, useSession } from 'next-auth/react'
 
 export default function ProfileDropdown() {
   const { data: session } = useSession()
-  const user = session.user
+  const user = session?.user
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="p-0 h-auto  hover:bg-transparent">
           <Avatar className={'size-12'}>
-            <AvatarImage src={user.image} alt="Profile image" />
+            <AvatarImage src={user?.image ?? undefined} alt="Profile image" />
             <AvatarFallback>
               <User />
             </AvatarFallback>
@@ -41,10 +41,10 @@ export default function ProfileDropdown() {
       <DropdownMenuContent className="max-w-64">
         <DropdownMenuLabel className="flex min-w-0 flex-col">
           <span className="text-foreground truncate text-sm font-medium">
-            {user.name}
+            {user?.name}
           </span>
           <span className="text-muted-foreground truncate text-xs font-normal">
-            {user.email}
+            {user?.email}
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

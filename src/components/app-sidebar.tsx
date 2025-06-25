@@ -112,7 +112,7 @@ function FileTree({
           prevItems: Record<string, Item> | null,
         ) => Record<string, Item> | null),
   ) => void
-  owner: string | null
+  owner: string | undefined | null
   branch: string | null
   adrs: Adr[] | null
 }) {
@@ -454,7 +454,7 @@ export function AppSidebar({
   children: React.ReactNode
   repoTree: RepoTree | null
   activeRepo: string | null
-  owner: string | null
+  owner: string | undefined | null
   adrs: Adr[] | null
   branch: string | null
 }) {

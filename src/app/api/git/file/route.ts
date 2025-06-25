@@ -5,7 +5,11 @@ import { errorResponse, getParams, withAuth } from '@/lib/api-helpers'
 export async function GET(request: NextRequest) {
   try {
     const session = await withAuth()
-    const { repo, path, owner } = getParams(request, ['repo', 'path', 'owner'])
+    const { repo, path, owner } = getParams(request, [
+      'repo',
+      'path',
+      'owner',
+    ] as const)
     const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
     const accessToken = session.user.accessToken
@@ -36,18 +40,20 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await withAuth()
-    const { repo, path, owner, sha } = getParams(request, [
+    const { repo, path, branch, owner, sha } = getParams(request, [
       'repo',
       'path',
+      'branch',
       'owner',
       'sha',
-    ])
+    ] as const)
     const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
     await gitAdapter.deleteFile({
       accessToken: session.user.accessToken ?? '',
       owner,
       repository: repo,
+      branch,
       path,
       sha,
       message: 'ADR Deleted',
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
       'owner',
       'sha',
       'branch',
-    ])
+    ] as const)
     const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
     const content = await request.text()

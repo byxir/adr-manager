@@ -8,7 +8,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Calendar, GitFork, Lock, Star } from 'lucide-react'
 import React from 'react'
-import type { Repo } from '@/app/types'
+import type { Repo } from '@/definitions/types'
 
 export default function RepositoryCard({
   repo,

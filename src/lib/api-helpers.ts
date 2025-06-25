@@ -10,8 +10,14 @@ export async function withAuth() {
   return session
 }
 
-export function getParams(request: NextRequest, required: string[]) {
-  const params = Object.fromEntries(request.nextUrl.searchParams.entries())
+export function getParams<const T extends readonly string[]>(
+  request: NextRequest,
+  required: T,
+): Record<T[number], string> {
+  const params = Object.fromEntries(
+    request.nextUrl.searchParams.entries(),
+  ) as Record<string, string>
+
   const missing = required.filter((key) => !params[key])
   if (missing.length > 0) {
     throw {
@@ -19,5 +25,8 @@ export function getParams(request: NextRequest, required: string[]) {
       message: `Bad request, missing parameters: ${missing.join(', ')}.`,
     }
   }
-  return params
+
+  return Object.fromEntries(
+    required.map((key) => [key, params[key]!]),
+  ) as Record<T[number], string>
 }

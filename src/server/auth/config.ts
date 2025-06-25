@@ -2,6 +2,8 @@ import { type DefaultSession, type NextAuthConfig } from 'next-auth'
 import GitHub from 'next-auth/providers/github'
 import GitLab from 'next-auth/providers/gitlab'
 import { getGitAdapter } from '@/services/git/GitAdapterFactory'
+import type { DefaultJWT } from '@auth/core/jwt'
+import type { JWT } from 'next-auth/jwt'
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -17,6 +19,13 @@ declare module 'next-auth' {
       authorizedProvider: string
       gitUsername: string
     } & DefaultSession['user']
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT extends DefaultJWT {
+    expires_at?: number
+    authorized_provider: string
   }
 }
 
@@ -69,7 +78,7 @@ export const authConfig = {
      */
   ],
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile }): Promise<JWT> {
       if (account) {
         // First-time login, save the `access_token`, its expiry and the `refresh_token`
         return {
@@ -80,8 +89,8 @@ export const authConfig = {
           authorized_provider: account.provider,
         }
       } else if (
-        Date.now() < token.expires_at * 1000 ||
-        token.expires_at === undefined
+        token.expires_at === undefined ||
+        Date.now() < token.expires_at * 1000
       ) {
         // Subsequent logins, but the `access_token` is still valid or if expires_at is undefined, meaning the app does not allow for refresh tokens.
         return token
@@ -92,9 +101,7 @@ export const authConfig = {
         try {
           const provider = getGitAdapter(token.authorized_provider)
 
-          const newToken = provider.refreshAccessToken(token)
-
-          return newToken
+          return provider.refreshAccessToken(token)
         } catch (error) {
           console.error('Error refreshing access_token', error)
           // If we fail to refresh the token, return an error so we can handle it on the page

@@ -6,10 +6,10 @@ import {
   type GitAdapterMethodInterface,
 } from './../GitAdapter'
 import { Octokit } from '@octokit/rest'
-import type { JWT } from '@auth/core/jwt'
+import { type JWT } from 'next-auth/jwt'
 
 export class GitHubProvider {
-  static async refreshAccessToken(token: JWT): Promise<unknown> {
+  static async refreshAccessToken(token: JWT): Promise<JWT> {
     const response = await fetch(
       'https://github.com/login/oauth/access_token',
       {
@@ -99,7 +99,7 @@ export class GitHubProvider {
 
     const response = await octokit.rest.repos.deleteFile({
       owner,
-      repository,
+      repo: repository,
       path,
       message,
       sha,
@@ -144,10 +144,15 @@ export class GitHubProvider {
       path: decodeURIComponent(path),
     })
 
-    const { content, sha, name } = file.data
-    const parsedContent = Buffer.from(content, 'base64').toString('utf-8')
+    if (!Array.isArray(file.data)) {
+      if (file.data.type === 'file') {
+        const { content, sha, name } = file.data
+        const parsedContent =
+          content && Buffer.from(content, 'base64').toString('utf-8')
 
-    return { name, path, sha, content: parsedContent }
+        return { name, path, sha, content: parsedContent }
+      }
+    }
   }
 
   static async getFileContributors({

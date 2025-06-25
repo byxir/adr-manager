@@ -18,7 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import type { Repo } from '@/app/types'
+import type { Repo } from '@/definitions/types'
 import { useRouter } from 'next/navigation'
 
 export function RepoSwitcher({
@@ -28,7 +28,7 @@ export function RepoSwitcher({
 }: {
   repos: Repo[]
   activeRepo: string | null
-  owner: string | null
+  owner: string | undefined | null
 }) {
   const { isMobile } = useSidebar()
   const router = useRouter()

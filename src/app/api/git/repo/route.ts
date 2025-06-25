@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
       'repo',
       'branch',
       'owner',
-    ])
+    ] as const)
     const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
     const repoTree = await gitAdapter.getRepoTree({

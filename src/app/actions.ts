@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Repo } from '@/app/types'
+import type { Repo } from '@/definitions/types'
 
 export function getRepos(): Promise<{
   code: number

@@ -6,10 +6,10 @@ import {
   type GitAdapterMethodInterface,
 } from './../GitAdapter'
 import { Gitlab, type ProjectSchema } from '@gitbeaker/rest'
-import type { JWT } from '@auth/core/jwt'
+import { type JWT } from 'next-auth/jwt'
 
 export class GitLabProvider {
-  static async refreshAccessToken(token: JWT): Promise<unknown> {
+  static async refreshAccessToken(token: JWT): Promise<JWT> {
     const response = await fetch('https://gitlab.com/oauth/token', {
       method: 'POST',
       headers: {
@@ -75,39 +75,9 @@ export class GitLabProvider {
         git_url: project.http_url_to_repo,
         ssh_url: project.ssh_url_to_repo,
         clone_url: project.http_url_to_repo,
-        svn_url: '',
-        homepage: project.homepage,
         stargazers_count: project.star_count,
-        watchers_count: 0,
-        language: project.language,
         has_issues: project.issues_enabled,
-        has_projects: false,
-        has_downloads: false,
-        has_wiki: project.wiki_enabled,
-        has_pages: false,
-        has_discussions: false,
-        forks_count: project.forks_count,
-        mirror_url: null,
-        archived: project.archived,
-        disabled: false,
-        open_issues_count: project.open_issues_count,
-        license: project.license
-          ? {
-              key: project.license.key,
-              name: project.license.name,
-              spdx_id: project.license.spdx_id,
-              url: '',
-              node_id: '',
-            }
-          : undefined,
-        allow_forking: true,
-        is_template: false,
-        web_commit_signoff_required: false,
-        topics: project.topics ?? [],
         visibility: project.visibility,
-        forks: project.forks_count,
-        open_issues: project.open_issues_count,
-        watchers: 0,
         default_branch: project.default_branch,
         permissions: {
           admin: true,
@@ -193,16 +163,21 @@ export class GitLabProvider {
     const client = this.createClient(accessToken)
 
     try {
-      await client.RepositoryFiles.edit(repository, path, branch, {
+      await client.RepositoryFiles.edit(
+        repository,
+        path,
+        branch,
         content,
-        commit_message: 'Update ADR',
-        last_commit_id: sha,
-      })
+        'Update ADR',
+      )
     } catch {
-      await client.RepositoryFiles.create(repository, path, branch, {
+      await client.RepositoryFiles.create(
+        repository,
+        path,
+        branch,
         content,
-        commit_message: 'Create ADR',
-      })
+        'create ADR',
+      )
     }
   }
 
@@ -214,8 +189,11 @@ export class GitLabProvider {
     message,
   }: GitAdapterDeleteFile) {
     const client = this.createClient(accessToken)
-    return await client.RepositoryFiles.remove(repository, path, branch, {
-      commit_message: message,
-    })
+    return await client.RepositoryFiles.remove(
+      repository,
+      path,
+      branch,
+      message,
+    )
   }
 }
