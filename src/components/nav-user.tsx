@@ -9,6 +9,8 @@ import {
   Moon,
   Sparkles,
   Sun,
+  MessageCircleQuestion,
+  Github,
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -88,6 +90,23 @@ export function NavUser({ user }: { user: User | null }) {
                 </div>
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() =>
+                window.open('https://adr.github.io/madr/', '_blank')
+              }
+            >
+              <MessageCircleQuestion />
+              What is MADR?
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                window.open('https://github.com/adr/adr-manager', '_blank')
+              }
+            >
+              <Github />
+              ADR-Manager Repository
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
 
             <DropdownMenuItem

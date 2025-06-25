@@ -24,7 +24,7 @@ export default function Home() {
     )
   }
 
-  if (!session) {
+  if (!session?.user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">

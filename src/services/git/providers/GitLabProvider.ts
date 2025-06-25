@@ -175,7 +175,7 @@ export class GitLabProvider {
           commit.author_email,
           {
             username: commit.author_name,
-            avatar: null,
+            avatar: null, // GitLab does not provide the user's avatar or id for fetching.
           },
         ]),
       ).values(),

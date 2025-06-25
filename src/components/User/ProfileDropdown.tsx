@@ -29,7 +29,7 @@ export default function ProfileDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="p-0 hover:bg-transparent">
+        <Button variant="ghost" className="p-0 h-auto  hover:bg-transparent">
           <Avatar className={'size-12'}>
             <AvatarImage src={user.image} alt="Profile image" />
             <AvatarFallback>
