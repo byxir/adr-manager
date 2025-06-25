@@ -25,7 +25,7 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import { Tree, TreeItem, TreeItemLabel } from '@/components/tree'
-import type { Item, RepoTree } from '@/app/types'
+import type { Item, RepoTree } from '@/definitions/types'
 import { transformAndAppendTreeData } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from './ui/button'
@@ -100,6 +100,7 @@ function FileTree({
   items,
   setItems,
   owner,
+  branch,
   adrs,
 }: {
   activeRepo: string | null
@@ -112,6 +113,7 @@ function FileTree({
         ) => Record<string, Item> | null),
   ) => void
   owner: string | null
+  branch: string | null
   adrs: Adr[] | null
 }) {
   const router = useRouter()
@@ -126,7 +128,9 @@ function FileTree({
 
     if (adr && !adr.hasMatch) {
       // Redirect to ADR page
-      router.push(`/${activeRepo}/adr/${fileName}`)
+      router.push(
+        `/${activeRepo}/adr/${fileName}?owner=${owner}&branch=${branch}`,
+      )
     } else {
       // Navigate to regular file page
       router.push(
@@ -330,6 +334,8 @@ function FileTree({
       repository: activeRepo ?? '',
       hasMatch: false,
       createdAt: new Date(),
+      branch: branch ?? '',
+      owner: owner ?? '',
     }
 
     try {
@@ -443,12 +449,14 @@ export function AppSidebar({
   activeRepo,
   owner,
   adrs,
+  branch,
 }: {
   children: React.ReactNode
   repoTree: RepoTree | null
   activeRepo: string | null
   owner: string | null
   adrs: Adr[] | null
+  branch: string | null
 }) {
   const { data: session } = useSession()
 
@@ -500,6 +508,7 @@ export function AppSidebar({
               setItems={handleSetItems}
               adrs={adrs}
               owner={owner}
+              branch={branch}
             />
           ) : (
             <SkeletonTree />

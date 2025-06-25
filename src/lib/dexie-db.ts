@@ -6,6 +6,8 @@ export interface Adr {
   path: string
   contents: string
   repository: string
+  branch: string
+  owner: string
   hasMatch: boolean
   createdAt: Date
 }
@@ -16,7 +18,7 @@ class AdrDatabase extends Dexie {
   constructor() {
     super('AdrDatabase')
     this.version(4).stores({
-      adrs: '&id, name, path, repository, hasMatch, createdAt, [name+repository]',
+      adrs: '&id, name, path, repository, branch, owner, hasMatch, createdAt, [name+repository]',
     })
     this.adrs = this.table('adrs')
   }

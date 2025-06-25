@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { getRepos, getRepoTree } from '@/app/actions'
 import { getAdrsByRepository } from '@/lib/adr-db-actions'
-import type { ApiResponse, RepoTree } from '@/app/types'
+import type { ApiResponse, RepoTree } from '@/definitions/types'
 import { useSession } from 'next-auth/react'
 
 export function useRepos() {

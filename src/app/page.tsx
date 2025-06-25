@@ -2,20 +2,10 @@
 import React from 'react'
 import '@mdxeditor/editor/style.css'
 import { useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import { getRepos } from './actions'
 import { signOut, useSession } from 'next-auth/react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Star, GitFork, Calendar, Lock } from 'lucide-react'
-import type { Repo } from '@/app/types'
+import type { Repo } from '@/definitions/types'
 import { useRepos } from '@/hooks/use-repo-queries'
 import { Button } from '@/components/ui/button'
 import RepositoryCard from '@/components/Cards/RepositoryCard'
@@ -28,6 +18,7 @@ export default function Home() {
   const { data: reposData, isLoading, error } = useRepos()
 
   const handleRepoClick = (repo: Repo) => {
+    console.log('handleRepoClick: ', repo)
     router.push(
       `/${repo.name}?owner=${repo.owner.login}&branch=${repo.default_branch}`,
     )
