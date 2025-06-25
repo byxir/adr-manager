@@ -171,7 +171,6 @@ export class GitHubProvider {
           {
             username: commit.author?.login,
             avatar: commit.author?.avatar_url,
-            url: commit.author?.html_url,
           },
         ]),
       ).values(),

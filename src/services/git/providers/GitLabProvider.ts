@@ -158,6 +158,30 @@ export class GitLabProvider {
     }
   }
 
+  static async getFileContributors({
+    accessToken,
+    repository,
+    path,
+    owner,
+  }: GitAdapterFetchFile) {
+    const client = this.createClient(accessToken)
+    const commits = await client.Commits.all(`${owner}/${repository}`, {
+      path,
+    })
+
+    return [
+      ...new Map(
+        commits.map((commit) => [
+          commit.author_email,
+          {
+            username: commit.author_name,
+            avatar: null,
+          },
+        ]),
+      ).values(),
+    ]
+  }
+
   static async createOrUpdateFile({
     accessToken,
     repository,
