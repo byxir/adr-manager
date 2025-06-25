@@ -22,6 +22,7 @@ import { useDebounce } from '@/lib/utils'
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
 import DisplayFileContents from './display-file-contents'
+import AdrTemplateSidebar from '@/components/adr-template-sidebar'
 
 export default function AdrPage() {
   const { data: session } = useSession()
@@ -164,41 +165,44 @@ export default function AdrPage() {
   }, [adr.data, adrKey])
 
   return (
-    <SidebarInset>
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-        <div className="flex items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">{repo}</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{adrName}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+    <div className="flex h-screen">
+      <SidebarInset className="flex-1">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="#">{repo}</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{adrName}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          {session?.user &&
+          typeof markdown === 'string' &&
+          currentAdrKey === adrKey ? (
+            <DisplayFileContents
+              key={adrKey}
+              markdown={markdown}
+              ref={editorRef}
+              onEditorReady={handleEditorReady}
+            />
+          ) : (
+            <SkeletonEditor />
+          )}
         </div>
-      </header>
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        {session?.user &&
-        typeof markdown === 'string' &&
-        currentAdrKey === adrKey ? (
-          <DisplayFileContents
-            key={adrKey}
-            markdown={markdown}
-            ref={editorRef}
-            onEditorReady={handleEditorReady}
-          />
-        ) : (
-          <SkeletonEditor />
-        )}
-      </div>
-    </SidebarInset>
+      </SidebarInset>
+      <AdrTemplateSidebar />
+    </div>
   )
 }

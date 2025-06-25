@@ -131,3 +131,24 @@ export interface Item {
   children?: string[]
   fileExtension?: string
 }
+
+export interface AdrTemplateSection {
+  id: string
+  title: string
+  placeholder: string
+  content: string
+  isRequired?: boolean
+}
+
+export interface AdrTemplate {
+  id: string
+  name: string
+  description: string
+  sections: AdrTemplateSection[]
+  generateMarkdown: (sections: AdrTemplateSection[]) => string
+}
+
+export interface TemplateFormData {
+  selectedTemplate: string | null
+  sections: Record<string, string>
+}

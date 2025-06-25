@@ -472,6 +472,8 @@ export function AppSidebar({
           tree: repoTree.tree,
           adrs: adrs ?? [],
           repository: activeRepo,
+          branch: branch ?? '',
+          owner: owner ?? '',
         })
         setItems(transformedItems)
       }
@@ -519,7 +521,7 @@ export function AppSidebar({
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
-      <div className="flex-1 overflow-auto h-screen">{children}</div>
+      <div className="flex-1 overflow-hidden h-screen">{children}</div>
     </div>
   )
 }

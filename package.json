@@ -38,6 +38,8 @@
     "dexie": "^4.0.11",
     "dexie-react-hooks": "^1.1.7",
     "eslint-config-prettier": "^10.1.5",
+    "framer-motion": "^12.19.1",
+    "jotai": "^2.12.5",
     "lucide-react": "^0.517.0",
     "next": "^15.3.3",
     "next-auth": "5.0.0-beta.25",

@@ -1,4 +1,4 @@
-import type { Item, RepoTree } from '@/app/types'
+import type { Item, RepoTree } from '@/definitions/types'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import type { Adr } from './dexie-db'
@@ -18,10 +18,14 @@ export const transformAndAppendTreeData = async ({
   tree,
   adrs,
   repository,
+  branch,
+  owner,
 }: {
   tree: RepoTree['tree'] | undefined
   adrs: Adr[]
   repository: string
+  branch: string
+  owner: string
 }) => {
   if (!tree) return null
 
@@ -127,11 +131,12 @@ export const transformAndAppendTreeData = async ({
       id: uuidv4(),
       name: '0001-adr-1.md',
       path: defaultAdrPath,
-      contents:
-        '# ADR-0001: Initial Architecture Decision Record\n\n## Status\n\nProposed\n\n## Context\n\nThis is the initial ADR for this project.\n\n## Decision\n\nWe will use this format for all future ADRs.\n\n## Consequences\n\n- Positive: Consistent documentation\n- Negative: None identified',
+      contents: '',
       repository,
       hasMatch: false,
       createdAt: new Date(),
+      branch: branch ?? '',
+      owner: owner ?? '',
     })
   } else {
     // Check which ADRs have matching files in the tree

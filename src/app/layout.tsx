@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import '@/styles/globals.css'
 import { SessionProvider } from 'next-auth/react'
 import QueryProvider from '@/components/providers/QueryClientProvider'
+import JotaiProvider from '@/components/providers/JotaiProvider'
 import { ThemeProvider } from 'next-themes'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -42,8 +43,10 @@ export default function RootLayout({
         >
           <SessionProvider>
             <QueryProvider>
-              {children}
-              <Toaster position={'top-right'} richColors />
+              <JotaiProvider>
+                {children}
+                <Toaster position={'top-right'} richColors />
+              </JotaiProvider>
             </QueryProvider>
           </SessionProvider>
         </ThemeProvider>
