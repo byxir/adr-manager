@@ -30,6 +30,7 @@ export interface GitAdapterCreateOrUpdateFile
   path: string
   repository: string
   message: string
+  content: string
   branch: string
   sha: string
 }
@@ -42,6 +43,8 @@ export interface GitAdapter {
   getRepoTree(params: GitAdapterFetchTree): Promise<unknown>
 
   getFile(params: GitAdapterFetchFile): Promise<unknown>
+
+  getFileContributors(params: GitAdapterFetchFile): Promise<unknown>
 
   createOrUpdateFile(params: GitAdapterCreateOrUpdateFile): Promise<unknown>
 

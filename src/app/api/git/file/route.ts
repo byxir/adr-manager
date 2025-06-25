@@ -8,14 +8,22 @@ export async function GET(request: NextRequest) {
     const { repo, path, owner } = getParams(request, ['repo', 'path', 'owner'])
     const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
+    const accessToken = session.user.accessToken
     const file = await gitAdapter.getFile({
-      accessToken: session.user.accessToken ?? '',
+      accessToken,
       owner,
       repository: repo,
       path,
     })
 
-    return Response.json({ code: 200, data: file })
+    const contributors = await gitAdapter.getFileContributors({
+      accessToken,
+      owner,
+      repository: repo,
+      path,
+    })
+
+    return Response.json({ code: 200, data: file, contributors })
   } catch (error: any) {
     console.error(error)
     return errorResponse(
@@ -27,7 +35,7 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await withAuth(request)
+    const session = await withAuth()
     const { repo, path, owner, sha } = getParams(request, [
       'repo',
       'path',
@@ -57,7 +65,7 @@ export async function DELETE(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await withAuth(request)
+    const session = await withAuth()
     const { repo, path, owner, sha, branch } = getParams(request, [
       'repo',
       'path',
@@ -67,11 +75,14 @@ export async function POST(request: NextRequest) {
     ])
     const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
+    const content = await request.text()
+
     await gitAdapter.createOrUpdateFile({
       accessToken: session.user.accessToken ?? '',
       owner,
       repository: repo,
       path,
+      content,
       sha,
       branch,
       message: 'ADR Updated',

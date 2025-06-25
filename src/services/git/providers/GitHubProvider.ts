@@ -149,4 +149,34 @@ export class GitHubProvider {
 
     return { name, path, sha, content: parsedContent }
   }
+
+  static async getFileContributors({
+    accessToken,
+    owner,
+    repository,
+    path,
+  }: GitAdapterFetchFile) {
+    const octokit = this.createClient(accessToken)
+
+    const commits = await octokit.rest.repos.listCommits({
+      owner,
+      repo: repository,
+      path: decodeURIComponent(path),
+    })
+
+    const contributors = [
+      ...new Map(
+        commits.data.map((commit) => [
+          commit.author?.login,
+          {
+            username: commit.author?.login,
+            avatar: commit.author?.avatar_url,
+            url: commit.author?.html_url,
+          },
+        ]),
+      ).values(),
+    ]
+
+    return contributors
+  }
 }
