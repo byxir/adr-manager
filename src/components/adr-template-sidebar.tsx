@@ -33,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import UpdateOrCreateFileButton from '@/components/actions/createOrUpdateFile'
 
 interface ExtendedSection extends AdrTemplateSection {
   items?: string[] // For list sections
@@ -633,9 +634,7 @@ export default function AdrTemplateSidebar() {
 
       {/* Fixed Action Buttons */}
       <div className="p-4 border-t space-y-2 flex-shrink-0 bg-background">
-        <Button onClick={copyToClipboard} className="w-full text-xs h-8">
-          Push ADR
-        </Button>
+        <UpdateOrCreateFileButton />
         <div className="text-xs text-muted-foreground text-center">
           {sections.filter(hasContent).length} / {sections.length} completed
         </div>

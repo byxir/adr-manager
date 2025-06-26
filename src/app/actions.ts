@@ -8,7 +8,7 @@ export function getRepos(): Promise<{
   return axios.get('/api/git/repos').then((res) => res.data)
 }
 
-export function updateOrCreateFile({
+export function createOrUpdateFile({
   repo,
   path,
   owner,
