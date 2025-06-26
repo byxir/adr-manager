@@ -8,7 +8,7 @@ import {
 import { Gitlab, type ProjectSchema } from '@gitbeaker/rest'
 import { type JWT } from 'next-auth/jwt'
 
-const baseUrl = process.env.GITLAB_HOST_URL ?? 'http://gitlab.com'
+const baseUrl = process.env.GITLAB_HOST_URL ?? 'https://gitlab.com'
 
 export class GitLabProvider {
   static async refreshAccessToken(token: JWT): Promise<JWT> {
@@ -64,7 +64,7 @@ export class GitLabProvider {
           login: project.namespace?.full_path,
           id: project.namespace?.id,
           node_id: project.namespace?.id?.toString(),
-          avatar_url: project.avatar_url,
+          avatar_url: project.avatar_url ?? project.namespace.avatar_url,
           url: project.web_url,
           html_url: project.web_url,
           type: 'User',
