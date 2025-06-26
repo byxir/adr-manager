@@ -15,27 +15,16 @@ You can find the tool at https://adr.github.io/adr-manager.
 
 ## Supported Browsers
 
-Currently, the tool has been successfully tested in Chrome and Firefox.
+Currently, the tool has been successfully tested in Chrome, Safari and Firefox.
 
 ### Usage
 
-1. After opening the tool, connect to your selected Git provider. The tool needs your permission to access your GitHub repositories and email address.
+1. After opening the tool, connect to your selected Git provider. The tool needs your permission to access your Git repositories and email address.
 2. Select any given Git repository. If your account does not have access to a repository with MADRs, you can simply fork one, e.g., <https://github.com/JabRef/jabref> or <https://github.com/adr/adr-log>.
 3. Now, you can edit any files in `docs/adr` of the GitHub repository.
    Edit existing ADRs or create new ones.
    One of the most important features is the MADR Editor that allows you to quickly draft a MADR while ensuring a consistent format.
 4. Do not forget to push your changes to Git, once you are done with editing the files.
-
-Some technical notes:
-
-- The `authID` (which enables the connection to GitHub) and changes to ADRs are stored in the local storage.
-  That way they are not lost when you reload the page or restart the browser.
-  However, changes will be lost when you either
-    - Clear local storage or
-    - Press the `Disconnect` button.
-- The general idea is that you directly push your changes to GitHub after editing.
-- During development, we may remove permissions for the OAuth App from time to time.
-  Do not be surprised, if you have to give permissions repeatedly.
 
 ## Development
 
@@ -50,27 +39,28 @@ To run the project locally, follow these steps:
 
 1. Clone this repository.
 2. Install dependencies with `pnpm install`.
-3. Compile and start the application with `pnpm start`.
+3. Compile and start the application with `pnpm build` and then `pnpm start`.
 
 Note that, even when you run it locally, you need to connect to GitHub to use any functionality.
 
 ### Environment Variables
-Please copy the `.env.example` file and create a `.env` file filling in the required fields. 
+Please copy the `.env.example` file and create a `.env` file filling in the required fields.
 ```dotenv
+AUTH_URL="https://example.com" # Your site's domain, necessary for auth to work
 AUTH_SECRET="" # This is the secret used for signing jwt tokens, do not share this secret, and make it secure. 
 
 # GitHub Integration
 NEXT_PUBLIC_GITHUB_LOGIN_ENABLED="true" # Set this to false to disable logins of this provider
 AUTH_GITHUB_ID=""
 AUTH_GITHUB_SECRET=""
-GITHUB_ENTERPRISE_URL="" # Set this to use github enterprise, this will override GitHab's default url.
+GITHUB_HOST_URL="" # Set this to use github enterprise, this will override GitHab's default url.
 
 
 # GitLab Integration
 NEXT_PUBLIC_GITLAB_LOGIN_ENABLED="true" # Set this to false to disable logins of this provider
 AUTH_GITLAB_ID=""
 AUTH_GITLAB_SECRET=""
-GITLAB_URL="" # Set this to use your own GitLab instance, this will override GitLab's default url.
+GITLAB_HOST_URL="" # Set this to use your own GitLab instance, this will override GitLab's default url.
 ```
 
 ### Using End-2-End Tests Locally
@@ -123,7 +113,7 @@ pnpm run format:write
 
 ### Authentication Setup
 
-The project uses [OAuth] alongside Auth.js for authenticating with Git providers.
+The project uses [OAuth] alongside [Auth.js](https://authjs.dev/) for authenticating with Git providers.
 If you do not want to use this instance, you can easily set up your own by following these steps:
 
 
@@ -143,11 +133,12 @@ If you do not want to use this instance, you can easily set up your own by follo
 
 4. Add these to your `.env` file:
     ```dotenv
+    NEXT_PUBLIC_GITHUB_LOGIN_ENABLED="true"
     AUTH_GITHUB_ID=your_client_id
     AUTH_GITHUB_SECRET=your_client_secret
-    NEXT_PUBLIC_GITHUB_ENTERPRISE_URL=https://github.com  # (optional, only if using GitHub Enterprise)
+    GITHUB_HOST_URL=https://github.com  # (optional, only if using GitHub Enterprise)
     ```
-       
+
 
 5. Make sure the callback URL matches exactly in both GitHub and your Auth.js configuration:
 
@@ -170,9 +161,10 @@ If you do not want to use this instance, you can easily set up your own by follo
 
 4. Add these to your `.env` file:
     ```dotenv
-     AUTH_GITLAB_ID=your_application_id
-     AUTH_GITLAB_SECRET=your_application_secret
-     NEXT_PUBLIC_GITLAB_URL=https://gitlab.com
+    NEXT_PUBLIC_GITLAB_LOGIN_ENABLED="true"
+    AUTH_GITLAB_ID=your_application_id
+    AUTH_GITLAB_SECRET=your_application_secret
+    GITLAB_HOST_URL=https://gitlab.com
     ```
 
    > If using a **self-managed GitLab instance**, replace `https://gitlab.com` with your instance URL.

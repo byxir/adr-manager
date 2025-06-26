@@ -8,6 +8,8 @@ import {
 import { Gitlab, type ProjectSchema } from '@gitbeaker/rest'
 import { type JWT } from 'next-auth/jwt'
 
+const baseUrl = process.env.GITLAB_HOST_URL ?? 'http://gitlab.com'
+
 export class GitLabProvider {
   static async refreshAccessToken(token: JWT): Promise<JWT> {
     const response = await fetch('https://gitlab.com/oauth/token', {
@@ -42,7 +44,7 @@ export class GitLabProvider {
   }
 
   private static createClient(token: string) {
-    return new Gitlab({ oauthToken: token })
+    return new Gitlab({ host: baseUrl, oauthToken: token })
   }
 
   static async getUserRepos({ accessToken }: GitAdapterMethodInterface) {

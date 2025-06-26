@@ -8,6 +8,11 @@ import {
 import { Octokit } from '@octokit/rest'
 import { type JWT } from 'next-auth/jwt'
 
+const hostUrl = process.env.GITHUB_HOST_URL
+const baseUrl = hostUrl
+  ? `${hostUrl.replace(/\/$/, '')}/api/v3`
+  : 'https://api.github.com'
+
 export class GitHubProvider {
   static async refreshAccessToken(token: JWT): Promise<JWT> {
     const response = await fetch(
@@ -49,12 +54,6 @@ export class GitHubProvider {
   }
 
   private static createClient(token: string) {
-    const enterpriseBase = process.env.NEXT_PUBLIC_GITHUB_ENTERPRISE_URL
-
-    const baseUrl = enterpriseBase
-      ? `${enterpriseBase.replace(/\/$/, '')}/api/v3`
-      : 'https://api.github.com'
-
     return new Octokit({
       auth: token,
       baseUrl,
