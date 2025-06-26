@@ -1,6 +1,7 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { signOut } from 'next-auth/react'
+import { CircleAlert } from 'lucide-react'
 
 export default function ErrorOverlay({
   heading,
@@ -10,14 +11,15 @@ export default function ErrorOverlay({
   description: string
 }) {
   return (
-    <div>
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">{heading}</h1>
-          <p className="text-muted-foreground">{description}</p>
-        </div>
+    <div className={'mt-30 flex flex-col items-center gap-4'}>
+      <CircleAlert />
+      <div className="flex flex-col text-center gap-2">
+        <h1 className="text-2xl font-bold">{heading}</h1>
+        <p className="text-muted-foreground">{description}</p>
       </div>
-      <Button onClick={() => signOut()}>Sign Out</Button>
+      <Button className={'w-[300px]'} onClick={() => signOut()}>
+        Sign Out
+      </Button>
     </div>
   )
 }

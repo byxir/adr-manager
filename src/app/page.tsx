@@ -63,12 +63,12 @@ export default function Home() {
       </div>
 
       {!isLoading && reposData && repositories.length === 0 ? (
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold mb-2">No repositories found</h2>
-          <p className="text-muted-foreground">
-            Make sure you have access to repositories in your connected account
-          </p>
-        </div>
+        <ErrorOverlay
+          heading={'No repositories found'}
+          description={
+            'Make sure you have access to repositories in your connected account'
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {repositories.map((repo: Repo) => (
