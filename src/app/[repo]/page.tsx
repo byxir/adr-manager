@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
-import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { useRepoTree, useRepoAdrs } from '@/hooks/use-repo-queries'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useRepoAdrs, useRepoTree } from '@/hooks/use-repo-queries'
 import {
   Card,
   CardContent,
@@ -11,9 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { getAdrByNameAndRepository } from '@/lib/adr-db-actions'
-import { RiFileTextLine, RiFolderLine } from '@remixicon/react'
-import { getFileExtension } from '@/lib/utils'
-import { getFileIcon } from '@/lib/helpers'
+import { RiFileTextLine } from '@remixicon/react'
 
 const RepoPage = () => {
   const { repo } = useParams()

@@ -1,8 +1,8 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  RiFileLine,
   RiBracesLine,
   RiCodeSSlashLine,
+  RiFileLine,
   RiFileTextLine,
   RiImageLine,
   RiReactjsLine,

@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 'use client'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { useParams, useSearchParams } from 'next/navigation'
-import { useRepoTree, useRepoAdrs, useRepos } from '@/hooks/use-repo-queries'
+import { useRepoAdrs, useRepos, useRepoTree } from '@/hooks/use-repo-queries'
 
 export default function RepoLayout({
   children,

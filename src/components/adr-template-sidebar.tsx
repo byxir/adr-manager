@@ -1,28 +1,26 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import React, { useCallback, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ADR_TEMPLATES } from '@/lib/adr-templates'
-import type { AdrTemplateSection, AdrTemplate } from '@/definitions/types'
+import type { AdrTemplate, AdrTemplateSection } from '@/definitions/types'
 import {
-  Plus,
-  Minus,
-  FileText,
-  Lightbulb,
   CheckCircle,
   ChevronDown,
   ChevronRight,
-  Users,
   Clock,
-  User,
-  X,
+  FileText,
+  Lightbulb,
+  Minus,
+  Plus,
   Tag,
+  Users,
+  X,
 } from 'lucide-react'
 import {
   Collapsible,
@@ -44,7 +42,7 @@ type AdrStatus = 'TO DO' | 'IN PROGRESS' | 'DONE' | 'BACKLOG'
 
 export default function AdrTemplateSidebar() {
   const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate>(
-    ADR_TEMPLATES[0]!,
+    ADR_TEMPLATES[0],
   )
   const [sections, setSections] = useState<ExtendedSection[]>(
     ADR_TEMPLATES[0]!.sections.map((section) => {

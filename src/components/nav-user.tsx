@@ -1,16 +1,12 @@
 'use client'
 
 import {
-  BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Moon,
-  Sparkles,
-  Sun,
-  MessageCircleQuestion,
   Github,
+  LogOut,
+  MessageCircleQuestion,
+  Moon,
+  Sun,
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -18,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -31,7 +26,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { useTheme } from 'next-themes'
-import { signIn, signOut } from 'next-auth/react'
+import { signOut } from 'next-auth/react'
 import type { User } from 'next-auth'
 import { useRouter } from 'next/navigation'
 

@@ -2,12 +2,9 @@
 import {
   BoltIcon,
   BookOpenIcon,
-  ChevronDownIcon,
   Layers2Icon,
   LogOutIcon,
-  PinIcon,
   User,
-  UserPenIcon,
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'

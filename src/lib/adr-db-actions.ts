@@ -1,5 +1,5 @@
-import { adrDB } from './dexie-db'
 import type { Adr } from './dexie-db'
+import { adrDB } from './dexie-db'
 
 export async function getAllAdrs(): Promise<Adr[]> {
   return adrDB.adrs.toArray()

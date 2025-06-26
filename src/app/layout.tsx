@@ -6,8 +6,6 @@ import { SessionProvider } from 'next-auth/react'
 import QueryProvider from '@/components/providers/QueryClientProvider'
 import JotaiProvider from '@/components/providers/JotaiProvider'
 import { ThemeProvider } from 'next-themes'
-import { SidebarProvider } from '@/components/ui/sidebar'
-import { AppSidebar } from '@/components/app-sidebar'
 import { Toaster } from 'sonner'
 
 const geistSans = Geist({

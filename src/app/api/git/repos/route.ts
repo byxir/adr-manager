@@ -1,5 +1,6 @@
 import { getGitAdapter } from '@/services/git/GitAdapterFactory'
 import { errorResponse, withAuth } from '@/lib/api-helpers'
+
 export async function GET() {
   try {
     const session = await withAuth()

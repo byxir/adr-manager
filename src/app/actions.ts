@@ -8,6 +8,27 @@ export function getRepos(): Promise<{
   return axios.get('/api/git/repos').then((res) => res.data)
 }
 
+export function updateOrCreateFile({
+  repo,
+  path,
+  owner,
+  sha,
+  branch,
+  content,
+}: {
+  repo: string
+  path: string
+  owner: string
+  sha: string
+  branch: string
+  content: string
+}): Promise<{ code: number }> {
+  return axios.post('/api/git/file', {
+    params: { repo, path, owner, sha, branch },
+    body: content,
+  })
+}
+
 export function getRepoTree(
   repo: string,
   branch: string,
