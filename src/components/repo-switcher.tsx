@@ -73,7 +73,7 @@ export function RepoSwitcher({
             </DropdownMenuLabel>
             {repos.map((repo, index) => (
               <DropdownMenuItem
-                key={repo.name}
+                key={repo.id}
                 onClick={() => handleSwitchRepo(repo)}
                 className="gap-2 p-2"
               >
