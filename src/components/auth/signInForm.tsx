@@ -12,7 +12,7 @@ import { Github, Gitlab } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 import SignInButton from '@/components/auth/signInButton'
 
-export function LoginForm({
+export function SignInForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {

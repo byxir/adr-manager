@@ -1,7 +1,7 @@
 'use client'
 import { GitMerge } from 'lucide-react'
 
-import { LoginForm } from '@/components/auth/signInForm'
+import { SignInForm } from '@/components/auth/signInForm'
 import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -28,7 +28,7 @@ export default function LoginPage() {
           </div>
           ADR Manager
         </a>
-        <LoginForm />
+        <SignInForm />
       </div>
     </div>
   )

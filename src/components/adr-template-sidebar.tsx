@@ -33,7 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import UpdateOrCreateFileButton from '@/components/actions/createOrUpdateFile'
+import UpdateOrCreateFileButton from '@/components/actions/CreateOrUpdateFile'
 
 interface ExtendedSection extends AdrTemplateSection {
   items?: string[] // For list sections
