@@ -13,23 +13,33 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import '@mdxeditor/editor/style.css'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import {
   getAdrByNameAndRepository,
   updateAdrContents,
+  updateAdrTemplate,
+  deleteAdr,
 } from '@/lib/adr-db-actions'
 import { useDebounce } from '@/lib/utils'
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
 import DisplayFileContents from './display-file-contents'
 import AdrTemplateSidebar from '@/components/adr-template-sidebar'
+import type { AdrTemplate } from '@/definitions/types'
+import { getTemplateById } from '@/lib/adr-templates'
+import { useRepoAdrs } from '@/hooks/use-repo-queries'
 
 export default function AdrPage() {
   const { data: session } = useSession()
   const { repo, adrName }: { repo: string; adrName: string } = useParams()
+  const router = useRouter()
   const queryClient = useQueryClient()
   const [markdown, setMarkdown] = useState<string>('')
   const [currentAdrKey, setCurrentAdrKey] = useState<string>('')
+  const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
+    null,
+  )
+  const [isNewAdr, setIsNewAdr] = useState(false)
   const editorRef = useRef<MDXEditorMethods>(null)
   const editorElementRef = useRef<HTMLElement | null>(null)
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -39,21 +49,23 @@ export default function AdrPage() {
 
   const adr = useQuery({
     queryKey: ['adr', repo, adrName],
-    queryFn: () => getAdrByNameAndRepository(adrName, repo),
+    queryFn: async () => {
+      const res = await getAdrByNameAndRepository(adrName, repo)
+      return res ?? null
+    },
   })
 
-  // Create a unique key for the current ADR to force re-render
-  const adrKey = `${repo}-${adrName}`
+  const adrs = useRepoAdrs(repo)
 
-  console.log('adrKey', adrKey)
+  const owner = adrs?.find((adr) => adr.name === adrName)?.owner
+  const branch = adrs?.find((adr) => adr.name === adrName)?.branch
+
+  const adrKey = `${repo}-${adrName}`
 
   useEffect(() => {
     if (debouncedAdrContent) {
-      console.log('debouncedAdrContent', debouncedAdrContent)
-      // Save to database and invalidate cache
       void updateAdrContents(adrName, repo, debouncedAdrContent)
         .then(() => {
-          // Invalidate the query to refetch fresh data
           void queryClient.invalidateQueries({
             queryKey: ['adr', repo, adrName],
           })
@@ -64,7 +76,6 @@ export default function AdrPage() {
     }
   }, [debouncedAdrContent, currentAdrKey, adrKey, adrName, repo, queryClient])
 
-  // Function to get content from editor
   const getEditorContent = useCallback(() => {
     if (editorRef.current) {
       const content = editorRef.current.getMarkdown()
@@ -74,20 +85,16 @@ export default function AdrPage() {
     return null
   }, [])
 
-  // Handle user activity - reset the inactivity timer
   const handleUserActivity = useCallback(() => {
-    // Clear existing timeout
     if (inactivityTimeoutRef.current) {
       clearTimeout(inactivityTimeoutRef.current)
     }
 
-    // Set new timeout to get content after 500ms of inactivity
     inactivityTimeoutRef.current = setTimeout(() => {
       getEditorContent()
     }, 200)
   }, [getEditorContent])
 
-  // Clean up event listeners
   const cleanupEventListeners = useCallback(() => {
     if (eventListenersRef.current) {
       eventListenersRef.current()
@@ -99,25 +106,18 @@ export default function AdrPage() {
     }
   }, [])
 
-  // Set up event listeners when editor becomes ready
   const handleEditorReady = useCallback(
     (element: HTMLElement) => {
-      console.log('Editor ready callback called with:', element)
       editorElementRef.current = element
 
-      // Set up listeners if all conditions are met
       if (
         adr.data &&
         session?.user &&
         typeof markdown === 'string' &&
         currentAdrKey === adrKey
       ) {
-        console.log('Setting up listeners on editor element:', element)
-
-        // Clean up any existing listeners first
         cleanupEventListeners()
 
-        // Listen for various user input events
         const events = ['input', 'keydown', 'keyup', 'paste', 'cut', 'drop']
 
         events.forEach((event) => {
@@ -126,7 +126,6 @@ export default function AdrPage() {
           })
         })
 
-        // Store cleanup function
         eventListenersRef.current = () => {
           events.forEach((event) => {
             element.removeEventListener(event, handleUserActivity)
@@ -148,6 +147,61 @@ export default function AdrPage() {
     ],
   )
 
+  const handleTemplateSelected = useCallback(
+    (template: AdrTemplate) => {
+      setSelectedTemplate(template)
+      setIsNewAdr(false)
+
+      const initialMarkdown = template.generateMarkdown(template.sections)
+      setMarkdown(initialMarkdown)
+
+      void updateAdrContents(adrName, repo, initialMarkdown)
+      void updateAdrTemplate(adrName, repo, template.id)
+    },
+    [adrName, repo],
+  )
+
+  const handleTemplateChanged = useCallback(
+    (template: AdrTemplate) => {
+      setSelectedTemplate(template)
+
+      const newMarkdown = template.generateMarkdown(template.sections)
+      setMarkdown(newMarkdown)
+
+      void updateAdrContents(adrName, repo, newMarkdown)
+      void updateAdrTemplate(adrName, repo, template.id)
+    },
+    [adrName, repo],
+  )
+
+  const handleCancelAdr = useCallback(async () => {
+    if (adr.data?.id) {
+      try {
+        await deleteAdr(adr.data.id)
+
+        await queryClient.invalidateQueries({
+          predicate: (query) => {
+            const queryKey = query.queryKey
+            return (
+              queryKey.includes('adr') ||
+              queryKey.includes('ADR') ||
+              (Array.isArray(queryKey) &&
+                queryKey.some(
+                  (key) =>
+                    typeof key === 'string' &&
+                    (key.includes('adr') || key === repo),
+                ))
+            )
+          },
+        })
+
+        router.push(`/${repo}?owner=${owner}&branch=${branch}`)
+      } catch (error) {
+        console.error('Failed to cancel ADR:', error)
+      }
+    }
+  }, [adr.data?.id, queryClient, router, repo])
+
   useEffect(() => {
     cleanupEventListeners()
     setMarkdown('')
@@ -161,6 +215,26 @@ export default function AdrPage() {
     if (adr.data) {
       setMarkdown(adr.data.contents ?? '')
       setCurrentAdrKey(adrKey)
+
+      let templateLoaded = false
+      if (adr.data.templateId) {
+        const template = getTemplateById(adr.data.templateId)
+        if (template) {
+          setSelectedTemplate(template)
+          templateLoaded = true
+          setIsNewAdr(false)
+        }
+      }
+
+      if (
+        !templateLoaded &&
+        (!adr.data.contents || adr.data.contents.trim() === '')
+      ) {
+        setIsNewAdr(true)
+        setSelectedTemplate(null)
+      } else if (!templateLoaded) {
+        setIsNewAdr(false)
+      }
     }
   }, [adr.data, adrKey])
 
@@ -190,7 +264,8 @@ export default function AdrPage() {
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           {session?.user &&
           typeof markdown === 'string' &&
-          currentAdrKey === adrKey ? (
+          currentAdrKey === adrKey &&
+          !isNewAdr ? (
             <DisplayFileContents
               key={adrKey}
               markdown={markdown}
@@ -202,7 +277,13 @@ export default function AdrPage() {
           )}
         </div>
       </SidebarInset>
-      <AdrTemplateSidebar />
+      <AdrTemplateSidebar
+        initialTemplate={selectedTemplate ?? undefined}
+        showInitialDialog={isNewAdr}
+        onTemplateSelected={handleTemplateSelected}
+        onTemplateChanged={handleTemplateChanged}
+        onCancelAdr={handleCancelAdr}
+      />
     </div>
   )
 }

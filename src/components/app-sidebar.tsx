@@ -42,21 +42,17 @@ function SkeletonTree() {
   return (
     <div className="flex h-full flex-col gap-2 *:first:grow">
       <div className="space-y-1">
-        {/* Root folder */}
         <div className="flex h-7 items-center gap-2 px-2">
           <Skeleton className="size-6 rounded-sm" />
           <Skeleton className="h-6 w-48 rounded-sm" />
         </div>
 
-        {/* First level items */}
         <div className="space-y-1 pl-6">
-          {/* Folder */}
           <div className="flex h-7 items-center gap-2 px-2">
             <Skeleton className="size-6 rounded-sm" />
             <Skeleton className="h-6 w-64 rounded-sm" />
           </div>
 
-          {/* Files */}
           <div className="space-y-1 pl-6">
             <div className="flex h-7 items-center gap-2 px-2">
               <Skeleton className="size-6 rounded-sm" />
@@ -68,13 +64,11 @@ function SkeletonTree() {
             </div>
           </div>
 
-          {/* Another folder */}
           <div className="flex h-7 items-center gap-2 px-2">
             <Skeleton className="size-6 rounded-sm" />
             <Skeleton className="h-6 w-48 rounded-sm" />
           </div>
 
-          {/* More files */}
           <div className="space-y-1 pl-6">
             <div className="flex h-7 items-center gap-2 px-2">
               <Skeleton className="size-6 rounded-sm" />
@@ -119,27 +113,22 @@ function FileTree({
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  // Function to handle file clicks and check for ADRs
   const handleFileClick = async (filePath: string, fileName: string) => {
     if (!activeRepo) return
 
-    // Check if this file is an ADR in the database
     const adr = await getAdrByNameAndRepository(fileName, activeRepo)
 
     if (adr && !adr.hasMatch) {
-      // Redirect to ADR page
       router.push(
         `/${activeRepo}/adr/${fileName}?owner=${owner}&branch=${branch}`,
       )
     } else {
-      // Navigate to regular file page
       router.push(
         `/${activeRepo}/file/${filePath.replaceAll('/', '~')}?owner=${owner}`,
       )
     }
   }
 
-  // Find any adrs folder to expand it
   const adrsFolderId = items
     ? Object.keys(items).find(
         (key) =>
@@ -166,29 +155,24 @@ function FileTree({
         const isAdrsFolder =
           dropParentId === 'adrs' || prevItems[dropParentId]?.name === 'adrs'
 
-        // Sort the children with "adrs" folder first, then folders, then files
         const sortedChildren = [...newChildrenIds].sort((a, b) => {
           const itemA = prevItems[a]
           const itemB = prevItems[b]
 
           if (!itemA || !itemB || newChildrenIds.length === 0) return 0
 
-          // First, put "adrs" folder at the top (only for root level)
           if (itemA?.name === 'adrs') return -1
           if (itemB?.name === 'adrs') return 1
 
-          // Special sorting for ADR files
           if (isAdrsFolder && adrs) {
             const isAFile = (itemA?.children?.length ?? 0) === 0
             const isBFile = (itemB?.children?.length ?? 0) === 0
 
             if (isAFile && isBFile) {
-              // Both are files in adrs folder, sort by createdAt
               const adrA = adrs.find((adr) => adr.name === itemA?.name)
               const adrB = adrs.find((adr) => adr.name === itemB?.name)
 
               if (adrA && adrB) {
-                // Sort by createdAt (oldest first)
                 return (
                   new Date(adrA.createdAt).getTime() -
                   new Date(adrB.createdAt).getTime()
@@ -197,14 +181,12 @@ function FileTree({
             }
           }
 
-          // Then sort folders before files
           const isAFolder = (itemA?.children?.length ?? 0) > 0
           const isBFolder = (itemB?.children?.length ?? 0) > 0
 
           if (isAFolder && !isBFolder) return -1
           if (!isAFolder && isBFolder) return 1
 
-          // Then sort alphabetically by name
           return (itemA?.name ?? '').localeCompare(itemB?.name ?? '')
         })
 
@@ -248,31 +230,26 @@ function FileTree({
                 ),
               ]
             : []
-          // Sort root children with "adrs" folder first
           return rootChildren.sort((a, b) => {
             const itemA = items?.[a]
             const itemB = items?.[b]
 
             if (!itemA || !itemB) return 0
 
-            // First, put "adrs" folder at the top
             if (itemA?.name === 'adrs') return -1
             if (itemB?.name === 'adrs') return 1
 
-            // Then sort folders before files
             const isAFolder = (itemA?.children?.length ?? 0) > 0
             const isBFolder = (itemB?.children?.length ?? 0) > 0
 
             if (isAFolder && !isBFolder) return -1
             if (!isAFolder && isBFolder) return 1
 
-            // Then sort alphabetically by name
             return (itemA?.name ?? '').localeCompare(itemB?.name ?? '')
           })
         }
         const children = items?.[itemId]?.children ?? []
 
-        // Sort children - special handling for adrs folder
         const isAdrsFolder =
           itemId === 'adrs' || items?.[itemId]?.name === 'adrs'
 
@@ -287,12 +264,10 @@ function FileTree({
             const isBFile = (itemB?.children?.length ?? 0) === 0
 
             if (isAFile && isBFile) {
-              // Both are files in adrs folder, sort by createdAt
               const adrA = adrs.find((adr) => adr.name === itemA?.name)
               const adrB = adrs.find((adr) => adr.name === itemB?.name)
 
               if (adrA && adrB) {
-                // Sort by createdAt (oldest first)
                 return (
                   new Date(adrA.createdAt).getTime() -
                   new Date(adrB.createdAt).getTime()
@@ -300,7 +275,6 @@ function FileTree({
               }
             }
 
-            // Default sorting for non-files or if ADR not found
             const isAFolder = (itemA?.children?.length ?? 0) > 0
             const isBFolder = (itemB?.children?.length ?? 0) > 0
 
@@ -323,6 +297,19 @@ function FileTree({
     ],
   })
 
+  useEffect(() => {
+    if (items) {
+      const adrsItem = tree.getItems().find((item) => item.getId() === 'adrs')
+      if (adrsItem) {
+        adrsItem.collapse()
+
+        setTimeout(() => {
+          adrsItem.expand()
+        }, 0)
+      }
+    }
+  }, [items])
+
   const addNewAdr = async () => {
     const newAdrName = `000${(adrs?.length ?? 0) + 1}-adr-${(adrs?.length ?? 0) + 1}.md`
 
@@ -336,27 +323,17 @@ function FileTree({
       createdAt: new Date(),
       branch: branch ?? '',
       owner: owner ?? '',
+      templateId: undefined,
     }
 
     try {
-      console.log(
-        'Creating new ADR:',
-        newAdrName,
-        'for repository:',
-        activeRepo,
-      )
-      console.log('Current ADRs count:', adrs?.length ?? 0)
-
       await createAdr(preparedAdr)
 
-      // Give a small delay to ensure the database operation is fully committed
       await new Promise((resolve) => setTimeout(resolve, 100))
 
-      // Invalidate any React Query caches that might be related to ADRs
       await queryClient.invalidateQueries({
         predicate: (query) => {
           const queryKey = query.queryKey
-          // Invalidate ADR-related queries
           return (
             queryKey.includes('adr') ||
             queryKey.includes('ADR') ||
@@ -370,15 +347,9 @@ function FileTree({
         },
       })
 
-      const adrsItem = tree.getItems().find((item) => item.getId() === 'adrs')
-      if (!adrsItem) return
-
-      adrsItem.collapse()
-      setTimeout(() => {
-        adrsItem.expand()
-      }, 0)
-
-      console.log('ADR created and queries invalidated, should update soon')
+      router.push(
+        `/${activeRepo}/adr/${newAdrName}?owner=${owner}&branch=${branch}`,
+      )
     } catch (error) {
       console.error('Error creating ADR:', error)
     }
@@ -464,7 +435,6 @@ export function AppSidebar({
 
   const { data: reposData, isLoading, error } = useRepos()
 
-  // Effect to handle async tree transformation
   useEffect(() => {
     const transformTree = async () => {
       if (repoTree?.tree && adrs && activeRepo) {
@@ -481,6 +451,8 @@ export function AppSidebar({
 
     void transformTree()
   }, [repoTree?.tree, adrs])
+
+  console.log('items', items)
 
   const handleSetItems = (
     items:

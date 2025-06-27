@@ -137,6 +137,7 @@ export const transformAndAppendTreeData = async ({
       createdAt: new Date(),
       branch: branch ?? '',
       owner: owner ?? '',
+      templateId: undefined, // Will be set when user selects template
     })
   } else {
     // Check which ADRs have matching files in the tree

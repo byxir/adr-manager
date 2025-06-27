@@ -6,7 +6,7 @@ export const errorResponse = (code: number, message: string) =>
 
 export async function withAuth() {
   const session = await auth()
-  if (!session) throw { status: 401, message: 'Unauthorized, please sign in.' }
+  if (!session) throw new Error('Unauthorized, please sign in.')
   return session
 }
 
@@ -20,10 +20,7 @@ export function getParams<const T extends readonly string[]>(
 
   const missing = required.filter((key) => !params[key])
   if (missing.length > 0) {
-    throw {
-      status: 400,
-      message: `Bad request, missing parameters: ${missing.join(', ')}.`,
-    }
+    throw new Error(`Bad request, missing parameters: ${missing.join(', ')}.`)
   }
 
   return Object.fromEntries(

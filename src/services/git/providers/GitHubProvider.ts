@@ -47,9 +47,7 @@ export class GitHubProvider {
       access_token: newTokens.access_token,
       expires_at: Math.floor(Date.now() / 1000 + newTokens.expires_in),
       // Some providers only issue refresh tokens once, so preserve if we did not get a new one
-      refresh_token: newTokens.refresh_token
-        ? newTokens.refresh_token
-        : token.refresh_token,
+      refresh_token: newTokens.refresh_token ?? token.refresh_token,
     }
   }
 

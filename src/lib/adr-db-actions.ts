@@ -74,3 +74,14 @@ export async function updateAdrContents(
     .equals([name, repository])
     .modify({ contents })
 }
+
+export async function updateAdrTemplate(
+  name: string,
+  repository: string,
+  templateId: string,
+) {
+  await adrDB.adrs
+    .where(['name', 'repository'])
+    .equals([name, repository])
+    .modify({ templateId })
+}
