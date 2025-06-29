@@ -25,8 +25,8 @@ import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
 import DisplayFileContents from './display-file-contents'
 import AdrTemplateSidebar from '@/components/adr-template-sidebar'
-import type { AdrTemplate } from '@/definitions/types'
-import { getTemplateById } from '@/lib/adr-templates'
+import type { AdrTemplate, ExtendedSection } from '@/definitions/types'
+import { getTemplateById, TEMPLATE_PARSERS } from '@/lib/adr-templates'
 import { useRepoAdrs } from '@/hooks/use-repo-queries'
 
 export default function AdrPage() {
@@ -35,6 +35,7 @@ export default function AdrPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [markdown, setMarkdown] = useState<string>('')
+  const [templateMarkdown, setTemplateMarkdown] = useState<string>('')
   const [currentAdrKey, setCurrentAdrKey] = useState<string>('')
   const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
     null,
@@ -43,7 +44,10 @@ export default function AdrPage() {
   const editorRef = useRef<MDXEditorMethods>(null)
   const editorElementRef = useRef<HTMLElement | null>(null)
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const sectionsDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const eventListenersRef = useRef<(() => void) | null>(null)
+  const [sections, setSections] = useState<ExtendedSection[]>([])
+  const [isEditorFocused, setIsEditorFocused] = useState(false)
 
   const debouncedAdrContent = useDebounce(markdown ?? '', 500)
 
@@ -61,6 +65,39 @@ export default function AdrPage() {
   const branch = adrs?.find((adr) => adr.name === adrName)?.branch
 
   const adrKey = `${repo}-${adrName}`
+
+  useEffect(() => {
+    if (markdown && isEditorFocused) {
+      const sections =
+        TEMPLATE_PARSERS[
+          selectedTemplate?.id as keyof typeof TEMPLATE_PARSERS
+        ].parseMarkdown(markdown)
+      setSections(sections)
+      console.log('SECTIONS ->>>>>>>>>>>>>>>', sections)
+    }
+  }, [markdown, selectedTemplate, isEditorFocused])
+
+  useEffect(() => {
+    if (sectionsDebounceTimeoutRef.current) {
+      clearTimeout(sectionsDebounceTimeoutRef.current)
+    }
+
+    if (sections.length > 0 && !isEditorFocused) {
+      sectionsDebounceTimeoutRef.current = setTimeout(() => {
+        const markdown =
+          TEMPLATE_PARSERS[
+            selectedTemplate?.id as keyof typeof TEMPLATE_PARSERS
+          ].generateMarkdown(sections)
+        setMarkdown(markdown)
+      }, 200)
+    }
+
+    return () => {
+      if (sectionsDebounceTimeoutRef.current) {
+        clearTimeout(sectionsDebounceTimeoutRef.current)
+      }
+    }
+  }, [sections, isEditorFocused, selectedTemplate])
 
   useEffect(() => {
     if (debouncedAdrContent) {
@@ -104,6 +141,10 @@ export default function AdrPage() {
       clearTimeout(inactivityTimeoutRef.current)
       inactivityTimeoutRef.current = null
     }
+    if (sectionsDebounceTimeoutRef.current) {
+      clearTimeout(sectionsDebounceTimeoutRef.current)
+      sectionsDebounceTimeoutRef.current = null
+    }
   }, [])
 
   const handleEditorReady = useCallback(
@@ -120,16 +161,31 @@ export default function AdrPage() {
 
         const events = ['input', 'keydown', 'keyup', 'paste', 'cut', 'drop']
 
+        const handleFocusIn = () => {
+          console.log('Editor focused')
+          setIsEditorFocused(true)
+        }
+        const handleFocusOut = () => {
+          console.log('Editor blurred')
+          setIsEditorFocused(false)
+        }
+
         events.forEach((event) => {
           element.addEventListener(event, handleUserActivity, {
             passive: true,
           })
         })
 
+        // Use focusin/focusout which bubble up from child elements
+        element.addEventListener('focusin', handleFocusIn, { passive: true })
+        element.addEventListener('focusout', handleFocusOut, { passive: true })
+
         eventListenersRef.current = () => {
           events.forEach((event) => {
             element.removeEventListener(event, handleUserActivity)
           })
+          element.removeEventListener('focusin', handleFocusIn)
+          element.removeEventListener('focusout', handleFocusOut)
           if (inactivityTimeoutRef.current) {
             clearTimeout(inactivityTimeoutRef.current)
           }
@@ -153,7 +209,7 @@ export default function AdrPage() {
       setIsNewAdr(false)
 
       const initialMarkdown = template.generateMarkdown(template.sections)
-      setMarkdown(initialMarkdown)
+      setTemplateMarkdown(initialMarkdown)
 
       void updateAdrContents(adrName, repo, initialMarkdown)
       void updateAdrTemplate(adrName, repo, template.id)
@@ -166,7 +222,7 @@ export default function AdrPage() {
       setSelectedTemplate(template)
 
       const newMarkdown = template.generateMarkdown(template.sections)
-      setMarkdown(newMarkdown)
+      setTemplateMarkdown(newMarkdown)
 
       void updateAdrContents(adrName, repo, newMarkdown)
       void updateAdrTemplate(adrName, repo, template.id)
@@ -213,7 +269,7 @@ export default function AdrPage() {
 
   useEffect(() => {
     if (adr.data) {
-      setMarkdown(adr.data.contents ?? '')
+      setTemplateMarkdown(adr.data.contents ?? '')
       setCurrentAdrKey(adrKey)
 
       let templateLoaded = false
@@ -271,6 +327,7 @@ export default function AdrPage() {
               markdown={markdown}
               ref={editorRef}
               onEditorReady={handleEditorReady}
+              templateMarkdown={templateMarkdown}
             />
           ) : (
             <SkeletonEditor />
@@ -283,6 +340,8 @@ export default function AdrPage() {
         onTemplateSelected={handleTemplateSelected}
         onTemplateChanged={handleTemplateChanged}
         onCancelAdr={handleCancelAdr}
+        sections={sections}
+        setSections={setSections}
       />
     </div>
   )

@@ -22,32 +22,6 @@ const RepoPage = () => {
 
   const activeRepo = repo as string
   const adrs = useRepoAdrs(activeRepo)
-  const { data: repoTree } = useRepoTree(activeRepo, owner, branch)
-
-  // Function to handle file clicks using the same logic as app-sidebar
-  const handleFileClick = async (filePath: string, fileName: string) => {
-    if (!activeRepo) return
-
-    // Check if this file is an ADR in the database
-    const adr = await getAdrByNameAndRepository(fileName, activeRepo)
-
-    if (adr && !adr.hasMatch) {
-      // Redirect to ADR page
-      router.push(`/${activeRepo}/adr/${fileName}`)
-    } else {
-      // Navigate to regular file page
-      router.push(
-        `/${activeRepo}/file/${filePath.replaceAll('/', '~')}?owner=${owner}`,
-      )
-    }
-  }
-
-  // Filter and process files from repo tree
-  const files =
-    repoTree?.data?.tree?.filter((item) => item.type === 'blob') ?? []
-
-  // Separate root level files (not in subdirectories)
-  const rootFiles = files.filter((file) => !file.path.includes('/'))
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -75,7 +49,11 @@ const RepoPage = () => {
                 <Card
                   key={adr.name}
                   className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => router.push(`/${activeRepo}/adr/${adr.name}`)}
+                  onClick={() =>
+                    router.push(
+                      `/${activeRepo}/adr/${adr.name}?owner=${owner}&branch=${branch}`,
+                    )
+                  }
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-2">

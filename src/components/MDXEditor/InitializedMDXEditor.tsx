@@ -1,12 +1,7 @@
 'use client'
-// InitializedMDXEditor.tsx
 import type { ForwardedRef } from 'react'
 import { useEffect, useRef } from 'react'
-import type {
-  CodeBlockEditorDescriptor,
-  MDXEditorMethods,
-  SandpackConfig,
-} from '@mdxeditor/editor'
+import type { MDXEditorMethods, SandpackConfig } from '@mdxeditor/editor'
 import {
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
@@ -18,6 +13,7 @@ import {
   ConditionalContents,
   CreateLink,
   diffSourcePlugin,
+  DiffSourceToggleWrapper,
   frontmatterPlugin,
   headingsPlugin,
   imagePlugin,
@@ -41,7 +37,6 @@ import {
   thematicBreakPlugin,
   toolbarPlugin,
   UndoRedo,
-  useCodeBlockEditorContext,
 } from '@mdxeditor/editor'
 import '@/styles/editor.css'
 
@@ -49,10 +44,12 @@ import '@/styles/editor.css'
 export default function InitializedMDXEditor({
   editorRef,
   onEditorReady,
+  templateMarkdown,
   ...props
 }: {
   editorRef: ForwardedRef<MDXEditorMethods> | null
   onEditorReady?: (element: HTMLElement) => void
+  templateMarkdown: string
 } & MDXEditorProps) {
   const defaultSnippetContent = `
 export default function App() {
@@ -63,7 +60,7 @@ export default function App() {
     </div>
   );
 }
-`.trim()
+`
 
   const simpleSandpackConfig: SandpackConfig = {
     defaultPreset: 'react',
@@ -81,29 +78,8 @@ export default function App() {
     ],
   }
 
-  const PlainTextCodeEditorDescriptor: CodeBlockEditorDescriptor = {
-    // always use the editor, no matter the language or the meta of the code block
-    match: (language, meta) => true,
-    // You can have multiple editors with different priorities, so that there's a "catch-all" editor (with the lowest priority)
-    priority: 0,
-    // The Editor is a React component
-    Editor: (props) => {
-      const cb = useCodeBlockEditorContext()
-      // stops the propagation so that the parent lexical editor does not handle certain events.
-      return (
-        <div onKeyDown={(e) => e.nativeEvent.stopImmediatePropagation()}>
-          <textarea
-            rows={3}
-            cols={20}
-            defaultValue={props.code}
-            onChange={(e) => cb.setCode(e.target.value)}
-          />
-        </div>
-      )
-    },
-  }
-
   const editorElementRef = useRef<HTMLDivElement>(null)
+  const internalEditorRef = useRef<MDXEditorMethods>(null)
 
   // Call onEditorReady when the editor element is available
   useEffect(() => {
@@ -111,6 +87,24 @@ export default function App() {
       onEditorReady(editorElementRef.current)
     }
   }, [onEditorReady])
+
+  // Update editor content when markdown prop changes
+  useEffect(() => {
+    if (internalEditorRef.current && templateMarkdown !== undefined) {
+      // Don't compare content to avoid trimming issues, just set it directly
+      internalEditorRef.current.setMarkdown(templateMarkdown)
+    }
+  }, [templateMarkdown])
+
+  // Callback ref to handle both external and internal refs
+  const handleEditorRef = (instance: MDXEditorMethods | null) => {
+    internalEditorRef.current = instance
+    if (typeof editorRef === 'function') {
+      editorRef(instance)
+    } else if (editorRef) {
+      editorRef.current = instance
+    }
+  }
 
   return (
     <div ref={editorElementRef}>
@@ -144,11 +138,6 @@ export default function App() {
           // Table support
           tablePlugin(),
 
-          // Code block support
-          // codeBlockPlugin({
-          //   codeBlockEditorDescriptors: [PlainTextCodeEditorDescriptor],
-          // }),
-
           codeBlockPlugin({
             codeBlockEditorDescriptors: [
               { priority: -10, match: (_) => true, Editor: CodeMirrorEditor },
@@ -156,8 +145,8 @@ export default function App() {
             defaultCodeBlockLanguage: 'js',
           }),
 
-          // View modes
-          diffSourcePlugin(),
+          // View modes - configured to start in source mode by default
+          diffSourcePlugin({ viewMode: 'rich-text' }),
 
           // Advanced features
           frontmatterPlugin(),
@@ -171,15 +160,12 @@ export default function App() {
               ts: 'TypeScript',
             },
           }),
-          // codeBlockPlugin({
-          //   defaultCodeBlockLanguage: 'JavaScript',
-          // }),
+
           sandpackPlugin({ sandpackConfig: simpleSandpackConfig }),
 
-          // Toolbar configuration
           toolbarPlugin({
             toolbarContents: () => (
-              <>
+              <DiffSourceToggleWrapper>
                 <UndoRedo />
                 <BoldItalicUnderlineToggles />
                 <BlockTypeSelect />
@@ -212,14 +198,16 @@ export default function App() {
                     },
                   ]}
                 />
-              </>
+              </DiffSourceToggleWrapper>
             ),
           }),
         ]}
         className={`mdxeditor ${props.className}`}
         contentEditableClassName="prose prose-sm dark:prose-invert max-w-none mdxeditor"
         {...props}
-        ref={editorRef}
+        ref={handleEditorRef}
+        trim={false}
+        suppressHtmlProcessing={true}
       />
     </div>
   )

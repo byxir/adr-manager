@@ -11,14 +11,19 @@ export default forwardRef<
     markdown: string
     className?: string
     onEditorReady?: (element: HTMLElement) => void
+    templateMarkdown: string
   }
->(function DisplayFileContents({ markdown, className, onEditorReady }, ref) {
+>(function DisplayFileContents(
+  { markdown, className, onEditorReady, templateMarkdown },
+  ref,
+) {
   return (
     <ForwardRefEditor
       markdown={markdown}
       ref={ref}
       className={className}
       onEditorReady={onEditorReady}
+      templateMarkdown={templateMarkdown}
     />
   )
 })

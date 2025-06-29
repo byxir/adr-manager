@@ -1,21 +1,24 @@
 'use client'
-
-import React, { useCallback, useState, useEffect } from 'react'
+import React, {
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+  type SetStateAction,
+  type Dispatch,
+} from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ADR_TEMPLATES } from '@/lib/adr-templates'
 import type { AdrTemplate, AdrTemplateSection } from '@/definitions/types'
 import {
-  CheckCircle,
   ChevronDown,
   ChevronRight,
   Clock,
   FileText,
-  Lightbulb,
   Edit3,
   Minus,
   Plus,
@@ -50,6 +53,8 @@ interface AdrTemplateSidebarProps {
   onTemplateSelected?: (template: AdrTemplate) => void
   onTemplateChanged?: (template: AdrTemplate) => void
   onCancelAdr?: () => void
+  sections: ExtendedSection[]
+  setSections: Dispatch<SetStateAction<ExtendedSection[]>>
 }
 
 export default function AdrTemplateSidebar({
@@ -58,11 +63,12 @@ export default function AdrTemplateSidebar({
   onTemplateSelected,
   onTemplateChanged,
   onCancelAdr,
+  sections,
+  setSections,
 }: AdrTemplateSidebarProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
     initialTemplate ?? null,
   )
-  const [sections, setSections] = useState<ExtendedSection[]>([])
   const [showTemplateDialog, setShowTemplateDialog] =
     useState(showInitialDialog)
   const [hasContent, setHasContent] = useState(false)
@@ -77,13 +83,6 @@ export default function AdrTemplateSidebar({
   ])
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
-
-  const templateIcons = {
-    'madr-minimal': FileText,
-    'madr-full': CheckCircle,
-    'y-statement': Lightbulb,
-    'free-form': Edit3,
-  }
 
   useEffect(() => {
     if (initialTemplate && initialTemplate !== selectedTemplate) {
@@ -131,6 +130,18 @@ export default function AdrTemplateSidebar({
     }
   }, [hasContent])
 
+  const [localSectionContent, setLocalSectionContent] = useState<
+    Record<string, string>
+  >({})
+  const [localItemContent, setLocalItemContent] = useState<
+    Record<string, Record<number, string>>
+  >({})
+
+  const sectionTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({})
+  const itemTimeoutRef = useRef<Record<string, Record<number, NodeJS.Timeout>>>(
+    {},
+  )
+
   const updateSectionContent = useCallback(
     (sectionId: string, content: string) => {
       setSections((prev) =>
@@ -140,7 +151,7 @@ export default function AdrTemplateSidebar({
       )
       setHasContent(true)
     },
-    [],
+    [setSections],
   )
 
   const updateItemContent = useCallback(
@@ -157,8 +168,71 @@ export default function AdrTemplateSidebar({
       )
       setHasContent(true)
     },
-    [],
+    [setSections],
   )
+
+  const handleSectionContentChange = useCallback(
+    (sectionId: string, content: string) => {
+      setLocalSectionContent((prev) => ({ ...prev, [sectionId]: content }))
+
+      if (sectionTimeoutRef.current[sectionId]) {
+        clearTimeout(sectionTimeoutRef.current[sectionId])
+      }
+
+      sectionTimeoutRef.current[sectionId] = setTimeout(() => {
+        updateSectionContent(sectionId, content)
+        setLocalSectionContent((prev) => {
+          const newState = { ...prev }
+          delete newState[sectionId]
+          return newState
+        })
+      }, 200)
+    },
+    [updateSectionContent],
+  )
+
+  const handleItemContentChange = useCallback(
+    (sectionId: string, itemIndex: number, content: string) => {
+      setLocalItemContent((prev) => ({
+        ...prev,
+        [sectionId]: { ...prev[sectionId], [itemIndex]: content },
+      }))
+
+      if (itemTimeoutRef.current[sectionId]?.[itemIndex]) {
+        clearTimeout(itemTimeoutRef.current[sectionId][itemIndex])
+      }
+
+      itemTimeoutRef.current[sectionId] ??= {}
+
+      itemTimeoutRef.current[sectionId][itemIndex] = setTimeout(() => {
+        updateItemContent(sectionId, itemIndex, content)
+        setLocalItemContent((prev) => {
+          const newState = { ...prev }
+          if (newState[sectionId]) {
+            delete newState[sectionId][itemIndex]
+            if (Object.keys(newState[sectionId]).length === 0) {
+              delete newState[sectionId]
+            }
+          }
+          return newState
+        })
+      }, 200)
+    },
+    [updateItemContent],
+  )
+
+  useEffect(() => {
+    return () => {
+      Object.values(sectionTimeoutRef.current).forEach((timeout) => {
+        if (timeout) clearTimeout(timeout)
+      })
+      Object.values(itemTimeoutRef.current).forEach((sectionTimeouts) => {
+        Object.values(sectionTimeouts).forEach((timeout) => {
+          if (timeout) clearTimeout(timeout)
+        })
+      })
+    }
+  }, [])
 
   const addListItem = useCallback((sectionId: string) => {
     setSections((prev) =>
@@ -204,23 +278,6 @@ export default function AdrTemplateSidebar({
       }),
     )
   }, [])
-
-  const getMarkdown = useCallback(() => {
-    if (!selectedTemplate) return ''
-
-    const convertedSections = sections.map((section) => {
-      if (section.items) {
-        const content = section.items.map((item) => `* ${item}`).join('\n')
-        return { ...section, content }
-      }
-      return section
-    })
-    return selectedTemplate.generateMarkdown(convertedSections)
-  }, [selectedTemplate, sections])
-
-  const copyToClipboard = useCallback(() => {
-    void navigator.clipboard.writeText(getMarkdown())
-  }, [getMarkdown])
 
   const checkHasContent = useCallback((section: ExtendedSection) => {
     if (section.items) {
@@ -594,9 +651,12 @@ export default function AdrTemplateSidebar({
                               <Input
                                 id={`section-${section.id}`}
                                 placeholder={section.placeholder}
-                                value={section.content}
+                                value={
+                                  localSectionContent[section.id] ??
+                                  section.content
+                                }
                                 onChange={(e) =>
-                                  updateSectionContent(
+                                  handleSectionContentChange(
                                     section.id,
                                     e.target.value,
                                   )
@@ -632,9 +692,13 @@ export default function AdrTemplateSidebar({
                                       <textarea
                                         className="w-full px-2 py-1 text-xs border rounded-md resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[40px]"
                                         placeholder={`Enter ${getSingularName(section.id).toLowerCase()} ${itemIndex + 1}...`}
-                                        value={item}
+                                        value={
+                                          localItemContent[section.id]?.[
+                                            itemIndex
+                                          ] ?? item
+                                        }
                                         onChange={(e) =>
-                                          updateItemContent(
+                                          handleItemContentChange(
                                             section.id,
                                             itemIndex,
                                             e.target.value,
@@ -657,9 +721,12 @@ export default function AdrTemplateSidebar({
                                   isContext ? 'min-h-[100px]' : 'min-h-[60px]'
                                 }`}
                                 placeholder={section.placeholder}
-                                value={section.content}
+                                value={
+                                  localSectionContent[section.id] ??
+                                  section.content
+                                }
                                 onChange={(e) =>
-                                  updateSectionContent(
+                                  handleSectionContentChange(
                                     section.id,
                                     e.target.value,
                                   )

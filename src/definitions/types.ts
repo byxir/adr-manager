@@ -152,3 +152,7 @@ export interface TemplateFormData {
   selectedTemplate: string | null
   sections: Record<string, string>
 }
+
+export interface ExtendedSection extends AdrTemplateSection {
+  items?: string[]
+}

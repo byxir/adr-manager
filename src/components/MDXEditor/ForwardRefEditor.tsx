@@ -14,13 +14,17 @@ const Editor = dynamic(() => import('./InitializedMDXEditor'), {
 // to accept other props, including a ref.
 export const ForwardRefEditor = forwardRef<
   MDXEditorMethods,
-  MDXEditorProps & { onEditorReady?: (element: HTMLElement) => void }
+  MDXEditorProps & {
+    onEditorReady?: (element: HTMLElement) => void
+    templateMarkdown: string
+  }
 >((props, ref) => (
   <Editor
     {...props}
     editorRef={ref}
     className={props.className}
     onEditorReady={props.onEditorReady}
+    templateMarkdown={props.templateMarkdown}
     placeholder={
       <span className="text-muted-foreground/30">Write your ADR here...</span>
     }

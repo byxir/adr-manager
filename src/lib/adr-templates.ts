@@ -281,6 +281,209 @@ Write your Architecture Decision Record here in free form. You can structure it 
 `
 }
 
+const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
+  const sections = MADR_MINIMAL_SECTIONS.map((section) => ({ ...section }))
+  const lines = markdown.split('\n')
+
+  const titleMatch = /^# (.+)/m.exec(markdown)
+  if (titleMatch?.[1]) {
+    const titleSection = sections.find((s) => s.id === 'title')
+    if (titleSection) titleSection.content = titleMatch[1].trim()
+  }
+
+  const contextMatch =
+    /## Context and Problem Statement\s*\n([\s\S]*?)(?=\n##|\n###|$)/m.exec(
+      markdown,
+    )
+  if (contextMatch?.[1]) {
+    const contextSection = sections.find((s) => s.id === 'context')
+    if (contextSection) contextSection.content = contextMatch[1].trim()
+  }
+
+  const optionsMatch =
+    /## Considered Options\s*\n([\s\S]*?)(?=\n##|\n###|$)/m.exec(markdown)
+  if (optionsMatch?.[1]) {
+    const optionsSection = sections.find((s) => s.id === 'options')
+    if (optionsSection) optionsSection.content = optionsMatch[1].trim()
+  }
+
+  const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=\n###|$)/m.exec(
+    markdown,
+  )
+  if (decisionMatch?.[1]) {
+    const decisionSection = sections.find((s) => s.id === 'decision')
+    if (decisionSection) decisionSection.content = decisionMatch[1].trim()
+  }
+
+  const consequencesMatch =
+    /### Consequences\s*\n([\s\S]*?)(?=\n##|\n###|$)/m.exec(markdown)
+  if (consequencesMatch?.[1]) {
+    const consequencesSection = sections.find((s) => s.id === 'consequences')
+    if (consequencesSection)
+      consequencesSection.content = consequencesMatch[1].trim()
+  }
+
+  return sections
+}
+
+const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
+  const sections = MADR_FULL_SECTIONS.map((section) => ({ ...section }))
+
+  const metadataMatch = /^---\s*\n([\s\S]*?)\n---/m.exec(markdown)
+  if (metadataMatch?.[1]) {
+    const metadataSection = sections.find((s) => s.id === 'metadata')
+    if (metadataSection) {
+      const metadata = metadataMatch[1]
+        .replace(/^# These are optional metadata elements.*\n/m, '')
+        .trim()
+      metadataSection.content = metadata
+    }
+  }
+
+  const titleMatch = /^# (.+)/m.exec(markdown)
+  if (titleMatch?.[1]) {
+    const titleSection = sections.find((s) => s.id === 'title')
+    if (titleSection) titleSection.content = titleMatch[1].trim()
+  }
+
+  const contextMatch =
+    /## Context and Problem Statement\s*\n([\s\S]*?)(?=\n##|$)/m.exec(markdown)
+  if (contextMatch?.[1]) {
+    const contextSection = sections.find((s) => s.id === 'context')
+    if (contextSection) contextSection.content = contextMatch[1].trim()
+  }
+
+  const driversMatch = /## Decision Drivers\s*\n([\s\S]*?)(?=\n##|$)/m.exec(
+    markdown,
+  )
+  if (driversMatch?.[1]) {
+    const driversSection = sections.find((s) => s.id === 'drivers')
+    if (driversSection) driversSection.content = driversMatch[1].trim()
+  }
+
+  const optionsMatch = /## Considered Options\s*\n([\s\S]*?)(?=\n##|$)/m.exec(
+    markdown,
+  )
+  if (optionsMatch?.[1]) {
+    const optionsSection = sections.find((s) => s.id === 'options')
+    if (optionsSection) optionsSection.content = optionsMatch[1].trim()
+  }
+
+  const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=\n###|$)/m.exec(
+    markdown,
+  )
+  if (decisionMatch?.[1]) {
+    const decisionSection = sections.find((s) => s.id === 'decision')
+    if (decisionSection) decisionSection.content = decisionMatch[1].trim()
+  }
+
+  const consequencesMatch =
+    /### Consequences\s*\n([\s\S]*?)(?=\n###|\n##|$)/m.exec(markdown)
+  if (consequencesMatch?.[1]) {
+    const consequencesSection = sections.find((s) => s.id === 'consequences')
+    if (consequencesSection)
+      consequencesSection.content = consequencesMatch[1].trim()
+  }
+
+  const confirmationMatch =
+    /### Confirmation\s*\n([\s\S]*?)(?=\n###|\n##|$)/m.exec(markdown)
+  if (confirmationMatch?.[1]) {
+    const confirmationSection = sections.find((s) => s.id === 'confirmation')
+    if (confirmationSection)
+      confirmationSection.content = confirmationMatch[1].trim()
+  }
+
+  const prosconsMatch =
+    /## Pros and Cons of the Options\s*\n([\s\S]*?)(?=\n##|$)/m.exec(markdown)
+  if (prosconsMatch?.[1]) {
+    const prosconsSection = sections.find((s) => s.id === 'proscons')
+    if (prosconsSection) prosconsSection.content = prosconsMatch[1].trim()
+  }
+
+  const moreinfoMatch = /## More Information\s*\n([\s\S]*?)$/m.exec(markdown)
+  if (moreinfoMatch?.[1]) {
+    const moreinfoSection = sections.find((s) => s.id === 'moreinfo')
+    if (moreinfoSection) moreinfoSection.content = moreinfoMatch[1].trim()
+  }
+
+  return sections
+}
+
+const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
+  const sections = Y_STATEMENT_SECTIONS.map((section) => ({ ...section }))
+
+  const titleMatch = /# Y-Statement: (.+)/m.exec(markdown)
+  if (titleMatch) {
+    const decidedSection = sections.find((s) => s.id === 'decided')
+    if (decidedSection && titleMatch?.[1])
+      decidedSection.content = titleMatch[1].trim()
+  }
+
+  const yStatementMatch =
+    /In the context of ([^,]+),\s*facing ([^,]+),\s*we decided for ([^,]+)\s*and against ([^,]+)\s*to achieve ([^,]+),\s*accepting that ([^.]+)\./s.exec(
+      markdown,
+    )
+
+  if (yStatementMatch) {
+    const [, context, facing, decided, neglected, achieve, accepting] =
+      yStatementMatch
+
+    const contextSection = sections.find((s) => s.id === 'context')
+    if (contextSection && context) contextSection.content = context.trim()
+
+    const facingSection = sections.find((s) => s.id === 'facing')
+    if (facingSection && facing) facingSection.content = facing.trim()
+
+    const decidedSection = sections.find((s) => s.id === 'decided')
+    if (decidedSection && decided) decidedSection.content = decided.trim()
+
+    const neglectedSection = sections.find((s) => s.id === 'neglected')
+    if (neglectedSection && neglected)
+      neglectedSection.content = neglected.trim()
+
+    const achieveSection = sections.find((s) => s.id === 'achieve')
+    if (achieveSection && achieve) achieveSection.content = achieve.trim()
+
+    const acceptingSection = sections.find((s) => s.id === 'accepting')
+    if (acceptingSection && accepting)
+      acceptingSection.content = accepting.trim()
+  }
+
+  return sections
+}
+
+const parseFreeFormMarkdown = (markdown: string): AdrTemplateSection[] => {
+  const sections = FREE_FORM_SECTIONS.map((section) => ({ ...section }))
+
+  const titleMatch = /^# (.+)/m.exec(markdown)
+  if (titleMatch) {
+    const titleSection = sections.find((s) => s.id === 'title')
+    if (titleSection && titleMatch?.[1])
+      titleSection.content = titleMatch[1].trim()
+  }
+
+  return sections
+}
+
+export const TEMPLATE_PARSERS = {
+  'madr-minimal': {
+    parseMarkdown: parseMADRMinimalMarkdown,
+    generateMarkdown: generateMADRMinimalMarkdown,
+  },
+  'madr-full': {
+    parseMarkdown: parseMADRFullMarkdown,
+    generateMarkdown: generateMADRFullMarkdown,
+  },
+  'y-statement': {
+    parseMarkdown: parseYStatementMarkdown,
+    generateMarkdown: generateYStatementMarkdown,
+  },
+  'free-form': {
+    parseMarkdown: parseFreeFormMarkdown,
+    generateMarkdown: generateFreeFormMarkdown,
+  },
+} as const
+
 export const ADR_TEMPLATES: AdrTemplate[] = [
   {
     id: 'madr-minimal',
@@ -317,41 +520,35 @@ export const getTemplateById = (id: string): AdrTemplate | undefined => {
   return ADR_TEMPLATES.find((template) => template.id === id)
 }
 
+export const getTemplateParser = (templateId: string) => {
+  return TEMPLATE_PARSERS[templateId as keyof typeof TEMPLATE_PARSERS]
+}
+
+export const markdownToSections = (
+  markdown: string,
+  templateId: string,
+): AdrTemplateSection[] => {
+  const parser = getTemplateParser(templateId)
+  if (!parser) {
+    throw new Error(`No parser found for template: ${templateId}`)
+  }
+  return parser.parseMarkdown(markdown)
+}
+
+export const sectionsToMarkdown = (
+  sections: AdrTemplateSection[],
+  templateId: string,
+): string => {
+  const parser = getTemplateParser(templateId)
+  if (!parser) {
+    throw new Error(`No parser found for template: ${templateId}`)
+  }
+  return parser.generateMarkdown(sections)
+}
+
 export const parseMarkdownToSections = (
   markdown: string,
   template: AdrTemplate,
 ): AdrTemplateSection[] => {
-  const sections = template.sections.map((section) => ({ ...section }))
-
-  const lines = markdown.split('\n')
-  let currentSection: AdrTemplateSection | null = null
-  let currentContent: string[] = []
-
-  for (const line of lines) {
-    const isHeader = line.startsWith('#')
-
-    if (isHeader) {
-      if (currentSection) {
-        currentSection.content = currentContent.join('\n').trim()
-      }
-
-      const headerText = line.replace(/^#+\s*/, '').toLowerCase()
-      currentSection =
-        sections.find(
-          (s) =>
-            s.title.toLowerCase().includes(headerText) ||
-            headerText.includes(s.title.toLowerCase()),
-        ) ?? null
-
-      currentContent = []
-    } else if (currentSection) {
-      currentContent.push(line)
-    }
-  }
-
-  if (currentSection) {
-    currentSection.content = currentContent.join('\n').trim()
-  }
-
-  return sections
+  return markdownToSections(markdown, template.id)
 }
