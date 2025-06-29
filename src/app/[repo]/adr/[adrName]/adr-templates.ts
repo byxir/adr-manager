@@ -162,6 +162,22 @@ const Y_STATEMENT_SECTIONS: AdrTemplateSection[] = [
     content: '',
     isRequired: true,
   },
+  {
+    id: 'rationale',
+    title: 'Rationale',
+    placeholder:
+      'Additional explanation of the reasoning behind this decision...',
+    content: '',
+    isRequired: false,
+  },
+  {
+    id: 'references',
+    title: 'References',
+    placeholder:
+      'Links to documentation, articles, or other relevant resources...',
+    content: '',
+    isRequired: false,
+  },
 ]
 
 const FREE_FORM_SECTIONS: AdrTemplateSection[] = [
@@ -249,20 +265,20 @@ const generateYStatementMarkdown = (sections: AdrTemplateSection[]): string => {
 
   return `# Y-Statement: ${sectionMap.decided ?? 'Decision Title'}
 
-In the context of ${sectionMap.context ?? '{functional requirement (story, use case) or architectural component}'},
-facing ${sectionMap.facing ?? '{non-functional requirement, for instance a desired quality}'},
+In the context of ${sectionMap.context ?? '{functional requirement (story, use case) or architectural component}'}
+facing ${sectionMap.facing ?? '{non-functional requirement, for instance a desired quality}'}
 we decided for ${sectionMap.decided ?? '{decision outcome (the most important part)}'}
 and against ${sectionMap.neglected ?? '{alternatives not chosen (not to be forgotten!)}'}
-to achieve ${sectionMap.achieve ?? '{benefits, the full or partial satisfaction of requirement(s)}'},
-accepting that ${sectionMap.accepting ?? '{drawbacks and other consequences, for instance impact on other properties/context and effort/cost}'}.
+to achieve ${sectionMap.achieve ?? '{benefits, the full or partial satisfaction of requirement(s)}'}
+accepting that ${sectionMap.accepting ?? '{drawbacks and other consequences, for instance impact on other properties/context and effort/cost}'}
 
 ## Rationale
 
-This Y-statement captures the essential elements of our architectural decision in a concise format that emphasizes the "why" behind our choice.
+${sectionMap.rationale ?? 'This Y-statement captures the essential elements of our architectural decision in a concise format that emphasizes the "why" behind our choice.'}
 
 ## References
 
-- [Y-Statements: A light template for architectural decision capturing](https://medium.com/olzzio/y-statements-10eb07b5a177)
+${sectionMap.references ?? '- [Y-Statements: A light template for architectural decision capturing](https://medium.com/olzzio/y-statements-10eb07b5a177)'}
 `
 }
 
@@ -292,22 +308,21 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const contextMatch =
-    /## Context and Problem Statement\s*\n([\s\S]*?)(?=\n##|\n###|$)/m.exec(
-      markdown,
-    )
+    /## Context and Problem Statement\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(markdown)
   if (contextMatch?.[1]) {
     const contextSection = sections.find((s) => s.id === 'context')
     if (contextSection) contextSection.content = contextMatch[1].trim()
   }
 
-  const optionsMatch =
-    /## Considered Options\s*\n([\s\S]*?)(?=\n##|\n###|$)/m.exec(markdown)
+  const optionsMatch = /## Considered Options\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
+    markdown,
+  )
   if (optionsMatch?.[1]) {
     const optionsSection = sections.find((s) => s.id === 'options')
     if (optionsSection) optionsSection.content = optionsMatch[1].trim()
   }
 
-  const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=\n###|$)/m.exec(
+  const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
     markdown,
   )
   if (decisionMatch?.[1]) {
@@ -315,8 +330,9 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
     if (decisionSection) decisionSection.content = decisionMatch[1].trim()
   }
 
-  const consequencesMatch =
-    /### Consequences\s*\n([\s\S]*?)(?=\n##|\n###|$)/m.exec(markdown)
+  const consequencesMatch = /### Consequences\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
+    markdown,
+  )
   if (consequencesMatch?.[1]) {
     const consequencesSection = sections.find((s) => s.id === 'consequences')
     if (consequencesSection)
@@ -347,13 +363,13 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const contextMatch =
-    /## Context and Problem Statement\s*\n([\s\S]*?)(?=\n##|$)/m.exec(markdown)
+    /## Context and Problem Statement\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(markdown)
   if (contextMatch?.[1]) {
     const contextSection = sections.find((s) => s.id === 'context')
     if (contextSection) contextSection.content = contextMatch[1].trim()
   }
 
-  const driversMatch = /## Decision Drivers\s*\n([\s\S]*?)(?=\n##|$)/m.exec(
+  const driversMatch = /## Decision Drivers\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
     markdown,
   )
   if (driversMatch?.[1]) {
@@ -361,7 +377,7 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
     if (driversSection) driversSection.content = driversMatch[1].trim()
   }
 
-  const optionsMatch = /## Considered Options\s*\n([\s\S]*?)(?=\n##|$)/m.exec(
+  const optionsMatch = /## Considered Options\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
     markdown,
   )
   if (optionsMatch?.[1]) {
@@ -369,7 +385,7 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
     if (optionsSection) optionsSection.content = optionsMatch[1].trim()
   }
 
-  const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=\n###|$)/m.exec(
+  const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
     markdown,
   )
   if (decisionMatch?.[1]) {
@@ -377,16 +393,18 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
     if (decisionSection) decisionSection.content = decisionMatch[1].trim()
   }
 
-  const consequencesMatch =
-    /### Consequences\s*\n([\s\S]*?)(?=\n###|\n##|$)/m.exec(markdown)
+  const consequencesMatch = /### Consequences\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
+    markdown,
+  )
   if (consequencesMatch?.[1]) {
     const consequencesSection = sections.find((s) => s.id === 'consequences')
     if (consequencesSection)
       consequencesSection.content = consequencesMatch[1].trim()
   }
 
-  const confirmationMatch =
-    /### Confirmation\s*\n([\s\S]*?)(?=\n###|\n##|$)/m.exec(markdown)
+  const confirmationMatch = /### Confirmation\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
+    markdown,
+  )
   if (confirmationMatch?.[1]) {
     const confirmationSection = sections.find((s) => s.id === 'confirmation')
     if (confirmationSection)
@@ -394,13 +412,15 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const prosconsMatch =
-    /## Pros and Cons of the Options\s*\n([\s\S]*?)(?=\n##|$)/m.exec(markdown)
+    /## Pros and Cons of the Options\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(markdown)
   if (prosconsMatch?.[1]) {
     const prosconsSection = sections.find((s) => s.id === 'proscons')
     if (prosconsSection) prosconsSection.content = prosconsMatch[1].trim()
   }
 
-  const moreinfoMatch = /## More Information\s*\n([\s\S]*?)$/m.exec(markdown)
+  const moreinfoMatch = /## More Information\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
+    markdown,
+  )
   if (moreinfoMatch?.[1]) {
     const moreinfoSection = sections.find((s) => s.id === 'moreinfo')
     if (moreinfoSection) moreinfoSection.content = moreinfoMatch[1].trim()
@@ -419,34 +439,73 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
       decidedSection.content = titleMatch[1].trim()
   }
 
-  const yStatementMatch =
-    /In the context of ([^,]+),\s*facing ([^,]+),\s*we decided for ([^,]+)\s*and against ([^,]+)\s*to achieve ([^,]+),\s*accepting that ([^.]+)\./s.exec(
+  // Parse each prefix and its content
+  const contextMatch =
+    /In the context of\s+([\s\S]*?)(?=^facing\s|^we decided for\s|^and against\s|^to achieve\s|^accepting that\s|$)/m.exec(
       markdown,
     )
-
-  if (yStatementMatch) {
-    const [, context, facing, decided, neglected, achieve, accepting] =
-      yStatementMatch
-
+  if (contextMatch?.[1]) {
     const contextSection = sections.find((s) => s.id === 'context')
-    if (contextSection && context) contextSection.content = context.trim()
+    if (contextSection) contextSection.content = contextMatch[1].trim()
+  }
 
+  const facingMatch =
+    /^facing\s+([\s\S]*?)(?=^we decided for\s|^and against\s|^to achieve\s|^accepting that\s|$)/m.exec(
+      markdown,
+    )
+  if (facingMatch?.[1]) {
     const facingSection = sections.find((s) => s.id === 'facing')
-    if (facingSection && facing) facingSection.content = facing.trim()
+    if (facingSection) facingSection.content = facingMatch[1].trim()
+  }
 
+  const decidedMatch =
+    /^we decided for\s+([\s\S]*?)(?=^and against\s|^to achieve\s|^accepting that\s|$)/m.exec(
+      markdown,
+    )
+  if (decidedMatch?.[1]) {
     const decidedSection = sections.find((s) => s.id === 'decided')
-    if (decidedSection && decided) decidedSection.content = decided.trim()
+    if (decidedSection) decidedSection.content = decidedMatch[1].trim()
+  }
 
+  const neglectedMatch =
+    /^and against\s+([\s\S]*?)(?=^to achieve\s|^accepting that\s|$)/m.exec(
+      markdown,
+    )
+  if (neglectedMatch?.[1]) {
     const neglectedSection = sections.find((s) => s.id === 'neglected')
-    if (neglectedSection && neglected)
-      neglectedSection.content = neglected.trim()
+    if (neglectedSection) neglectedSection.content = neglectedMatch[1].trim()
+  }
 
+  const achieveMatch = /^to achieve\s+([\s\S]*?)(?=^accepting that\s|$)/m.exec(
+    markdown,
+  )
+  if (achieveMatch?.[1]) {
     const achieveSection = sections.find((s) => s.id === 'achieve')
-    if (achieveSection && achieve) achieveSection.content = achieve.trim()
+    if (achieveSection) achieveSection.content = achieveMatch[1].trim()
+  }
 
+  const acceptingMatch = /^accepting that\s+([\s\S]*?)(?=^##\s|$)/m.exec(
+    markdown,
+  )
+  if (acceptingMatch?.[1]) {
     const acceptingSection = sections.find((s) => s.id === 'accepting')
-    if (acceptingSection && accepting)
-      acceptingSection.content = accepting.trim()
+    if (acceptingSection) acceptingSection.content = acceptingMatch[1].trim()
+  }
+
+  const rationaleMatch = /## Rationale\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
+    markdown,
+  )
+  if (rationaleMatch?.[1]) {
+    const rationaleSection = sections.find((s) => s.id === 'rationale')
+    if (rationaleSection) rationaleSection.content = rationaleMatch[1].trim()
+  }
+
+  const referencesMatch = /## References\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
+    markdown,
+  )
+  if (referencesMatch?.[1]) {
+    const referencesSection = sections.find((s) => s.id === 'references')
+    if (referencesSection) referencesSection.content = referencesMatch[1].trim()
   }
 
   return sections

@@ -24,18 +24,26 @@ import { useDebounce } from '@/lib/utils'
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
 import DisplayFileContents from './display-file-contents'
-import AdrTemplateSidebar from '@/components/adr-template-sidebar'
+import AdrTemplateSidebar from '@/app/[repo]/adr/[adrName]/adr-template-sidebar'
 import type { AdrTemplate, ExtendedSection } from '@/definitions/types'
-import { getTemplateById, TEMPLATE_PARSERS } from '@/lib/adr-templates'
+import {
+  getTemplateById,
+  TEMPLATE_PARSERS,
+} from '@/app/[repo]/adr/[adrName]/adr-templates'
 import { useRepoAdrs } from '@/hooks/use-repo-queries'
+import { atom, useAtom } from 'jotai'
+
+export const markdownAtom = atom<string>('')
+export const templateMarkdownAtom = atom<string>('')
 
 export default function AdrPage() {
+  const [markdown, setMarkdown] = useAtom(markdownAtom)
+  const [templateMarkdown, setTemplateMarkdown] = useAtom(templateMarkdownAtom)
+
   const { data: session } = useSession()
   const { repo, adrName }: { repo: string; adrName: string } = useParams()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const [markdown, setMarkdown] = useState<string>('')
-  const [templateMarkdown, setTemplateMarkdown] = useState<string>('')
   const [currentAdrKey, setCurrentAdrKey] = useState<string>('')
   const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
     null,
@@ -324,10 +332,8 @@ export default function AdrPage() {
           !isNewAdr ? (
             <DisplayFileContents
               key={adrKey}
-              markdown={markdown}
               ref={editorRef}
               onEditorReady={handleEditorReady}
-              templateMarkdown={templateMarkdown}
             />
           ) : (
             <SkeletonEditor />

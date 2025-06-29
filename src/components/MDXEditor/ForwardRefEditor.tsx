@@ -16,7 +16,6 @@ export const ForwardRefEditor = forwardRef<
   MDXEditorMethods,
   MDXEditorProps & {
     onEditorReady?: (element: HTMLElement) => void
-    templateMarkdown: string
   }
 >((props, ref) => (
   <Editor
@@ -24,7 +23,6 @@ export const ForwardRefEditor = forwardRef<
     editorRef={ref}
     className={props.className}
     onEditorReady={props.onEditorReady}
-    templateMarkdown={props.templateMarkdown}
     placeholder={
       <span className="text-muted-foreground/30">Write your ADR here...</span>
     }

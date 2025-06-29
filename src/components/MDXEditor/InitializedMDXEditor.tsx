@@ -39,17 +39,20 @@ import {
   UndoRedo,
 } from '@mdxeditor/editor'
 import '@/styles/editor.css'
+import { useAtom } from 'jotai'
+import {
+  markdownAtom,
+  templateMarkdownAtom,
+} from '@/app/[repo]/adr/[adrName]/page'
 
 // Only import this to the next file
 export default function InitializedMDXEditor({
   editorRef,
   onEditorReady,
-  templateMarkdown,
   ...props
 }: {
   editorRef: ForwardedRef<MDXEditorMethods> | null
   onEditorReady?: (element: HTMLElement) => void
-  templateMarkdown: string
 } & MDXEditorProps) {
   const defaultSnippetContent = `
 export default function App() {
@@ -81,6 +84,9 @@ export default function App() {
   const editorElementRef = useRef<HTMLDivElement>(null)
   const internalEditorRef = useRef<MDXEditorMethods>(null)
 
+  const [markdown, setMarkdown] = useAtom(markdownAtom)
+  const [templateMarkdown, setTemplateMarkdown] = useAtom(templateMarkdownAtom)
+
   // Call onEditorReady when the editor element is available
   useEffect(() => {
     if (onEditorReady && editorElementRef.current) {
@@ -88,7 +94,6 @@ export default function App() {
     }
   }, [onEditorReady])
 
-  // Update editor content when markdown prop changes
   useEffect(() => {
     if (internalEditorRef.current && templateMarkdown !== undefined) {
       // Don't compare content to avoid trimming issues, just set it directly
@@ -105,6 +110,8 @@ export default function App() {
       editorRef.current = instance
     }
   }
+
+  console.log('templateMarkdown', templateMarkdown)
 
   return (
     <div ref={editorElementRef}>

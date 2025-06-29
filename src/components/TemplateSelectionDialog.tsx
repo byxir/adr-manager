@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ADR_TEMPLATES } from '@/lib/adr-templates'
+import { ADR_TEMPLATES } from '@/app/[repo]/adr/[adrName]/adr-templates'
 import type { AdrTemplate } from '@/definitions/types'
 import { CheckCircle, FileText, Lightbulb, Edit3 } from 'lucide-react'
 

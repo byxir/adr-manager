@@ -8,22 +8,16 @@ import type { MDXEditorMethods } from '@mdxeditor/editor'
 export default forwardRef<
   MDXEditorMethods,
   {
-    markdown: string
     className?: string
     onEditorReady?: (element: HTMLElement) => void
-    templateMarkdown: string
   }
->(function DisplayFileContents(
-  { markdown, className, onEditorReady, templateMarkdown },
-  ref,
-) {
+>(function DisplayFileContents({ className, onEditorReady }, ref) {
   return (
     <ForwardRefEditor
-      markdown={markdown}
+      markdown={''}
       ref={ref}
       className={className}
       onEditorReady={onEditorReady}
-      templateMarkdown={templateMarkdown}
     />
   )
 })

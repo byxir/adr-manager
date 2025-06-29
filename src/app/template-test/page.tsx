@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import AdrTemplateSidebar from '@/components/adr-template-sidebar'
+import AdrTemplateSidebar from '@/app/[repo]/adr/[adrName]/adr-template-sidebar'
 
 export default function TemplateTestPage() {
   return (
