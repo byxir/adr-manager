@@ -130,6 +130,8 @@ export interface Item {
   name: string
   children?: string[]
   fileExtension?: string
+  isFolder: boolean
+  isAdr: boolean
 }
 
 export interface AdrTemplateSection {

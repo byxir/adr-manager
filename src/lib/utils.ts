@@ -29,14 +29,14 @@ export const transformAndAppendTreeData = async ({
 }) => {
   if (!tree) return null
 
+  const isAdr = (filename: string) => {
+    return adrs.some((adr) => adr.name === filename)
+  }
+
   // Filter ADRs to only include those belonging to the current repository
   const repositoryAdrs = adrs.filter((adr) => {
-    console.log('ADR REPO', adr.repository)
-    console.log('REPO IN UTILS', repository)
     return adr.repository === repository
   })
-
-  console.log('REPOSITORY ADRS', repositoryAdrs)
 
   const result: Record<string, Item> = {}
 
@@ -52,6 +52,8 @@ export const transformAndAppendTreeData = async ({
       result[currentPath] ??= {
         name: parts[i]!,
         children: [],
+        isFolder: true,
+        isAdr: false,
       }
     }
   }
@@ -86,6 +88,8 @@ export const transformAndAppendTreeData = async ({
       name,
       children: isDirectory ? [] : undefined,
       fileExtension: isDirectory ? undefined : path.split('.').pop(),
+      isFolder: isDirectory,
+      isAdr: isAdr(name),
     }
 
     if (!isDirectory) {
@@ -114,6 +118,8 @@ export const transformAndAppendTreeData = async ({
     result[adrsFolderName] = {
       name: adrsFolderName,
       children: [],
+      isFolder: true,
+      isAdr: false,
     }
 
     // Create default ADR file
@@ -121,6 +127,8 @@ export const transformAndAppendTreeData = async ({
     result[defaultAdrPath] = {
       name: '0001-adr-1.md',
       fileExtension: 'md',
+      isFolder: false,
+      isAdr: true,
     }
 
     // Add to parent folder's children
@@ -165,6 +173,8 @@ export const transformAndAppendTreeData = async ({
       result[adrsFolderName] = {
         name: adrsFolderName,
         children: [],
+        isFolder: true,
+        isAdr: false,
       }
 
       // Add all ADRs to the folder
@@ -173,6 +183,8 @@ export const transformAndAppendTreeData = async ({
         result[adrPath] = {
           name: adr.name,
           fileExtension: adr.name.split('.').pop(),
+          isFolder: false,
+          isAdr: true,
         }
         result[adrsFolderName].children?.push(adrPath)
 
@@ -193,6 +205,8 @@ export const transformAndAppendTreeData = async ({
       result[adrsFolderName] = {
         name: adrsFolderName,
         children: [],
+        isFolder: true,
+        isAdr: false,
       }
 
       // Add non-matching ADRs to the folder
@@ -201,6 +215,8 @@ export const transformAndAppendTreeData = async ({
         result[adrPath] = {
           name: adr.name,
           fileExtension: adr.name.split('.').pop(),
+          isFolder: false,
+          isAdr: true,
         }
         result[adrsFolderName].children?.push(adrPath)
 

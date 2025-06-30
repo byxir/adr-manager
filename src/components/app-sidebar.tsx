@@ -145,8 +145,11 @@ function FileTree({
     indent,
     rootItemId: 'root',
     getItemName: (item) => item.getItemData()?.name ?? 'Unknown',
-    isItemFolder: (item) => (item.getItemData()?.children?.length ?? 0) > 0,
+    isItemFolder: (item) => item.getItemData()?.isFolder,
     canReorder: true,
+    canDrag: (items) => {
+      return items.every((item) => item.getItemData()?.isAdr === true)
+    },
     onDrop: createOnDropHandler((parentItem, newChildrenIds) => {
       setItems((prevItems: Record<string, Item> | null) => {
         if (!prevItems) return null
@@ -194,6 +197,9 @@ function FileTree({
         const parentData = prevItems[parentId]
         if (!parentData) return prevItems
 
+        console.log('parentId', parentId)
+        console.log('sortedChildren', sortedChildren)
+
         return {
           ...prevItems,
           [parentId]: {
@@ -215,10 +221,16 @@ function FileTree({
                   ),
                 ]
               : [],
+            isFolder: true,
+            isAdr: false,
           }
           return rootItem
         }
-        const item = items?.[itemId] ?? { name: 'Unknown' }
+        const item = items?.[itemId] ?? {
+          name: 'Unknown',
+          isFolder: false,
+          isAdr: false,
+        }
         return item
       },
       getChildren: (itemId) => {
@@ -239,8 +251,8 @@ function FileTree({
             if (itemA?.name === 'adrs') return -1
             if (itemB?.name === 'adrs') return 1
 
-            const isAFolder = (itemA?.children?.length ?? 0) > 0
-            const isBFolder = (itemB?.children?.length ?? 0) > 0
+            const isAFolder = itemA?.isFolder
+            const isBFolder = itemB?.isFolder
 
             if (isAFolder && !isBFolder) return -1
             if (!isAFolder && isBFolder) return 1
@@ -260,8 +272,8 @@ function FileTree({
 
             if (!itemA || !itemB) return 0
 
-            const isAFile = (itemA?.children?.length ?? 0) === 0
-            const isBFile = (itemB?.children?.length ?? 0) === 0
+            const isAFile = !itemA?.isFolder
+            const isBFile = !itemB?.isFolder
 
             if (isAFile && isBFile) {
               const adrA = adrs.find((adr) => adr.name === itemA?.name)
@@ -275,8 +287,8 @@ function FileTree({
               }
             }
 
-            const isAFolder = (itemA?.children?.length ?? 0) > 0
-            const isBFolder = (itemB?.children?.length ?? 0) > 0
+            const isAFolder = itemA?.isFolder
+            const isBFolder = itemB?.isFolder
 
             if (isAFolder && !isBFolder) return -1
             if (!isAFolder && isBFolder) return 1
@@ -291,8 +303,8 @@ function FileTree({
 
           if (!itemA || !itemB) return 0
 
-          const isAFolder = (itemA?.children?.length ?? 0) > 0
-          const isBFolder = (itemB?.children?.length ?? 0) > 0
+          const isAFolder = itemA?.isFolder
+          const isBFolder = itemB?.isFolder
 
           if (isAFolder && !isBFolder) return -1
           if (!isAFolder && isBFolder) return 1
