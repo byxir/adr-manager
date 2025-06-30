@@ -1,5 +1,17 @@
 import type { AdrTemplate, AdrTemplateSection } from '@/definitions/types'
 
+// Utility function to trim trailing whitespace from each line and overall content
+const trimLineTrailingWhitespace = (content: string): string => {
+  return (
+    content
+      // .split('\n')
+      // .map((line) => line.replace(/\s+$/, '')) // Remove trailing whitespace from each line
+      // .join('\n')
+      .replace('&#x20;', '')
+      .trim()
+  ) // Remove leading/trailing whitespace from overall content
+}
+
 const MADR_MINIMAL_SECTIONS: AdrTemplateSection[] = [
   {
     id: 'title',
@@ -304,14 +316,16 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   const titleMatch = /^# (.+)/m.exec(markdown)
   if (titleMatch?.[1]) {
     const titleSection = sections.find((s) => s.id === 'title')
-    if (titleSection) titleSection.content = titleMatch[1].trim()
+    if (titleSection)
+      titleSection.content = trimLineTrailingWhitespace(titleMatch[1])
   }
 
   const contextMatch =
     /## Context and Problem Statement\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(markdown)
   if (contextMatch?.[1]) {
     const contextSection = sections.find((s) => s.id === 'context')
-    if (contextSection) contextSection.content = contextMatch[1].trim()
+    if (contextSection)
+      contextSection.content = trimLineTrailingWhitespace(contextMatch[1])
   }
 
   const optionsMatch = /## Considered Options\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -319,7 +333,8 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (optionsMatch?.[1]) {
     const optionsSection = sections.find((s) => s.id === 'options')
-    if (optionsSection) optionsSection.content = optionsMatch[1].trim()
+    if (optionsSection)
+      optionsSection.content = trimLineTrailingWhitespace(optionsMatch[1])
   }
 
   const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -327,7 +342,8 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (decisionMatch?.[1]) {
     const decisionSection = sections.find((s) => s.id === 'decision')
-    if (decisionSection) decisionSection.content = decisionMatch[1].trim()
+    if (decisionSection)
+      decisionSection.content = trimLineTrailingWhitespace(decisionMatch[1])
   }
 
   const consequencesMatch = /### Consequences\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -336,7 +352,9 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   if (consequencesMatch?.[1]) {
     const consequencesSection = sections.find((s) => s.id === 'consequences')
     if (consequencesSection)
-      consequencesSection.content = consequencesMatch[1].trim()
+      consequencesSection.content = trimLineTrailingWhitespace(
+        consequencesMatch[1],
+      )
   }
 
   return sections
@@ -352,21 +370,23 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
       const metadata = metadataMatch[1]
         .replace(/^# These are optional metadata elements.*\n/m, '')
         .trim()
-      metadataSection.content = metadata
+      metadataSection.content = trimLineTrailingWhitespace(metadata)
     }
   }
 
   const titleMatch = /^# (.+)/m.exec(markdown)
   if (titleMatch?.[1]) {
     const titleSection = sections.find((s) => s.id === 'title')
-    if (titleSection) titleSection.content = titleMatch[1].trim()
+    if (titleSection)
+      titleSection.content = trimLineTrailingWhitespace(titleMatch[1])
   }
 
   const contextMatch =
     /## Context and Problem Statement\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(markdown)
   if (contextMatch?.[1]) {
     const contextSection = sections.find((s) => s.id === 'context')
-    if (contextSection) contextSection.content = contextMatch[1].trim()
+    if (contextSection)
+      contextSection.content = trimLineTrailingWhitespace(contextMatch[1])
   }
 
   const driversMatch = /## Decision Drivers\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -374,7 +394,8 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (driversMatch?.[1]) {
     const driversSection = sections.find((s) => s.id === 'drivers')
-    if (driversSection) driversSection.content = driversMatch[1].trim()
+    if (driversSection)
+      driversSection.content = trimLineTrailingWhitespace(driversMatch[1])
   }
 
   const optionsMatch = /## Considered Options\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -382,7 +403,8 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (optionsMatch?.[1]) {
     const optionsSection = sections.find((s) => s.id === 'options')
-    if (optionsSection) optionsSection.content = optionsMatch[1].trim()
+    if (optionsSection)
+      optionsSection.content = trimLineTrailingWhitespace(optionsMatch[1])
   }
 
   const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -390,7 +412,8 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (decisionMatch?.[1]) {
     const decisionSection = sections.find((s) => s.id === 'decision')
-    if (decisionSection) decisionSection.content = decisionMatch[1].trim()
+    if (decisionSection)
+      decisionSection.content = trimLineTrailingWhitespace(decisionMatch[1])
   }
 
   const consequencesMatch = /### Consequences\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -399,7 +422,9 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   if (consequencesMatch?.[1]) {
     const consequencesSection = sections.find((s) => s.id === 'consequences')
     if (consequencesSection)
-      consequencesSection.content = consequencesMatch[1].trim()
+      consequencesSection.content = trimLineTrailingWhitespace(
+        consequencesMatch[1],
+      )
   }
 
   const confirmationMatch = /### Confirmation\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -408,14 +433,17 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   if (confirmationMatch?.[1]) {
     const confirmationSection = sections.find((s) => s.id === 'confirmation')
     if (confirmationSection)
-      confirmationSection.content = confirmationMatch[1].trim()
+      confirmationSection.content = trimLineTrailingWhitespace(
+        confirmationMatch[1],
+      )
   }
 
   const prosconsMatch =
     /## Pros and Cons of the Options\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(markdown)
   if (prosconsMatch?.[1]) {
     const prosconsSection = sections.find((s) => s.id === 'proscons')
-    if (prosconsSection) prosconsSection.content = prosconsMatch[1].trim()
+    if (prosconsSection)
+      prosconsSection.content = trimLineTrailingWhitespace(prosconsMatch[1])
   }
 
   const moreinfoMatch = /## More Information\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -423,7 +451,8 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (moreinfoMatch?.[1]) {
     const moreinfoSection = sections.find((s) => s.id === 'moreinfo')
-    if (moreinfoSection) moreinfoSection.content = moreinfoMatch[1].trim()
+    if (moreinfoSection)
+      moreinfoSection.content = trimLineTrailingWhitespace(moreinfoMatch[1])
   }
 
   return sections
@@ -436,7 +465,7 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
   if (titleMatch) {
     const decidedSection = sections.find((s) => s.id === 'decided')
     if (decidedSection && titleMatch?.[1])
-      decidedSection.content = titleMatch[1].trim()
+      decidedSection.content = trimLineTrailingWhitespace(titleMatch[1])
   }
 
   // Parse each prefix and its content
@@ -446,7 +475,8 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
     )
   if (contextMatch?.[1]) {
     const contextSection = sections.find((s) => s.id === 'context')
-    if (contextSection) contextSection.content = contextMatch[1].trim()
+    if (contextSection)
+      contextSection.content = trimLineTrailingWhitespace(contextMatch[1])
   }
 
   const facingMatch =
@@ -455,7 +485,8 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
     )
   if (facingMatch?.[1]) {
     const facingSection = sections.find((s) => s.id === 'facing')
-    if (facingSection) facingSection.content = facingMatch[1].trim()
+    if (facingSection)
+      facingSection.content = trimLineTrailingWhitespace(facingMatch[1])
   }
 
   const decidedMatch =
@@ -464,7 +495,8 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
     )
   if (decidedMatch?.[1]) {
     const decidedSection = sections.find((s) => s.id === 'decided')
-    if (decidedSection) decidedSection.content = decidedMatch[1].trim()
+    if (decidedSection)
+      decidedSection.content = trimLineTrailingWhitespace(decidedMatch[1])
   }
 
   const neglectedMatch =
@@ -473,7 +505,8 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
     )
   if (neglectedMatch?.[1]) {
     const neglectedSection = sections.find((s) => s.id === 'neglected')
-    if (neglectedSection) neglectedSection.content = neglectedMatch[1].trim()
+    if (neglectedSection)
+      neglectedSection.content = trimLineTrailingWhitespace(neglectedMatch[1])
   }
 
   const achieveMatch = /^to achieve\s+([\s\S]*?)(?=^accepting that\s|$)/m.exec(
@@ -481,7 +514,8 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (achieveMatch?.[1]) {
     const achieveSection = sections.find((s) => s.id === 'achieve')
-    if (achieveSection) achieveSection.content = achieveMatch[1].trim()
+    if (achieveSection)
+      achieveSection.content = trimLineTrailingWhitespace(achieveMatch[1])
   }
 
   const acceptingMatch = /^accepting that\s+([\s\S]*?)(?=^##\s|$)/m.exec(
@@ -489,7 +523,8 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (acceptingMatch?.[1]) {
     const acceptingSection = sections.find((s) => s.id === 'accepting')
-    if (acceptingSection) acceptingSection.content = acceptingMatch[1].trim()
+    if (acceptingSection)
+      acceptingSection.content = trimLineTrailingWhitespace(acceptingMatch[1])
   }
 
   const rationaleMatch = /## Rationale\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -497,7 +532,8 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (rationaleMatch?.[1]) {
     const rationaleSection = sections.find((s) => s.id === 'rationale')
-    if (rationaleSection) rationaleSection.content = rationaleMatch[1].trim()
+    if (rationaleSection)
+      rationaleSection.content = trimLineTrailingWhitespace(rationaleMatch[1])
   }
 
   const referencesMatch = /## References\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
@@ -505,7 +541,8 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
   )
   if (referencesMatch?.[1]) {
     const referencesSection = sections.find((s) => s.id === 'references')
-    if (referencesSection) referencesSection.content = referencesMatch[1].trim()
+    if (referencesSection)
+      referencesSection.content = trimLineTrailingWhitespace(referencesMatch[1])
   }
 
   return sections
@@ -518,7 +555,7 @@ const parseFreeFormMarkdown = (markdown: string): AdrTemplateSection[] => {
   if (titleMatch) {
     const titleSection = sections.find((s) => s.id === 'title')
     if (titleSection && titleMatch?.[1])
-      titleSection.content = titleMatch[1].trim()
+      titleSection.content = trimLineTrailingWhitespace(titleMatch[1])
   }
 
   return sections

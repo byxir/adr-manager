@@ -98,7 +98,7 @@ export default function AdrPage() {
             selectedTemplate?.id as keyof typeof TEMPLATE_PARSERS
           ].generateMarkdown(sections)
         setMarkdown(markdown)
-      }, 500)
+      }, 200)
     }
 
     return () => {
