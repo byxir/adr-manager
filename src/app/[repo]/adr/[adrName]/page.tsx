@@ -23,7 +23,6 @@ import {
 import { useDebounce } from '@/lib/utils'
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
-import DisplayFileContents from './display-file-contents'
 import AdrTemplateSidebar from '@/app/[repo]/adr/[adrName]/adr-template-sidebar'
 import type { AdrTemplate, ExtendedSection } from '@/definitions/types'
 import {
@@ -32,13 +31,16 @@ import {
 } from '@/app/[repo]/adr/[adrName]/adr-templates'
 import { useRepoAdrs } from '@/hooks/use-repo-queries'
 import { atom, useAtom } from 'jotai'
+import { ForwardRefEditor } from '@/components/MDXEditor/ForwardRefEditor'
 
 export const markdownAtom = atom<string>('')
 export const templateMarkdownAtom = atom<string>('')
+export const syncMarkdownAtom = atom<string>('')
 
 export default function AdrPage() {
   const [markdown, setMarkdown] = useAtom(markdownAtom)
   const [templateMarkdown, setTemplateMarkdown] = useAtom(templateMarkdownAtom)
+  const [syncMarkdown, setSyncMarkdown] = useAtom(syncMarkdownAtom)
 
   const { data: session } = useSession()
   const { repo, adrName }: { repo: string; adrName: string } = useParams()
@@ -75,15 +77,14 @@ export default function AdrPage() {
   const adrKey = `${repo}-${adrName}`
 
   useEffect(() => {
-    if (markdown && isEditorFocused) {
+    if (syncMarkdown && isEditorFocused) {
       const sections =
         TEMPLATE_PARSERS[
           selectedTemplate?.id as keyof typeof TEMPLATE_PARSERS
-        ].parseMarkdown(markdown)
+        ].parseMarkdown(syncMarkdown)
       setSections(sections)
-      console.log('SECTIONS ->>>>>>>>>>>>>>>', sections)
     }
-  }, [markdown, selectedTemplate, isEditorFocused])
+  }, [syncMarkdown, selectedTemplate, isEditorFocused])
 
   useEffect(() => {
     if (sectionsDebounceTimeoutRef.current) {
@@ -97,7 +98,7 @@ export default function AdrPage() {
             selectedTemplate?.id as keyof typeof TEMPLATE_PARSERS
           ].generateMarkdown(sections)
         setMarkdown(markdown)
-      }, 200)
+      }, 500)
     }
 
     return () => {
@@ -124,7 +125,7 @@ export default function AdrPage() {
   const getEditorContent = useCallback(() => {
     if (editorRef.current) {
       const content = editorRef.current.getMarkdown()
-      setMarkdown(content)
+      setSyncMarkdown(content)
       return content
     }
     return null
@@ -330,10 +331,11 @@ export default function AdrPage() {
           typeof markdown === 'string' &&
           currentAdrKey === adrKey &&
           !isNewAdr ? (
-            <DisplayFileContents
+            <ForwardRefEditor
               key={adrKey}
               ref={editorRef}
               onEditorReady={handleEditorReady}
+              markdown={''}
             />
           ) : (
             <SkeletonEditor />

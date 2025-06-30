@@ -84,7 +84,6 @@ export default function App() {
   const editorElementRef = useRef<HTMLDivElement>(null)
   const internalEditorRef = useRef<MDXEditorMethods>(null)
 
-  const [markdown, setMarkdown] = useAtom(markdownAtom)
   const [templateMarkdown, setTemplateMarkdown] = useAtom(templateMarkdownAtom)
 
   // Call onEditorReady when the editor element is available
