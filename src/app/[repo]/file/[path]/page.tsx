@@ -18,6 +18,8 @@ import { useParams, useSearchParams } from 'next/navigation'
 import DisplayFileContents from './display-file-contents'
 import { SkeletonEditor } from '@/lib/helpers'
 import type { ApiResponse } from '@/definitions/types'
+import { templateMarkdownAtom } from '../../layout'
+import { useAtom } from 'jotai'
 
 export default function FilePage() {
   const { data: session } = useSession()
@@ -29,9 +31,9 @@ export default function FilePage() {
 
   const owner = searchParams.get('owner')
 
-  const [markdown, setMarkdown] = useState<string | null>(null)
+  const [templateMarkdown, setTemplateMarkdown] = useAtom(templateMarkdownAtom)
 
-  const { data: fileResponse, error } = useQuery<
+  const { data: fileResponse, isLoading } = useQuery<
     ApiResponse<{
       content: string
       name: string
@@ -46,7 +48,7 @@ export default function FilePage() {
 
   useEffect(() => {
     if (fileResponse) {
-      setMarkdown(
+      setTemplateMarkdown(
         `\`\`\`${path?.split('.').pop() ?? ''}\n${fileResponse.data.content}\n\`\`\``,
       )
     }
@@ -77,10 +79,10 @@ export default function FilePage() {
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        {session?.user && markdown && (
-          <DisplayFileContents markdown={markdown} />
+        {session?.user && templateMarkdown && !isLoading && (
+          <DisplayFileContents markdown={templateMarkdown} />
         )}
-        {session?.user && !markdown && <SkeletonEditor />}
+        {session?.user && isLoading && <SkeletonEditor />}
       </div>
     </SidebarInset>
   )

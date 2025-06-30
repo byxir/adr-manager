@@ -28,7 +28,6 @@ export const ForwardRefEditor = forwardRef<
     placeholder={
       <span className="text-muted-foreground/30">Write your ADR here...</span>
     }
-    markdown={props.markdown}
     readOnly={props.readOnly}
   />
 ))

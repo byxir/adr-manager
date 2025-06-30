@@ -15,10 +15,11 @@ export default forwardRef<
 >(function DisplayFileContents({ markdown, className, onEditorReady }, ref) {
   return (
     <ForwardRefEditor
-      markdown={markdown}
+      markdown={''}
       ref={ref}
       className={className}
       onEditorReady={onEditorReady}
+      readOnly
     />
   )
 })

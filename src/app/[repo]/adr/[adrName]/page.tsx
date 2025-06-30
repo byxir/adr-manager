@@ -32,10 +32,11 @@ import {
 import { useRepoAdrs } from '@/hooks/use-repo-queries'
 import { atom, useAtom } from 'jotai'
 import { ForwardRefEditor } from '@/components/MDXEditor/ForwardRefEditor'
-
-export const markdownAtom = atom<string>('')
-export const templateMarkdownAtom = atom<string>('')
-export const syncMarkdownAtom = atom<string>('')
+import {
+  markdownAtom,
+  syncMarkdownAtom,
+  templateMarkdownAtom,
+} from '../../layout'
 
 export default function AdrPage() {
   const [markdown, setMarkdown] = useAtom(markdownAtom)
@@ -336,6 +337,7 @@ export default function AdrPage() {
               ref={editorRef}
               onEditorReady={handleEditorReady}
               markdown={''}
+              readOnly={false}
             />
           ) : (
             <SkeletonEditor />

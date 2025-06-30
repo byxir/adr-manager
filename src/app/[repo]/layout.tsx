@@ -3,6 +3,11 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { useParams, useSearchParams } from 'next/navigation'
 import { useRepoAdrs, useRepos, useRepoTree } from '@/hooks/use-repo-queries'
+import { atom } from 'jotai'
+
+export const markdownAtom = atom<string>('')
+export const templateMarkdownAtom = atom<string>('')
+export const syncMarkdownAtom = atom<string>('')
 
 export default function RepoLayout({
   children,

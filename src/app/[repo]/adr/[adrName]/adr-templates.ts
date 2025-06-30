@@ -303,10 +303,7 @@ const generateFreeFormMarkdown = (sections: AdrTemplateSection[]): string => {
     {} as Record<string, string>,
   )
 
-  return `# ${sectionMap.title ?? 'Untitled ADR'}
-
-Write your Architecture Decision Record here in free form. You can structure it however you like.
-`
+  return ``
 }
 
 const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {

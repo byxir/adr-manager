@@ -40,10 +40,7 @@ import {
 } from '@mdxeditor/editor'
 import '@/styles/editor.css'
 import { useAtom } from 'jotai'
-import {
-  markdownAtom,
-  templateMarkdownAtom,
-} from '@/app/[repo]/adr/[adrName]/page'
+import { templateMarkdownAtom } from '@/app/[repo]/layout'
 
 // Only import this to the next file
 export default function InitializedMDXEditor({

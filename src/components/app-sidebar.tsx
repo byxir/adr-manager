@@ -124,7 +124,7 @@ function FileTree({
       )
     } else {
       router.push(
-        `/${activeRepo}/file/${filePath.replaceAll('/', '~')}?owner=${owner}`,
+        `/${activeRepo}/file/${filePath.replaceAll('/', '~')}?owner=${owner}&branch=${branch}`,
       )
     }
   }
@@ -285,7 +285,20 @@ function FileTree({
           })
         }
 
-        return children
+        return [...children].sort((a, b) => {
+          const itemA = items?.[a]
+          const itemB = items?.[b]
+
+          if (!itemA || !itemB) return 0
+
+          const isAFolder = (itemA?.children?.length ?? 0) > 0
+          const isBFolder = (itemB?.children?.length ?? 0) > 0
+
+          if (isAFolder && !isBFolder) return -1
+          if (!isAFolder && isBFolder) return 1
+
+          return (itemA?.name ?? '').localeCompare(itemB?.name ?? '')
+        })
       },
     },
     features: [
@@ -391,7 +404,7 @@ function FileTree({
                       onClick={() =>
                         handleFileClick(filePath, item.getItemName())
                       }
-                      className="flex items-center gap-2 w-full text-left hover:bg-accent hover:text-accent-foreground rounded-sm px-2 py-1"
+                      className="flex items-center gap-2 w-full text-left"
                     >
                       {getFileIcon(
                         itemData?.fileExtension,

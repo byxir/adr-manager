@@ -16,6 +16,7 @@ export const ForwardRefEditor = forwardRef<
   MDXEditorMethods,
   MDXEditorProps & {
     onEditorReady?: (element: HTMLElement) => void
+    readOnly: boolean
   }
 >((props, ref) => (
   <Editor
@@ -26,6 +27,8 @@ export const ForwardRefEditor = forwardRef<
     placeholder={
       <span className="text-muted-foreground/30">Write your ADR here...</span>
     }
+    markdown={props.markdown}
+    readOnly={props.readOnly}
   />
 ))
 
