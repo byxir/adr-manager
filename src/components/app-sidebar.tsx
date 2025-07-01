@@ -518,7 +518,7 @@ export function AppSidebar({
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
-      <div className="flex-1 overflow-hidden h-screen">{children}</div>
+      <div className="flex-1 h-screen overflow-hidden">{children}</div>
     </div>
   )
 }

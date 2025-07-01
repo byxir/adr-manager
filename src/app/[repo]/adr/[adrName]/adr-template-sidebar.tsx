@@ -402,7 +402,7 @@ export default function AdrTemplateSidebar({
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto min-h-0">
               <Collapsible open={isStatusOpen} onOpenChange={setIsStatusOpen}>
                 <div className="p-4 border-b">
                   <CollapsibleTrigger asChild>

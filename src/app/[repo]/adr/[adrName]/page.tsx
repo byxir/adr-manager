@@ -327,22 +327,20 @@ export default function AdrPage() {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          {session?.user &&
-          typeof markdown === 'string' &&
-          currentAdrKey === adrKey &&
-          !isNewAdr ? (
-            <ForwardRefEditor
-              key={adrKey}
-              ref={editorRef}
-              onEditorReady={handleEditorReady}
-              markdown={''}
-              readOnly={false}
-            />
-          ) : (
-            <SkeletonEditor />
-          )}
-        </div>
+        {session?.user &&
+        typeof markdown === 'string' &&
+        currentAdrKey === adrKey &&
+        !isNewAdr ? (
+          <ForwardRefEditor
+            key={adrKey}
+            ref={editorRef}
+            onEditorReady={handleEditorReady}
+            markdown={''}
+            readOnly={false}
+          />
+        ) : (
+          <SkeletonEditor />
+        )}
       </SidebarInset>
       <AdrTemplateSidebar
         initialTemplate={selectedTemplate ?? undefined}
