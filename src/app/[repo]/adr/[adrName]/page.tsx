@@ -11,7 +11,13 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { Separator } from '@/components/ui/separator'
-import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
 import '@mdxeditor/editor/style.css'
 import { useParams, useRouter } from 'next/navigation'
 import {
@@ -20,7 +26,7 @@ import {
   updateAdrTemplate,
   deleteAdr,
 } from '@/lib/adr-db-actions'
-import { useDebounce } from '@/lib/utils'
+import { cn, useDebounce } from '@/lib/utils'
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
 import AdrTemplateSidebar from '@/app/[repo]/adr/[adrName]/adr-template-sidebar'
@@ -37,6 +43,9 @@ import {
   syncMarkdownAtom,
   templateMarkdownAtom,
 } from '../../layout'
+import { Button } from '@/components/ui/button'
+import { PanelLeftIcon, PanelRightIcon } from 'lucide-react'
+import { RightSidebarTrigger } from '@/components/ui/right-sidebar'
 
 export default function AdrPage() {
   const [markdown, setMarkdown] = useAtom(markdownAtom)
@@ -305,52 +314,63 @@ export default function AdrPage() {
   }, [adr.data, adrKey])
 
   return (
-    <div className="flex h-screen">
-      <SidebarInset className="flex-1">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
+    <AdrTemplateSidebar
+      initialTemplate={selectedTemplate ?? undefined}
+      showInitialDialog={isNewAdr}
+      onTemplateSelected={handleTemplateSelected}
+      onTemplateChanged={handleTemplateChanged}
+      onCancelAdr={handleCancelAdr}
+      sections={sections}
+      setSections={setSections}
+    >
+      <div className="flex h-screen z-50">
+        <div className="flex-1">
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4 w-full justify-between">
+              <div className="flex items-center gap-2">
+                <SidebarTrigger className="-ml-1" />
+
+                <Separator
+                  orientation="vertical"
+                  className="mr-2 data-[orientation=vertical]:h-4"
+                />
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem className="hidden md:block">
+                      <BreadcrumbLink href="#">{repo}</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{adrName}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </div>
+              <div className="flex items-center gap-2">
+                <Separator
+                  orientation="vertical"
+                  className="ml-2 data-[orientation=vertical]:h-4"
+                />
+                <RightSidebarTrigger className="-ml-1" />
+              </div>
+            </div>
+          </header>
+          {session?.user &&
+          typeof markdown === 'string' &&
+          currentAdrKey === adrKey &&
+          !isNewAdr ? (
+            <ForwardRefEditor
+              key={adrKey}
+              ref={editorRef}
+              onEditorReady={handleEditorReady}
+              markdown={''}
+              readOnly={false}
             />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">{repo}</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{adrName}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
-        {session?.user &&
-        typeof markdown === 'string' &&
-        currentAdrKey === adrKey &&
-        !isNewAdr ? (
-          <ForwardRefEditor
-            key={adrKey}
-            ref={editorRef}
-            onEditorReady={handleEditorReady}
-            markdown={''}
-            readOnly={false}
-          />
-        ) : (
-          <SkeletonEditor />
-        )}
-      </SidebarInset>
-      <AdrTemplateSidebar
-        initialTemplate={selectedTemplate ?? undefined}
-        showInitialDialog={isNewAdr}
-        onTemplateSelected={handleTemplateSelected}
-        onTemplateChanged={handleTemplateChanged}
-        onCancelAdr={handleCancelAdr}
-        sections={sections}
-        setSections={setSections}
-      />
-    </div>
+          ) : (
+            <SkeletonEditor />
+          )}
+        </div>
+      </div>
+    </AdrTemplateSidebar>
   )
 }

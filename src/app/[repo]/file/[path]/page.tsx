@@ -78,7 +78,7 @@ export default function FilePage() {
           </Breadcrumb>
         </div>
       </header>
-      <div className="hi">
+      <div className="h-screen">
         {session?.user && templateMarkdown && !isLoading && (
           <DisplayFileContents markdown={templateMarkdown} />
         )}

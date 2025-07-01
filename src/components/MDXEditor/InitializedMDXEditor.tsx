@@ -107,8 +107,6 @@ export default function App() {
     }
   }
 
-  console.log('templateMarkdown', templateMarkdown)
-
   return (
     <div ref={editorElementRef}>
       <MDXEditor

@@ -85,3 +85,11 @@ export async function updateAdrTemplate(
     .equals([name, repository])
     .modify({ templateId })
 }
+
+export async function updateAdrName(
+  id: string,
+  newName: string,
+  newPath: string,
+) {
+  await adrDB.adrs.update(id, { name: newName, path: newPath })
+}

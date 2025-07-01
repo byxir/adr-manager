@@ -5,16 +5,21 @@
   --editor-line-height: 1.5;
   --editor-color: var(--foreground);
   --editor-background: var(--background);
+  width: 100%;
 }
 
 /* Toolbar styles */
-.mdxeditor .toolbar {
-  background-color: var(--background);
+.mdxeditor .toolbar,
+.mdxeditor [data-slot='toolbar'],
+.mdxeditor [role='toolbar'] {
   border-bottom: 1px solid var(--border);
   padding: 0.5rem;
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  align-items: flex-start;
+  min-height: auto;
+  width: 100%;
 }
 
 .mdxeditor .toolbar button {
@@ -28,6 +33,7 @@
   align-items: center;
   gap: 0.25rem;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .mdxeditor .toolbar button:hover {
@@ -284,6 +290,7 @@
   border-radius: 0.5rem;
   padding: 1rem;
   color: var(--foreground);
+  /* transform: translateX(2000px); */
 }
 
 .mdxeditor [role='dialog'] input,
