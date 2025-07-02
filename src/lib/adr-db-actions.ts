@@ -93,3 +93,25 @@ export async function updateAdrName(
 ) {
   await adrDB.adrs.update(id, { name: newName, path: newPath })
 }
+
+export async function updateAdrStatus(
+  name: string,
+  repository: string,
+  status: 'todo' | 'in-progress' | 'done' | 'backlog',
+) {
+  await adrDB.adrs
+    .where(['name', 'repository'])
+    .equals([name, repository])
+    .modify({ status })
+}
+
+export async function updateAdrTags(
+  name: string,
+  repository: string,
+  tags: string[],
+) {
+  await adrDB.adrs
+    .where(['name', 'repository'])
+    .equals([name, repository])
+    .modify({ tags })
+}

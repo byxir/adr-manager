@@ -26,7 +26,18 @@ import {
   Users,
   X,
   RefreshCw,
+  CircleDot,
+  PlayCircle,
+  CheckCircle,
+  Archive,
 } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import {
+  updateAdrStatus,
+  updateAdrTags,
+  getAdrByNameAndRepository,
+} from '@/lib/adr-db-actions'
+import { useParams } from 'next/navigation'
 import {
   Collapsible,
   CollapsibleContent,
@@ -50,7 +61,7 @@ interface ExtendedSection extends AdrTemplateSection {
   items?: string[]
 }
 
-type AdrStatus = 'TO DO' | 'IN PROGRESS' | 'DONE' | 'BACKLOG'
+type AdrStatus = 'todo' | 'in-progress' | 'done' | 'backlog'
 
 interface AdrTemplateSidebarProps {
   initialTemplate?: AdrTemplate
@@ -73,6 +84,8 @@ export default function AdrTemplateSidebar({
   setSections,
   children,
 }: AdrTemplateSidebarProps) {
+  const { repo, adrName }: { repo: string; adrName: string } = useParams()
+
   const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
     initialTemplate ?? null,
   )
@@ -80,9 +93,9 @@ export default function AdrTemplateSidebar({
     useState(showInitialDialog)
   const [hasContent, setHasContent] = useState(false)
 
-  const [isStatusOpen, setIsStatusOpen] = useState(false)
+  const [isTeamOpen, setIsTeamOpen] = useState(false)
   const [isTagsOpen, setIsTagsOpen] = useState(false)
-  const [adrStatus, setAdrStatus] = useState<AdrStatus>('TO DO')
+  const [adrStatus, setAdrStatus] = useState<AdrStatus>('todo')
   const [collaborators] = useState([
     { name: 'John Doe', username: 'john.doe', avatar: '' },
     { name: 'Jane Smith', username: 'jane.smith', avatar: '' },
@@ -90,6 +103,24 @@ export default function AdrTemplateSidebar({
   ])
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
+
+  // Use live query to sync with database
+  const adrData = useLiveQuery(
+    () => getAdrByNameAndRepository(adrName, repo),
+    [adrName, repo],
+  )
+
+  // Sync status and tags from database
+  useEffect(() => {
+    if (adrData) {
+      if (adrData.status) {
+        setAdrStatus(adrData.status)
+      }
+      if (adrData.tags) {
+        setTags(adrData.tags)
+      }
+    }
+  }, [adrData])
 
   useEffect(() => {
     if (initialTemplate && initialTemplate !== selectedTemplate) {
@@ -301,44 +332,59 @@ export default function AdrTemplateSidebar({
     )
   }, [])
 
-  const addTag = useCallback(() => {
+  const addTag = useCallback(async () => {
     if (newTag.trim() && !tags.includes(newTag.trim().toLowerCase())) {
-      setTags((prev) => [...prev, newTag.trim().toLowerCase()])
+      const updatedTags = [...tags, newTag.trim().toLowerCase()]
+      setTags(updatedTags)
       setNewTag('')
+      await updateAdrTags(adrName, repo, updatedTags)
     }
-  }, [newTag, tags])
+  }, [newTag, tags, adrName, repo])
 
-  const removeTag = useCallback((tag: string) => {
-    setTags((prev) => prev.filter((t) => t !== tag))
-  }, [])
+  const removeTag = useCallback(
+    async (tag: string) => {
+      const updatedTags = tags.filter((t) => t !== tag)
+      setTags(updatedTags)
+      await updateAdrTags(adrName, repo, updatedTags)
+    },
+    [tags, adrName, repo],
+  )
+
+  const handleStatusChange = useCallback(
+    async (status: AdrStatus) => {
+      setAdrStatus(status)
+      await updateAdrStatus(adrName, repo, status)
+    },
+    [adrName, repo],
+  )
 
   const getStatusColor = useCallback((status: AdrStatus) => {
     switch (status) {
-      case 'TO DO':
-        return 'bg-gray-100 text-gray-700 border-gray-300'
-      case 'IN PROGRESS':
-        return 'bg-blue-100 text-blue-700 border-blue-300'
-      case 'DONE':
-        return 'bg-green-100 text-green-700 border-green-300'
-      case 'BACKLOG':
-        return 'bg-orange-100 text-orange-700 border-orange-300'
+      case 'todo':
+        return 'bg-slate-50 text-slate-600 border-slate-200'
+      case 'in-progress':
+        return 'bg-blue-50 text-blue-600 border-blue-200'
+      case 'done':
+        return 'bg-green-50 text-green-600 border-green-200'
+      case 'backlog':
+        return 'bg-amber-50 text-amber-600 border-amber-200'
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300'
+        return 'bg-slate-50 text-slate-600 border-slate-200'
     }
   }, [])
 
   const getStatusIcon = useCallback((status: AdrStatus) => {
     switch (status) {
-      case 'TO DO':
-        return '⏳'
-      case 'IN PROGRESS':
-        return '🔄'
-      case 'DONE':
-        return '✅'
-      case 'BACKLOG':
-        return '📋'
+      case 'todo':
+        return CircleDot
+      case 'in-progress':
+        return PlayCircle
+      case 'done':
+        return CheckCircle
+      case 'backlog':
+        return Archive
       default:
-        return '⏳'
+        return CircleDot
     }
   }, [])
 
@@ -347,7 +393,7 @@ export default function AdrTemplateSidebar({
 
   return (
     <div className="flex h-screen w-full">
-      <div className="h-screen flex-shrink overflow-hidden w-full px-4">
+      <div className="flex-shrink overflow-y-scroll w-full px-4">
         {children}
       </div>
       <RightSidebar side="right" className="">
@@ -414,7 +460,67 @@ export default function AdrTemplateSidebar({
           ) : (
             <>
               <div className="flex-1 overflow-y-auto min-h-0">
-                <Collapsible open={isStatusOpen} onOpenChange={setIsStatusOpen}>
+                {/* Status Section - Always visible */}
+                <div className="p-4 border-b">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Status
+                    </Label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-between text-sm h-8 ${getStatusColor(adrStatus)}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {React.createElement(getStatusIcon(adrStatus), {
+                              className: 'w-4 h-4',
+                            })}
+                            {adrStatus === 'todo'
+                              ? 'To Do'
+                              : adrStatus === 'in-progress'
+                                ? 'In Progress'
+                                : adrStatus === 'done'
+                                  ? 'Done'
+                                  : 'Backlog'}
+                          </span>
+                          <ChevronDown className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-40">
+                        {(
+                          ['todo', 'in-progress', 'done', 'backlog'] as const
+                        ).map((status) => {
+                          const StatusIcon = getStatusIcon(status)
+                          const displayName =
+                            status === 'todo'
+                              ? 'To Do'
+                              : status === 'in-progress'
+                                ? 'In Progress'
+                                : status === 'done'
+                                  ? 'Done'
+                                  : 'Backlog'
+                          return (
+                            <DropdownMenuItem
+                              key={status}
+                              onClick={() => handleStatusChange(status)}
+                              className="text-sm"
+                            >
+                              <span className="flex items-center gap-2">
+                                <StatusIcon className="w-4 h-4" />
+                                {displayName}
+                              </span>
+                            </DropdownMenuItem>
+                          )
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                {/* Team Section - Collapsible */}
+                <Collapsible open={isTeamOpen} onOpenChange={setIsTeamOpen}>
                   <div className="p-4 border-b">
                     <CollapsibleTrigger asChild>
                       <Button
@@ -422,10 +528,10 @@ export default function AdrTemplateSidebar({
                         className="w-full justify-between p-0 h-auto font-semibold text-sm"
                       >
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          Status & Team
+                          <Users className="w-4 h-4" />
+                          Team ({collaborators.length})
                         </div>
-                        {isStatusOpen ? (
+                        {isTeamOpen ? (
                           <ChevronDown className="w-4 h-4" />
                         ) : (
                           <ChevronRight className="w-4 h-4" />
@@ -433,88 +539,40 @@ export default function AdrTemplateSidebar({
                       </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-3 mt-3">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-medium">
-                          ADR Status
-                        </Label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={`w-full justify-between text-xs h-6 ${getStatusColor(adrStatus)}`}
-                            >
-                              <span className="flex items-center gap-1">
-                                <span>{getStatusIcon(adrStatus)}</span>
-                                {adrStatus}
-                              </span>
-                              <ChevronDown className="w-3 h-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-40">
-                            {(
-                              [
-                                'TO DO',
-                                'IN PROGRESS',
-                                'DONE',
-                                'BACKLOG',
-                              ] as const
-                            ).map((status) => (
-                              <DropdownMenuItem
-                                key={status}
-                                onClick={() => setAdrStatus(status)}
-                                className="text-xs"
-                              >
-                                <span className="flex items-center gap-2">
-                                  <span>{getStatusIcon(status)}</span>
-                                  {status}
-                                </span>
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-xs font-medium flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          Collaborators ({collaborators.length})
-                        </Label>
-
-                        <div className="space-y-2 max-h-24 overflow-y-auto">
-                          {collaborators.map((collaborator, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1.5"
-                            >
-                              <Avatar className="w-5 h-5">
-                                <AvatarImage
-                                  src={collaborator.avatar}
-                                  alt={collaborator.name}
-                                />
-                                <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                                  {collaborator.name
-                                    .split(' ')
-                                    .map((n) => n[0])
-                                    .join('')
-                                    .toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium truncate">
-                                  {collaborator.name}
-                                </div>
-                                <div className="text-xs text-muted-foreground truncate">
-                                  @{collaborator.username}
-                                </div>
+                      <div className="space-y-2 max-h-24 overflow-y-auto">
+                        {collaborators.map((collaborator, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1.5"
+                          >
+                            <Avatar className="w-5 h-5">
+                              <AvatarImage
+                                src={collaborator.avatar}
+                                alt={collaborator.name}
+                              />
+                              <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+                                {collaborator.name
+                                  .split(' ')
+                                  .map((n) => n[0])
+                                  .join('')
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium truncate">
+                                {collaborator.name}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                @{collaborator.username}
                               </div>
                             </div>
-                          ))}
-                          {collaborators.length === 0 && (
-                            <div className="text-xs text-muted-foreground italic text-center py-2">
-                              No collaborators assigned
-                            </div>
-                          )}
-                        </div>
+                          </div>
+                        ))}
+                        {collaborators.length === 0 && (
+                          <div className="text-xs text-muted-foreground italic text-center py-2">
+                            No collaborators assigned
+                          </div>
+                        )}
                       </div>
                     </CollapsibleContent>
                   </div>
