@@ -76,9 +76,11 @@ export async function POST(request: NextRequest) {
       'repo',
       'path',
       'owner',
-      'sha',
       'branch',
     ] as const)
+
+    const sha = request.nextUrl.searchParams.get('sha')
+
     console.log('POST', {
       repo,
       path,
