@@ -123,7 +123,7 @@ export class GitHubProvider {
       path,
       message: 'Create or update ADR',
       content: Buffer.from(content).toString('base64'),
-      sha: sha,
+      sha: sha ?? undefined,
     })
   }
 

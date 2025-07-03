@@ -200,7 +200,8 @@ function FileTree({
 
     if (adr && !adr.hasMatch) {
       router.push(
-        `/${activeRepo}/adr/${fileName}?owner=${owner}&branch=${branch}`,
+        // `/${activeRepo}/adr/${fileName}?owner=${owner}&branch=${branch}`,
+        `/${activeRepo}/adr/${filePath.replaceAll('/', '~')}?owner=${owner}&branch=${branch}`,
       )
     } else {
       router.push(

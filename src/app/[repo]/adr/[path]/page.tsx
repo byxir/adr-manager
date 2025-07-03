@@ -11,13 +11,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { Separator } from '@/components/ui/separator'
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 import '@mdxeditor/editor/style.css'
 import { useParams, useRouter } from 'next/navigation'
 import {
@@ -29,12 +23,12 @@ import {
 import { cn, useDebounce } from '@/lib/utils'
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
-import AdrTemplateSidebar from '@/app/[repo]/adr/[adrName]/adr-template-sidebar'
+import AdrTemplateSidebar from '@/app/[repo]/adr/[path]/adr-template-sidebar'
 import type { AdrTemplate, ExtendedSection } from '@/definitions/types'
 import {
   getTemplateById,
   TEMPLATE_PARSERS,
-} from '@/app/[repo]/adr/[adrName]/adr-templates'
+} from '@/app/[repo]/adr/[path]/adr-templates'
 import { useRepoAdrs } from '@/hooks/use-repo-queries'
 import { atom, useAtom } from 'jotai'
 import { ForwardRefEditor } from '@/components/MDXEditor/ForwardRefEditor'
@@ -53,7 +47,9 @@ export default function AdrPage() {
   const [syncMarkdown, setSyncMarkdown] = useAtom(syncMarkdownAtom)
 
   const { data: session } = useSession()
-  const { repo, adrName }: { repo: string; adrName: string } = useParams()
+  const { repo, path }: { repo: string; path: string } = useParams()
+  const formattedPath = path.replaceAll('~', '/')
+  const adrName = formattedPath.split('/').pop() ?? ''
   const router = useRouter()
   const queryClient = useQueryClient()
   const [currentAdrKey, setCurrentAdrKey] = useState<string>('')
