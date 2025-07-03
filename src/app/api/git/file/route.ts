@@ -80,24 +80,17 @@ export async function POST(request: NextRequest) {
     ] as const)
 
     const sha = request.nextUrl.searchParams.get('sha')
-
-    console.log('POST', {
-      repo,
-      path,
-      owner,
-      sha,
-      branch,
-    })
     const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
     const content = await request.text()
+    const parsedContent = JSON.parse(content).body
 
     await gitAdapter.createOrUpdateFile({
       accessToken: session.user.accessToken ?? '',
       owner,
       repository: repo,
       path,
-      content,
+      content: parsedContent,
       sha,
       branch,
       message: 'ADR Updated',

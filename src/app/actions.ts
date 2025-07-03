@@ -30,10 +30,15 @@ export function createOrUpdateFile({
     sha,
     branch,
   })
-  return axios.post('/api/git/file', {
-    params: { repo, path, owner, sha, branch },
-    body: content,
-  })
+  return axios.post(
+    '/api/git/file',
+    {
+      body: content,
+    },
+    {
+      params: { repo, path, owner, sha, branch },
+    },
+  )
 }
 
 export function getRepoTree(
