@@ -33,7 +33,7 @@ export interface GitAdapterCreateOrUpdateFile
   message: string
   content: string
   branch: string
-  sha: string
+  sha: string | null
 }
 
 export interface GitAdapter {

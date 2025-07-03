@@ -72,7 +72,7 @@ export async function DELETE(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await withAuth()
-    const { repo, path, owner, sha, branch } = getParams(request, [
+    const { repo, path, owner, branch } = getParams(request, [
       'repo',
       'path',
       'owner',
