@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { getAdrByNameAndRepository } from '@/lib/adr-db-actions'
 import { RiFileTextLine } from '@remixicon/react'
 
 const RepoPage = () => {
@@ -22,6 +21,45 @@ const RepoPage = () => {
 
   const activeRepo = repo as string
   const adrs = useRepoAdrs(activeRepo)
+  const { data: repoTree } = useRepoTree(activeRepo, owner, branch)
+
+  // Get markdown files from repository tree
+  const markdownFiles =
+    repoTree?.data?.tree?.filter(
+      (item) => item.type === 'blob' && item.path?.endsWith('.md'),
+    ) ?? []
+
+  // Combine database ADRs with markdown files from tree
+  const allAdrs = React.useMemo(() => {
+    const combined = []
+
+    // Add database ADRs
+    if (adrs && adrs.length > 0) {
+      combined.push(
+        ...adrs.map((adr) => ({
+          ...adr,
+          source: 'database' as const,
+        })),
+      )
+    }
+
+    // Add markdown files from tree (excluding duplicates)
+    markdownFiles.forEach((file) => {
+      const fileName = file.path?.split('/').pop() ?? file.path ?? ''
+      const isAlreadyInDb = adrs?.some((adr) => adr.name === fileName)
+
+      if (!isAlreadyInDb) {
+        combined.push({
+          name: fileName,
+          path: file.path ?? '',
+          createdAt: new Date().toISOString(), // Default timestamp for tree files
+          source: 'tree' as const,
+        })
+      }
+    })
+
+    return combined
+  }, [adrs, markdownFiles])
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -33,13 +71,13 @@ const RepoPage = () => {
       </div>
 
       {/* ADRs Section */}
-      {adrs && adrs.length > 0 && (
+      {allAdrs && allAdrs.length > 0 && (
         <div className="space-y-4">
           {/* <h2 className="text-2xl font-semibold">
             Architecture Decision Records
           </h2> */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {adrs
+            {allAdrs
               .sort(
                 (a, b) =>
                   new Date(a.createdAt).getTime() -
@@ -47,11 +85,11 @@ const RepoPage = () => {
               )
               .map((adr) => (
                 <Card
-                  key={adr.name}
+                  key={`${adr.source}-${adr.name}`}
                   className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() =>
                     router.push(
-                      `/${activeRepo}/adr/${adr.name}?owner=${owner}&branch=${branch}`,
+                      `/${activeRepo}/adr/${adr.path.replaceAll('/', '~')}?owner=${owner}&branch=${branch}`,
                     )
                   }
                 >
@@ -65,7 +103,7 @@ const RepoPage = () => {
                   </CardHeader>
                   <CardContent>
                     <CardDescription className="text-xs">
-                      ADR • {adr.path}
+                      {adr.source === 'database' ? 'ADR' : 'MD'} • {adr.path}
                     </CardDescription>
                   </CardContent>
                 </Card>

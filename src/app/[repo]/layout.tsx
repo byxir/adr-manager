@@ -1,10 +1,22 @@
 'use client'
 import { AppSidebar } from '@/components/app-sidebar'
-import { SidebarProvider } from '@/components/ui/sidebar'
-import { useParams, useSearchParams } from 'next/navigation'
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { useParams, useSearchParams, usePathname } from 'next/navigation'
 import { useRepoAdrs, useRepos, useRepoTree } from '@/hooks/use-repo-queries'
 import { atom } from 'jotai'
-import { RightSidebarProvider } from '@/components/ui/right-sidebar'
+import {
+  RightSidebarProvider,
+  RightSidebarTrigger,
+} from '@/components/ui/right-sidebar'
+import { Separator } from '@radix-ui/react-separator'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 
 export const markdownAtom = atom<string>('')
 export const templateMarkdownAtom = atom<string>('')
@@ -20,6 +32,7 @@ export default function RepoLayout({
 }) {
   const { repo } = useParams()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const owner = searchParams.get('owner')
   const branch = searchParams.get('branch')
 
@@ -46,6 +59,39 @@ export default function RepoLayout({
           owner={owner ?? repoOwner}
           branch={branch ?? repoDefaultBranch}
         >
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4 w-full justify-between">
+              <div className="flex items-center gap-2">
+                <SidebarTrigger className="-ml-1" />
+
+                <Separator
+                  orientation="vertical"
+                  className="mr-2 data-[orientation=vertical]:h-4"
+                />
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem className="hidden md:block">
+                      <BreadcrumbLink href="#">{repo}</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{activeRepo}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </div>
+              {pathname.includes('/adr/') && (
+                <div className="flex items-center gap-2">
+                  <Separator
+                    orientation="vertical"
+                    className="ml-2 data-[orientation=vertical]:h-4"
+                  />
+
+                  <RightSidebarTrigger className="-ml-1" />
+                </div>
+              )}
+            </div>
+          </header>
           {children}
         </AppSidebar>
       </RightSidebarProvider>

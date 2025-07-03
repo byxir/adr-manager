@@ -193,17 +193,16 @@ function FileTree({
     })
   }, [items, debouncedSearchQuery])
 
-  const handleFileClick = async (filePath: string, fileName: string) => {
+  const handleFileClick = async (filePath: string, item: Item) => {
     if (!activeRepo) return
 
-    const adr = await getAdrByNameAndRepository(fileName, activeRepo)
-
-    if (adr && !adr.hasMatch) {
+    if (item.isAdr) {
+      // If it's an ADR in the database, route to the ADR page
       router.push(
-        // `/${activeRepo}/adr/${fileName}?owner=${owner}&branch=${branch}`,
         `/${activeRepo}/adr/${filePath.replaceAll('/', '~')}?owner=${owner}&branch=${branch}`,
       )
     } else {
+      // Otherwise, route to the file page
       router.push(
         `/${activeRepo}/file/${filePath.replaceAll('/', '~')}?owner=${owner}&branch=${branch}`,
       )
@@ -371,9 +370,6 @@ function FileTree({
         const parentData = prevItems[parentId]
         if (!parentData) return prevItems
 
-        console.log('parentId', parentId)
-        console.log('sortedChildren', sortedChildren)
-
         return {
           ...prevItems,
           [parentId]: {
@@ -510,7 +506,30 @@ function FileTree({
   }, [items])
 
   const addNewAdr = async () => {
-    const newAdrName = 'new-adr.md'
+    // Check for existing ADRs with similar names in database
+    const existingNamesFromDb = adrs?.map((adr) => adr.name) ?? []
+
+    // Check for existing ADRs in the file tree
+    const existingNamesFromTree: string[] = []
+    if (items) {
+      Object.values(items).forEach((item) => {
+        if (item.isAdr && item.name) {
+          existingNamesFromTree.push(item.name)
+        }
+      })
+    }
+
+    // Combine both sources of existing names
+    const existingNames = [...existingNamesFromDb, ...existingNamesFromTree]
+
+    let newAdrName = 'new-adr.md'
+    let counter = 1
+
+    // Keep checking until we find a unique name
+    while (existingNames.includes(newAdrName)) {
+      newAdrName = `new-adr-${counter}.md`
+      counter++
+    }
 
     const preparedAdr = {
       id: uuidv4(),
@@ -518,11 +537,11 @@ function FileTree({
       path: `adrs/${newAdrName}`,
       contents: '',
       repository: activeRepo ?? '',
-      hasMatch: false,
       createdAt: new Date(),
       branch: branch ?? '',
       owner: owner ?? '',
-      templateId: undefined,
+      templateId: 'free-form',
+      lastFetched: null,
     }
 
     try {
@@ -593,7 +612,7 @@ function FileTree({
                     className="flex items-center justify-between w-full group py-1 px-2 hover:bg-muted rounded-md"
                   >
                     <div
-                      onClick={() => handleFileClick(id, item.name ?? '')}
+                      onClick={() => handleFileClick(id, item)}
                       className="flex items-center gap-2 flex-1 text-left cursor-pointer"
                     >
                       {getFileIcon(
@@ -662,9 +681,7 @@ function FileTree({
                     {isFile ? (
                       <div className="flex items-center justify-between w-full group">
                         <div
-                          onClick={() =>
-                            handleFileClick(filePath, item.getItemName())
-                          }
+                          onClick={() => handleFileClick(filePath, itemData)}
                           className="flex items-center gap-2 flex-1 text-left cursor-pointer"
                         >
                           {getFileIcon(
@@ -818,8 +835,6 @@ export function AppSidebar({
 
     void transformTree()
   }, [repoTree?.tree, adrs])
-
-  console.log('items', items)
 
   const handleSetItems = (
     items:

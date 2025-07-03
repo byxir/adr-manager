@@ -17,7 +17,6 @@ export default function Home() {
   const { data: reposData, isLoading, error } = useRepos()
 
   const handleRepoClick = (repo: Repo) => {
-    console.log('handleRepoClick: ', repo)
     router.push(
       `/${repo.name}?owner=${repo.owner.login}&branch=${repo.default_branch}`,
     )

@@ -194,9 +194,10 @@ const Y_STATEMENT_SECTIONS: AdrTemplateSection[] = [
 
 const FREE_FORM_SECTIONS: AdrTemplateSection[] = [
   {
-    id: 'title',
-    title: 'Title',
-    placeholder: 'Enter the title of your Architecture Decision Record',
+    id: 'content',
+    title: 'Free Form Content',
+    placeholder:
+      'Enter your Architecture Decision Record content in markdown format...',
     content: '',
     isRequired: true,
   },
@@ -303,7 +304,7 @@ const generateFreeFormMarkdown = (sections: AdrTemplateSection[]): string => {
     {} as Record<string, string>,
   )
 
-  return ``
+  return sectionMap.content ?? ''
 }
 
 const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
@@ -548,11 +549,11 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
 const parseFreeFormMarkdown = (markdown: string): AdrTemplateSection[] => {
   const sections = FREE_FORM_SECTIONS.map((section) => ({ ...section }))
 
-  const titleMatch = /^# (.+)/m.exec(markdown)
-  if (titleMatch) {
-    const titleSection = sections.find((s) => s.id === 'title')
-    if (titleSection && titleMatch?.[1])
-      titleSection.content = trimLineTrailingWhitespace(titleMatch[1])
+  console.log('markdown in free form parser', markdown)
+
+  const contentSection = sections.find((s) => s.id === 'content')
+  if (contentSection) {
+    contentSection.content = markdown
   }
 
   return sections

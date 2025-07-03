@@ -6,11 +6,24 @@ export async function getAllAdrs(): Promise<Adr[]> {
 }
 
 export async function getAdrsByRepository(repository: string): Promise<Adr[]> {
-  console.log('Searching for repository:', repository)
+  // console.log('Searching for repository:', repository)
+
+  // Validate repository parameter to prevent IndexedDB key errors
+  if (!repository?.trim()) {
+    console.warn(
+      'Invalid repository parameter for getAdrsByRepository:',
+      repository,
+    )
+    return []
+  }
+
   const allAdrs = await adrDB.adrs.toArray()
-  console.log('All ADRs in DB:', allAdrs)
-  const res = await adrDB.adrs.where('repository').equals(repository).toArray()
-  console.log('RESPONSE FROM DEXIE for repository', repository, ':', res)
+  // console.log('All ADRs in DB:', allAdrs)
+  const res = await adrDB.adrs
+    .where('repository')
+    .equals(repository.trim())
+    .toArray()
+  // console.log('RESPONSE FROM DEXIE for repository', repository, ':', res)
   return res
 }
 
@@ -18,9 +31,20 @@ export async function getAdrByNameAndRepository(
   name: string,
   repository: string,
 ): Promise<Adr | undefined> {
+  // console.log('name, repository', name, repository)
+
+  // Validate parameters to prevent IndexedDB key errors
+  if (!name || !repository || !name.trim() || !repository.trim()) {
+    console.warn('Invalid parameters for getAdrByNameAndRepository:', {
+      name,
+      repository,
+    })
+    return undefined
+  }
+
   return await adrDB.adrs
     .where(['name', 'repository'])
-    .equals([name, repository])
+    .equals([name.trim(), repository.trim()])
     .first()
 }
 
@@ -33,35 +57,42 @@ export async function deleteAdr(id: string) {
 }
 
 export async function createAdr(adr: Adr) {
-  console.log('Creating ADR:', adr)
+  // console.log('Creating ADR:', adr)
   await adrDB.adrs.add(adr)
-  console.log('ADR created successfully in database')
+  // console.log('ADR created successfully in database')
 
   // Force a query to make sure the change is committed
   const verifyCount = await adrDB.adrs
     .where('repository')
     .equals(adr.repository)
     .count()
-  console.log(
-    'ADR count after creation for repository',
-    adr.repository,
-    ':',
-    verifyCount,
-  )
+  // console.log(
+  //   'ADR count after creation for repository',
+  //   adr.repository,
+  //   ':',
+  //   verifyCount,
+  // )
 }
 
-export async function updateAdrHasMatch(id: string, hasMatch: boolean) {
-  await adrDB.adrs.update(id, { hasMatch })
-}
-
-export async function bulkUpdateAdrHasMatch(
-  adrs: { name: string; hasMatch: boolean }[],
+export async function updateAdrContentAndPath(
+  name: string,
+  repository: string,
+  contents: string,
+  path: string,
 ) {
-  await adrDB.transaction('rw', adrDB.adrs, async () => {
-    for (const adr of adrs) {
-      await adrDB.adrs.update(adr.name, { hasMatch: adr.hasMatch })
-    }
-  })
+  // Validate parameters to prevent IndexedDB key errors
+  if (!name || !repository || !name.trim() || !repository.trim()) {
+    console.warn('Invalid parameters for updateAdrContentAndPath:', {
+      name,
+      repository,
+    })
+    return
+  }
+
+  await adrDB.adrs
+    .where(['name', 'repository'])
+    .equals([name.trim(), repository.trim()])
+    .modify({ contents, path })
 }
 
 export async function updateAdrContents(
@@ -69,9 +100,18 @@ export async function updateAdrContents(
   repository: string,
   contents: string,
 ) {
+  // Validate parameters to prevent IndexedDB key errors
+  if (!name || !repository || !name.trim() || !repository.trim()) {
+    console.warn('Invalid parameters for updateAdrContents:', {
+      name,
+      repository,
+    })
+    return
+  }
+
   await adrDB.adrs
     .where(['name', 'repository'])
-    .equals([name, repository])
+    .equals([name.trim(), repository.trim()])
     .modify({ contents })
 }
 
@@ -80,9 +120,18 @@ export async function updateAdrTemplate(
   repository: string,
   templateId: string,
 ) {
+  // Validate parameters to prevent IndexedDB key errors
+  if (!name || !repository || !name.trim() || !repository.trim()) {
+    console.warn('Invalid parameters for updateAdrTemplate:', {
+      name,
+      repository,
+    })
+    return
+  }
+
   await adrDB.adrs
     .where(['name', 'repository'])
-    .equals([name, repository])
+    .equals([name.trim(), repository.trim()])
     .modify({ templateId })
 }
 
@@ -99,9 +148,18 @@ export async function updateAdrStatus(
   repository: string,
   status: 'todo' | 'in-progress' | 'done' | 'backlog',
 ) {
+  // Validate parameters to prevent IndexedDB key errors
+  if (!name || !repository || !name.trim() || !repository.trim()) {
+    console.warn('Invalid parameters for updateAdrStatus:', {
+      name,
+      repository,
+    })
+    return
+  }
+
   await adrDB.adrs
     .where(['name', 'repository'])
-    .equals([name, repository])
+    .equals([name.trim(), repository.trim()])
     .modify({ status })
 }
 
@@ -110,8 +168,46 @@ export async function updateAdrTags(
   repository: string,
   tags: string[],
 ) {
+  // Validate parameters to prevent IndexedDB key errors
+  if (!name || !repository || !name.trim() || !repository.trim()) {
+    console.warn('Invalid parameters for updateAdrTags:', { name, repository })
+    return
+  }
+
   await adrDB.adrs
     .where(['name', 'repository'])
-    .equals([name, repository])
+    .equals([name.trim(), repository.trim()])
     .modify({ tags })
+}
+
+export async function updateAdrLastFetched(
+  name: string,
+  repository: string,
+  lastFetched: Date,
+) {
+  // Validate parameters to prevent IndexedDB key errors
+  if (!name || !repository || !name.trim() || !repository.trim()) {
+    console.warn('Invalid parameters for updateAdrLastFetched:', {
+      name,
+      repository,
+    })
+    return
+  }
+
+  await adrDB.adrs
+    .where(['name', 'repository'])
+    .equals([name.trim(), repository.trim()])
+    .modify({ lastFetched })
+}
+
+// Add liveQuery function for a specific ADR
+export function getAdrLiveQuery(name: string, repository: string) {
+  if (!name || !repository || !name.trim() || !repository.trim()) {
+    return undefined
+  }
+
+  return adrDB.adrs
+    .where(['name', 'repository'])
+    .equals([name.trim(), repository.trim()])
+    .first()
 }
