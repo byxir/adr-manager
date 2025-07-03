@@ -157,6 +157,7 @@ export class GitLabProvider {
   static async createOrUpdateFile({
     accessToken,
     repository,
+    owner,
     branch,
     path,
     content,
@@ -164,9 +165,11 @@ export class GitLabProvider {
   }: GitAdapterCreateOrUpdateFile) {
     const client = this.createClient(accessToken)
 
+    const projectId = `${owner}/${repository}`
+
     try {
       await client.RepositoryFiles.edit(
-        repository,
+        projectId,
         path,
         branch,
         content,
@@ -174,7 +177,7 @@ export class GitLabProvider {
       )
     } catch {
       await client.RepositoryFiles.create(
-        repository,
+        projectId,
         path,
         branch,
         content,
