@@ -23,6 +23,13 @@ export function createOrUpdateFile({
   branch: string
   content: string
 }): Promise<{ code: number }> {
+  console.log('createOrUpdateFile', {
+    repo,
+    path,
+    owner,
+    sha,
+    branch,
+  })
   return axios.post('/api/git/file', {
     params: { repo, path, owner, sha, branch },
     body: content,

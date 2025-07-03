@@ -86,6 +86,11 @@ export default function AdrTemplateSidebar({
 }: AdrTemplateSidebarProps) {
   const { repo, adrName }: { repo: string; adrName: string } = useParams()
 
+  const adr = useLiveQuery(
+    () => getAdrByNameAndRepository(adrName, repo),
+    [adrName, repo],
+  )
+
   const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
     initialTemplate ?? null,
   )
@@ -843,7 +848,14 @@ export default function AdrTemplateSidebar({
               </div>
 
               <div className="p-4 border-t space-y-2 flex-shrink-0 bg-background">
-                <UpdateOrCreateFileButton />
+                <UpdateOrCreateFileButton
+                  repo={adr?.repository ?? ''}
+                  path={adr?.path ?? ''}
+                  owner={adr?.owner ?? ''}
+                  sha={adr?.sha ?? ''}
+                  branch={adr?.branch ?? ''}
+                  content={adr?.contents ?? ''}
+                />
                 {!isFreeForm && (
                   <div className="text-xs text-muted-foreground text-center">
                     {sections.filter(checkHasContent).length} /{' '}

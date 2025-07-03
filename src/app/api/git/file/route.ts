@@ -79,6 +79,13 @@ export async function POST(request: NextRequest) {
       'sha',
       'branch',
     ] as const)
+    console.log('POST', {
+      repo,
+      path,
+      owner,
+      sha,
+      branch,
+    })
     const gitAdapter = getGitAdapter(session.user.authorizedProvider)
 
     const content = await request.text()
