@@ -1,0 +1,1 @@
+{"body":"# \n\n## Context and Problem Statement\n\n\n\n## Considered Options\n\n\n\n## Decision Outcome\n\n\n\n### Consequences\n\n* Good, because {positive consequence, e.g., improvement of one or more desired qualities, …}\n* Bad, because {negative consequence, e.g., compromising one or more desired qualities, …}\n* …\n"}
