@@ -12,7 +12,6 @@ import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { AdrTemplate, AdrTemplateSection } from '@/definitions/types'
 import {
   ChevronDown,
@@ -51,11 +50,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import UpdateOrCreateFileButton from '@/components/actions/CreateOrUpdateFile'
 import TemplateSelectionDialog from '@/components/TemplateSelectionDialog'
-import { Sidebar, SidebarContent } from '@/components/ui/sidebar'
 import {
   RightSidebar,
   RightSidebarContent,
 } from '@/components/ui/right-sidebar'
+import Contributors from 'src/components/contributors'
 
 interface ExtendedSection extends AdrTemplateSection {
   items?: string[]
@@ -487,61 +486,7 @@ export default function AdrTemplateSidebar({
 
             {/* Team Section - Collapsible */}
             <Collapsible open={isTeamOpen} onOpenChange={setIsTeamOpen}>
-              <div className="p-4 border-b">
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-between p-0 h-auto font-semibold text-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      Team ({collaborators.length})
-                    </div>
-                    {isTeamOpen ? (
-                      <ChevronDown className="w-4 h-4" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4" />
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-3 mt-3">
-                  <div className="space-y-2 max-h-24 overflow-y-auto">
-                    {collaborators.map((collaborator, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1.5"
-                      >
-                        <Avatar className="w-5 h-5">
-                          <AvatarImage
-                            src={collaborator.avatar}
-                            alt={collaborator.name}
-                          />
-                          <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                            {collaborator.name
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium truncate">
-                            {collaborator.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            @{collaborator.username}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {collaborators.length === 0 && (
-                      <div className="text-xs text-muted-foreground italic text-center py-2">
-                        No collaborators assigned
-                      </div>
-                    )}
-                  </div>
-                </CollapsibleContent>
-              </div>
+              <Contributors isOpen={isTeamOpen} />
             </Collapsible>
 
             <Collapsible open={isTagsOpen} onOpenChange={setIsTagsOpen}>
