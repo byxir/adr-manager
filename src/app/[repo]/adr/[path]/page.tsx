@@ -16,7 +16,6 @@ import {
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
 import AdrTemplateSidebar from '@/app/[repo]/adr/[path]/adr-template-sidebar'
-import type { AdrTemplate } from '@/definitions/types'
 import { getTemplateById } from '@/app/[repo]/adr/[path]/adr-templates'
 import { useRepoAdrs } from '@/hooks/use-repo-queries'
 import { useAtom } from 'jotai'
@@ -34,9 +33,7 @@ export default function AdrPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [currentAdrKey, setCurrentAdrKey] = useState<string>('')
-  const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
-    null,
-  )
+
   const editorRef = useRef<MDXEditorMethods>(null)
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const eventListenersRef = useRef<(() => void) | null>(null)
@@ -145,6 +142,25 @@ export default function AdrPage() {
       }
     }
   }, [liveAdr, markdown, setMarkdown])
+
+  // Initialize markdown when ADR data is available
+  useEffect(() => {
+    console.log('LAST USEEFFECT CALLED')
+    if (adr.data) {
+      const initialMarkdown = adr.data.contents ?? ''
+      setMarkdown(initialMarkdown)
+      setCurrentAdrKey(adrKey)
+
+      if (adr.data.templateId) {
+        const template = getTemplateById(adr.data.templateId)
+        if (template) {
+          // setSelectedTemplate(template)
+        }
+      } else {
+        // setSelectedTemplate(null)
+      }
+    }
+  }, [adr.data?.contents, adrKey, setMarkdown])
 
   const getEditorContent = useCallback(() => {
     if (editorRef.current) {
@@ -281,31 +297,8 @@ export default function AdrPage() {
     }
   }, [cleanupEventListeners])
 
-  // Initialize markdown when ADR data is available
-  useEffect(() => {
-    console.log('LAST USEEFFECT CALLED')
-    if (adr.data) {
-      const initialMarkdown = adr.data.contents ?? ''
-      setMarkdown(initialMarkdown)
-      setCurrentAdrKey(adrKey)
-
-      if (adr.data.templateId) {
-        const template = getTemplateById(adr.data.templateId)
-        if (template) {
-          setSelectedTemplate(template)
-        }
-      } else {
-        setSelectedTemplate(null)
-      }
-    }
-  }, [adr.data?.contents, adrKey, setMarkdown])
-
   return (
-    <AdrTemplateSidebar
-      initialTemplate={selectedTemplate ?? undefined}
-      showInitialDialog={false}
-      onCancelAdr={handleCancelAdr}
-    >
+    <AdrTemplateSidebar showInitialDialog={false} onCancelAdr={handleCancelAdr}>
       <div className="flex overflow-y-scroll z-50">
         <div className="flex-1">
           {!adrName.trim() ? (

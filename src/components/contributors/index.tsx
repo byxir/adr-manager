@@ -7,11 +7,8 @@ import { Button } from '@/components/ui/button'
 import { ChevronDown, ChevronRight, Users } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import React from 'react'
-import { useParams, usePathname, useSearchParams } from 'next/navigation'
-import { useAtom } from 'jotai/index'
-import { templateMarkdownAtom } from '@/app/[repo]/layout'
+import { useParams, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import type { ApiResponse } from '@/definitions/types'
 import { getFileContent } from '@/app/actions'
 import { useRepoTree } from '@/hooks/use-repo-queries'
 
@@ -43,8 +40,6 @@ export default function Contributors({ isOpen }: { isOpen: boolean }) {
 
   const owner = searchParams.get('owner')
   const branch = searchParams.get('branch')
-
-  const [templateMarkdown, setTemplateMarkdown] = useAtom(templateMarkdownAtom)
 
   // Get the repository tree to check if the path exists
   const { data: repoTree } = useRepoTree(repo, owner, branch)

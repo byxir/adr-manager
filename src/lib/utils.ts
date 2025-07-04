@@ -2,13 +2,8 @@ import type { Item, RepoTree } from '@/definitions/types'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import type { Adr } from './dexie-db'
-import {
-  updateAdrContentAndPath,
-  createAdr,
-  updateAdrPath,
-} from './adr-db-actions'
+import { updateAdrContentAndPath } from './adr-db-actions'
 import { useEffect, useState } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

@@ -1,12 +1,5 @@
 'use client'
-import React, {
-  useCallback,
-  useState,
-  useEffect,
-  useRef,
-  type SetStateAction,
-  type Dispatch,
-} from 'react'
+import React, { useCallback, useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Separator } from '@/components/ui/separator'
 import { Label } from '@/components/ui/label'
@@ -17,12 +10,10 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  FileText,
   Edit3,
   Minus,
   Plus,
   Tag,
-  Users,
   X,
   RefreshCw,
   CircleDot,
@@ -35,6 +26,7 @@ import {
   updateAdrStatus,
   updateAdrTags,
   getAdrByNameAndRepository,
+  updateAdrContents,
 } from '@/lib/adr-db-actions'
 import { useParams } from 'next/navigation'
 import {
@@ -72,7 +64,6 @@ interface AdrTemplateSidebarProps {
 }
 
 export default function AdrTemplateSidebar({
-  initialTemplate,
   showInitialDialog = false,
 
   onCancelAdr,
@@ -90,7 +81,7 @@ export default function AdrTemplateSidebar({
   )
 
   const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
-    initialTemplate ?? null,
+    null,
   )
   const [showTemplateDialog, setShowTemplateDialog] =
     useState(showInitialDialog)
@@ -99,11 +90,7 @@ export default function AdrTemplateSidebar({
   const [isTeamOpen, setIsTeamOpen] = useState(false)
   const [isTagsOpen, setIsTagsOpen] = useState(false)
   const [adrStatus, setAdrStatus] = useState<AdrStatus>('todo')
-  const [collaborators] = useState([
-    { name: 'John Doe', username: 'john.doe', avatar: '' },
-    { name: 'Jane Smith', username: 'jane.smith', avatar: '' },
-    { name: 'Alex Chen', username: 'alex.chen', avatar: '' },
-  ])
+
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
 
@@ -125,11 +112,16 @@ export default function AdrTemplateSidebar({
     }
   }, [adrData])
 
-  useEffect(() => {
-    if (initialTemplate && initialTemplate !== selectedTemplate) {
-      setSelectedTemplate(initialTemplate)
-    }
-  }, [initialTemplate, selectedTemplate])
+  const generateMarkdownFromTemplate = useCallback((template: AdrTemplate) => {
+    // Use the template's built-in generateMarkdown function with empty sections
+    // This will generate the template with placeholder content
+    const emptySections = template.sections.map((section) => ({
+      ...section,
+      content: '',
+    }))
+
+    return template.generateMarkdown(emptySections)
+  }, [])
 
   useEffect(() => {
     if (!selectedTemplate) return
@@ -148,7 +140,15 @@ export default function AdrTemplateSidebar({
     })
     setSections(newSections)
     setHasContent(false)
-  }, [selectedTemplate])
+
+    // Generate and save initial template content to database
+    const saveInitialContent = async () => {
+      const initialContent = generateMarkdownFromTemplate(selectedTemplate)
+      await updateAdrContents(adrName, repo, initialContent)
+    }
+
+    void saveInitialContent()
+  }, [selectedTemplate, generateMarkdownFromTemplate, adrName, repo])
 
   const handleTemplateChange = useCallback((template: AdrTemplate) => {
     setSelectedTemplate(template)
@@ -383,7 +383,6 @@ export default function AdrTemplateSidebar({
   }, [])
 
   const isFreeForm = selectedTemplate?.id === 'free-form' || !selectedTemplate
-  const noTemplateSelected = false
 
   return (
     <div className="flex h-screen w-full">
