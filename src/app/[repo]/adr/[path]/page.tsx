@@ -4,40 +4,24 @@ import { useSession } from 'next-auth/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { getFileContent } from '@/app/actions'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import { Separator } from '@/components/ui/separator'
-import { SidebarTrigger } from '@/components/ui/sidebar'
 import '@mdxeditor/editor/style.css'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
   getAdrByNameAndRepository,
   updateAdrContents,
-  updateAdrTemplate,
   deleteAdr,
-  updateAdrLastFetched,
   getAdrLiveQuery,
   createAdr,
 } from '@/lib/adr-db-actions'
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
 import AdrTemplateSidebar from '@/app/[repo]/adr/[path]/adr-template-sidebar'
-import type { AdrTemplate, ExtendedSection } from '@/definitions/types'
-import {
-  getTemplateById,
-  TEMPLATE_PARSERS,
-} from '@/app/[repo]/adr/[path]/adr-templates'
+import type { AdrTemplate } from '@/definitions/types'
+import { getTemplateById } from '@/app/[repo]/adr/[path]/adr-templates'
 import { useRepoAdrs } from '@/hooks/use-repo-queries'
 import { useAtom } from 'jotai'
 import { ForwardRefEditor } from '@/components/MDXEditor/ForwardRefEditor'
 import { markdownAtom } from '../../layout'
-import { RightSidebarTrigger } from '@/components/ui/right-sidebar'
 import { v4 as uuidv4 } from 'uuid'
 
 export default function AdrPage() {
@@ -56,9 +40,7 @@ export default function AdrPage() {
   const editorRef = useRef<MDXEditorMethods>(null)
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const eventListenersRef = useRef<(() => void) | null>(null)
-  const [sections, setSections] = useState<ExtendedSection[]>([])
   const [isEditorFocused, setIsEditorFocused] = useState(false)
-
   // Live query for the current ADR
   const liveAdr = useLiveQuery(() => {
     if (!adrName.trim() || !repo.trim()) return undefined
@@ -76,82 +58,47 @@ export default function AdrPage() {
 
       const existingAdr = await getAdrByNameAndRepository(adrName, repo)
 
+      // If ADR exists in database, return it
+      if (existingAdr) {
+        return existingAdr
+      }
+
       // If no ADR exists in database, fetch from remote
-      if (!existingAdr) {
-        console.log('made it inside no existing adr')
-        try {
-          const fileResponse = await getFileContent(
-            repo,
-            `${path.replaceAll('~', '/')}`,
-            owner ?? '',
-          )
-          if (fileResponse.data) {
-            // Update the database with the fetched content
-            await createAdr({
-              name: adrName,
-              path: `${path.replaceAll('~', '/')}`,
-              contents: fileResponse.data.content,
-              repository: repo,
-              branch: branch ?? '',
-              owner: owner ?? '',
-              createdAt: new Date(),
-              templateId: undefined,
-              status: 'todo',
-              tags: [],
-              sha: fileResponse.data.sha,
-              lastFetched: new Date(),
-              id: uuidv4(),
-            })
+      console.log('No existing ADR found, fetching from remote')
+      try {
+        const fileResponse = await getFileContent(
+          repo,
+          `${path.replaceAll('~', '/')}`,
+          owner ?? '',
+        )
+        if (fileResponse.data) {
+          // Create new ADR in database with the fetched content
+          await createAdr({
+            name: adrName,
+            path: `${path.replaceAll('~', '/')}`,
+            contents: fileResponse.data.content,
+            repository: repo,
+            branch: branch ?? '',
+            owner: owner ?? '',
+            createdAt: new Date(),
+            status: 'todo',
+            tags: [],
+            sha: fileResponse.data.sha,
+            id: uuidv4(),
+          })
 
-            // Update lastFetched timestamp
-            await updateAdrLastFetched(adrName, repo, new Date())
-
-            // Get the updated ADR from database
-            const updatedAdr = await getAdrByNameAndRepository(adrName, repo)
-            console.log('updated adr', updatedAdr)
-            return updatedAdr
-          }
-        } catch (error) {
-          console.error('Failed to fetch file from remote:', error)
+          // Get the newly created ADR from database
+          const updatedAdr = await getAdrByNameAndRepository(adrName, repo)
+          console.log('Created new ADR:', updatedAdr)
+          return updatedAdr
         }
-
-        // If ADR doesn't exist and can't be fetched, redirect to repo page
-        router.push(`/${repo}?owner=${owner}&branch=${branch}`)
-        return null
+      } catch (error) {
+        console.error('Failed to fetch file from remote:', error)
       }
 
-      // If ADR exists, check if we need to refresh from remote
-      // Only refresh if lastFetched exists (meaning it was previously fetched from remote)
-      // and is older than 5 minutes
-      const now = new Date()
-      const lastFetched = existingAdr.lastFetched
-      const shouldRefresh =
-        lastFetched && now.getTime() - lastFetched.getTime() > 5 * 60 * 1000 // 5 minutes
-
-      if (shouldRefresh) {
-        try {
-          const fileResponse = await getFileContent(
-            repo,
-            `${path.replaceAll('~', '/')}`,
-            owner ?? '',
-          )
-          if (fileResponse.data) {
-            // Update the database with the fetched content
-            await updateAdrContents(adrName, repo, fileResponse.data.content)
-
-            // Update lastFetched timestamp
-            await updateAdrLastFetched(adrName, repo, now)
-
-            // Get the updated ADR from database
-            const updatedAdr = await getAdrByNameAndRepository(adrName, repo)
-            return updatedAdr
-          }
-        } catch (error) {
-          console.error('Failed to refresh file from remote:', error)
-        }
-      }
-
-      return existingAdr
+      // If ADR doesn't exist and can't be fetched, redirect to repo page
+      router.push(`/${repo}?owner=${owner}&branch=${branch}`)
+      return null
     },
     enabled: adrName.trim().length > 0,
   })
@@ -175,43 +122,15 @@ export default function AdrPage() {
     }
   }, [adr.error, router, repo, owner, branch])
 
-  // Update sections when markdown changes and template is selected
-  useEffect(() => {
-    console.log('PARSER EFFECT CALLED')
-    if (markdown && selectedTemplate && isEditorFocused) {
-      const sections =
-        TEMPLATE_PARSERS[
-          selectedTemplate.id as keyof typeof TEMPLATE_PARSERS
-        ]?.parseMarkdown(markdown)
-      if (sections) {
-        setSections(sections)
-      }
-    }
-  }, [markdown, selectedTemplate, isEditorFocused])
-
   // Update database when markdown changes
   useEffect(() => {
     console.log('UPDATE EFFECT CALLED')
     if (adrName.trim() && currentAdrKey === adrKey && isEditorFocused) {
-      void updateAdrContents(adrName, repo, markdown)
-        .then(() => {
-          void queryClient.invalidateQueries({
-            queryKey: ['adr', repo, adrName],
-          })
-        })
-        .catch((error) => {
-          console.error('Failed to update ADR contents:', error)
-        })
+      void updateAdrContents(adrName, repo, markdown).catch((error) => {
+        console.error('Failed to update ADR contents:', error)
+      })
     }
-  }, [
-    markdown,
-    adrName,
-    repo,
-    currentAdrKey,
-    adrKey,
-    queryClient,
-    isEditorFocused,
-  ])
+  }, [markdown, adrName, repo, currentAdrKey, adrKey])
 
   // Listen to database changes and update markdown content (database changes + not focused scenario)
   useEffect(() => {
@@ -224,16 +143,8 @@ export default function AdrPage() {
       if (editorRef.current) {
         editorRef.current.setMarkdown(newMarkdown)
       }
-
-      // Update template if it exists
-      if (liveAdr.templateId) {
-        const template = getTemplateById(liveAdr.templateId)
-        if (template) {
-          setSelectedTemplate(template)
-        }
-      }
     }
-  }, [liveAdr, markdown, setMarkdown, isEditorFocused])
+  }, [liveAdr, markdown, setMarkdown])
 
   const getEditorContent = useCallback(() => {
     if (editorRef.current) {
@@ -251,7 +162,7 @@ export default function AdrPage() {
 
     inactivityTimeoutRef.current = setTimeout(() => {
       getEditorContent()
-    }, 200)
+    }, 500)
   }, [getEditorContent])
 
   const cleanupEventListeners = useCallback(() => {
@@ -291,9 +202,11 @@ export default function AdrPage() {
         const events = ['input', 'keydown', 'keyup', 'paste', 'cut', 'drop']
 
         const handleFocusIn = () => {
+          console.log('FOCUS IN CALLED')
           setIsEditorFocused(true)
         }
         const handleFocusOut = () => {
+          console.log('FOCUS OUT CALLED')
           setIsEditorFocused(false)
           getEditorContent()
         }
@@ -330,42 +243,6 @@ export default function AdrPage() {
       cleanupEventListeners,
       getEditorContent,
     ],
-  )
-
-  const handleTemplateSelected = useCallback(
-    (template: AdrTemplate) => {
-      if (!adrName.trim()) {
-        console.error('Cannot update template: invalid adrName')
-        return
-      }
-
-      setSelectedTemplate(template)
-
-      const initialMarkdown = template.generateMarkdown(template.sections)
-      setMarkdown(initialMarkdown)
-
-      void updateAdrContents(adrName, repo, initialMarkdown)
-      void updateAdrTemplate(adrName, repo, template.id)
-    },
-    [adrName, repo, setMarkdown],
-  )
-
-  const handleTemplateChanged = useCallback(
-    (template: AdrTemplate) => {
-      if (!adrName.trim()) {
-        console.error('Cannot update template: invalid adrName')
-        return
-      }
-
-      setSelectedTemplate(template)
-
-      const newMarkdown = template.generateMarkdown(template.sections)
-      setMarkdown(newMarkdown)
-
-      void updateAdrContents(adrName, repo, newMarkdown)
-      void updateAdrTemplate(adrName, repo, template.id)
-    },
-    [adrName, repo, setMarkdown],
   )
 
   const handleCancelAdr = useCallback(async () => {
@@ -421,50 +298,16 @@ export default function AdrPage() {
         setSelectedTemplate(null)
       }
     }
-  }, [adr.data?.contents, adrKey, setMarkdown, isEditorFocused])
+  }, [adr.data?.contents, adrKey, setMarkdown])
 
   return (
     <AdrTemplateSidebar
       initialTemplate={selectedTemplate ?? undefined}
       showInitialDialog={false}
-      onTemplateSelected={handleTemplateSelected}
-      onTemplateChanged={handleTemplateChanged}
       onCancelAdr={handleCancelAdr}
-      sections={sections}
-      setSections={setSections}
     >
       <div className="flex overflow-y-scroll z-50">
         <div className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4 w-full justify-between">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
-
-                <Separator
-                  orientation="vertical"
-                  className="mr-2 data-[orientation=vertical]:h-4"
-                />
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="#">{repo}</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>{adrName}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
-              <div className="flex items-center gap-2">
-                <Separator
-                  orientation="vertical"
-                  className="ml-2 data-[orientation=vertical]:h-4"
-                />
-                <RightSidebarTrigger className="-ml-1" />
-              </div>
-            </div>
-          </header>
           {!adrName.trim() ? (
             <div className="p-4 text-red-500">
               Invalid ADR path: Unable to extract ADR name from path &quot;

@@ -17,6 +17,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import Link from 'next/link'
 
 export const markdownAtom = atom<string>('')
 export const templateMarkdownAtom = atom<string>('')
@@ -33,6 +34,7 @@ export default function RepoLayout({
   const { repo } = useParams()
   const searchParams = useSearchParams()
   const pathname = usePathname()
+  console.log('pathname', pathname)
   const owner = searchParams.get('owner')
   const branch = searchParams.get('branch')
 
@@ -59,7 +61,7 @@ export default function RepoLayout({
           owner={owner ?? repoOwner}
           branch={branch ?? repoDefaultBranch}
         >
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <header className="flex w-full max-w-[calc(100%-250px)] h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4 w-full justify-between">
               <div className="flex items-center gap-2">
                 <SidebarTrigger className="-ml-1" />
@@ -71,12 +73,25 @@ export default function RepoLayout({
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="#">{repo}</BreadcrumbLink>
+                      <Link
+                        href={`/${activeRepo}?owner=${owner}&branch=${branch}`}
+                      >
+                        {activeRepo}
+                      </Link>
                     </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>{activeRepo}</BreadcrumbPage>
-                    </BreadcrumbItem>
+                    {pathname.replace(`/${activeRepo}`, '').length > 0 && (
+                      <>
+                        <BreadcrumbSeparator className="hidden md:block" />
+
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>
+                            {pathname
+                              .replace(`/${activeRepo}`, '')
+                              .replaceAll('~', '/')}
+                          </BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </>
+                    )}
                   </BreadcrumbList>
                 </Breadcrumb>
               </div>

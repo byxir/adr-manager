@@ -65,27 +65,24 @@ type AdrStatus = 'todo' | 'in-progress' | 'done' | 'backlog'
 interface AdrTemplateSidebarProps {
   initialTemplate?: AdrTemplate
   showInitialDialog?: boolean
-  onTemplateSelected?: (template: AdrTemplate) => void
-  onTemplateChanged?: (template: AdrTemplate) => void
+
   onCancelAdr?: () => void
-  sections: ExtendedSection[]
-  setSections: Dispatch<SetStateAction<ExtendedSection[]>>
+
   children: React.ReactNode
 }
 
 export default function AdrTemplateSidebar({
   initialTemplate,
   showInitialDialog = false,
-  onTemplateSelected,
-  onTemplateChanged,
+
   onCancelAdr,
-  sections,
-  setSections,
+
   children,
 }: AdrTemplateSidebarProps) {
   const { repo, path }: { repo: string; path: string } = useParams()
   const formattedPath = path.replaceAll('~', '/')
   const adrName = formattedPath.split('/').filter(Boolean).pop() ?? ''
+  const [sections, setSections] = useState<ExtendedSection[]>([])
 
   const adr = useLiveQuery(
     () => getAdrByNameAndRepository(adrName, repo),
@@ -153,18 +150,9 @@ export default function AdrTemplateSidebar({
     setHasContent(false)
   }, [selectedTemplate])
 
-  const handleTemplateChange = useCallback(
-    (template: AdrTemplate) => {
-      setSelectedTemplate(template)
-      const isInitialSelection = !selectedTemplate
-      if (isInitialSelection && onTemplateSelected) {
-        onTemplateSelected(template)
-      } else if (onTemplateChanged) {
-        onTemplateChanged(template)
-      }
-    },
-    [onTemplateSelected, onTemplateChanged, selectedTemplate],
-  )
+  const handleTemplateChange = useCallback((template: AdrTemplate) => {
+    setSelectedTemplate(template)
+  }, [])
 
   const handleTemplateChangeWithWarning = useCallback(() => {
     if (hasContent) {

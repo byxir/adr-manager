@@ -180,26 +180,6 @@ export async function updateAdrTags(
     .modify({ tags })
 }
 
-export async function updateAdrLastFetched(
-  name: string,
-  repository: string,
-  lastFetched: Date,
-) {
-  // Validate parameters to prevent IndexedDB key errors
-  if (!name || !repository || !name.trim() || !repository.trim()) {
-    console.warn('Invalid parameters for updateAdrLastFetched:', {
-      name,
-      repository,
-    })
-    return
-  }
-
-  await adrDB.adrs
-    .where(['name', 'repository'])
-    .equals([name.trim(), repository.trim()])
-    .modify({ lastFetched })
-}
-
 // Add liveQuery function for a specific ADR
 export function getAdrLiveQuery(name: string, repository: string) {
   if (!name || !repository || !name.trim() || !repository.trim()) {
