@@ -298,7 +298,7 @@ export default function AdrPage() {
   }, [cleanupEventListeners])
 
   return (
-    <AdrTemplateSidebar showInitialDialog={false} onCancelAdr={handleCancelAdr}>
+    <AdrTemplateSidebar onCancelAdr={handleCancelAdr} adr={adr.data ?? null}>
       <div className="flex overflow-y-scroll z-50">
         <div className="flex-1">
           {!adrName.trim() ? (

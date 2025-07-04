@@ -47,6 +47,7 @@ import {
   RightSidebarContent,
 } from '@/components/ui/right-sidebar'
 import Contributors from 'src/components/contributors'
+import type { Adr } from '@/lib/dexie-db'
 
 interface ExtendedSection extends AdrTemplateSection {
   items?: string[]
@@ -55,8 +56,7 @@ interface ExtendedSection extends AdrTemplateSection {
 type AdrStatus = 'todo' | 'in-progress' | 'done' | 'backlog'
 
 interface AdrTemplateSidebarProps {
-  initialTemplate?: AdrTemplate
-  showInitialDialog?: boolean
+  adr?: Adr | null
 
   onCancelAdr?: () => void
 
@@ -64,8 +64,6 @@ interface AdrTemplateSidebarProps {
 }
 
 export default function AdrTemplateSidebar({
-  showInitialDialog = false,
-
   onCancelAdr,
 
   children,
@@ -83,8 +81,7 @@ export default function AdrTemplateSidebar({
   const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
     null,
   )
-  const [showTemplateDialog, setShowTemplateDialog] =
-    useState(showInitialDialog)
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false)
   const [hasContent, setHasContent] = useState(false)
 
   const [isTeamOpen, setIsTeamOpen] = useState(false)
