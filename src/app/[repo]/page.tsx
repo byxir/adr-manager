@@ -83,9 +83,9 @@ const RepoPage = () => {
                   new Date(a.createdAt).getTime() -
                   new Date(b.createdAt).getTime(),
               )
-              .map((adr) => (
+              .map((adr, index) => (
                 <Card
-                  key={`${adr.source}-${adr.name}`}
+                  key={index}
                   className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() =>
                     router.push(
