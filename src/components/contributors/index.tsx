@@ -84,7 +84,7 @@ export default function Contributors({ isOpen }: { isOpen: boolean }) {
               </div>
             </div>
           ))}
-          {contributor.length === 0 && (
+          {contributors.length === 0 && (
             <div className="text-xs text-muted-foreground italic text-center py-2">
               No collaborators assigned
             </div>
