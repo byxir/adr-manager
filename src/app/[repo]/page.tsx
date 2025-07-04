@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { RiFileTextLine } from '@remixicon/react'
+import { v4 as uuidv4 } from 'uuid'
 
 const RepoPage = () => {
   const { repo } = useParams()
@@ -83,9 +84,9 @@ const RepoPage = () => {
                   new Date(a.createdAt).getTime() -
                   new Date(b.createdAt).getTime(),
               )
-              .map((adr, index) => (
+              .map((adr) => (
                 <Card
-                  key={index}
+                  key={uuidv4()}
                   className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() =>
                     router.push(
