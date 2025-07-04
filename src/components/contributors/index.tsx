@@ -38,7 +38,12 @@ export default function Contributors({ isOpen }: { isOpen: boolean }) {
     enabled: !!repo && !!path && !!owner,
   })
 
-  const contributors = fileResponse?.contributors ?? []
+  // Filter out empty/non-existent contributors
+  const contributors =
+    fileResponse?.contributors.filter(
+      (value) => Object.keys(value).length !== 0,
+    ) ?? []
+
   return (
     <div className="p-4 border-b">
       <CollapsibleTrigger asChild>
@@ -68,7 +73,7 @@ export default function Contributors({ isOpen }: { isOpen: boolean }) {
                 <AvatarImage src={contributor.avatar} alt={contributor.name} />
                 <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
                   {contributor.username
-                    .split(' ')
+                    ?.split(' ')
                     .map((n) => n[0])
                     .join('')
                     .toUpperCase()}
