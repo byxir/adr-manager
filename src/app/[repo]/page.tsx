@@ -62,6 +62,8 @@ const RepoPage = () => {
     return combined
   }, [adrs, markdownFiles])
 
+  console.log(markdownFiles)
+
   return (
     <div className="container mx-auto p-6 space-y-8">
       <div className="space-y-2">
@@ -109,7 +111,7 @@ const RepoPage = () => {
           </div>
         </div>
       )}
-      {(!adrs || adrs.length === 0) && (
+      {adrs?.length === 0 && markdownFiles?.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">
             No ADRs or markdown files found in this repository.
