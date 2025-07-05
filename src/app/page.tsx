@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import type { Repo } from '@/definitions/types'
 import { useRepos } from '@/hooks/use-repo-queries'
 import RepositoryCard from '@/components/home/RepositoryCard'
-import ProfileDropdown from '@/components/User/ProfileDropdown'
+import ProfileDropdown from '@/components/user/ProfileDropdown'
 import RepositorySkeleton from '@/components/home/RepositorySkeleton'
 import ErrorOverlay from '@/components/home/ErrorOverlay'
 

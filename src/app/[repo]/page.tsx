@@ -74,9 +74,6 @@ const RepoPage = () => {
       {/* ADRs Section */}
       {allAdrs && allAdrs.length > 0 && (
         <div className="space-y-4">
-          {/* <h2 className="text-2xl font-semibold">
-            Architecture Decision Records
-          </h2> */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {allAdrs
               .sort(
@@ -112,85 +109,13 @@ const RepoPage = () => {
           </div>
         </div>
       )}
-
-      {/* Files Section */}
-      {/* {rootFiles.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Repository Files</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {rootFiles.map((file) => {
-              const fileName = file.path.split('/').pop() ?? file.path
-              const extension = getFileExtension(fileName)
-
-              return (
-                <Card
-                  key={file.path}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleFileClick(file.path, fileName)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                      {getFileIcon(extension, 'size-4 text-muted-foreground')}
-                      <CardTitle className="text-sm font-medium truncate">
-                        {fileName}
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-xs">
-                      File •{' '}
-                      {file.size
-                        ? `${Math.round(file.size / 1024)}KB`
-                        : 'Unknown size'}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      )} */}
-
-      {/* Directories Section */}
-      {/* {(repoTree?.data?.tree?.filter((item) => item.type === 'tree').length ??
-        0) > 0 &&
-        repoTree?.data?.tree && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">Directories</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {repoTree.data.tree
-                .filter((item) => item.type === 'tree')
-                .map((directory) => (
-                  <Card
-                    key={directory.path}
-                    className="cursor-pointer hover:shadow-md transition-shadow"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2">
-                        <RiFolderLine className="size-4 text-yellow-600" />
-                        <CardTitle className="text-sm font-medium truncate">
-                          {directory.path}
-                        </CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-xs">
-                        Directory
-                      </CardDescription>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          </div>
-        )}
-
-      {(!adrs || adrs.length === 0) && rootFiles.length === 0 && (
+      {(!adrs || adrs.length === 0) && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">
-            No ADRs or files found in this repository.
+            No ADRs or markdown files found in this repository.
           </p>
         </div>
-      )} */}
+      )}
     </div>
   )
 }
