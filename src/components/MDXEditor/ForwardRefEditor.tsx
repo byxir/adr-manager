@@ -17,6 +17,7 @@ export const ForwardRefEditor = forwardRef<
   MDXEditorProps & {
     onEditorReady?: (element: HTMLElement) => void
     readOnly: boolean
+    diffMarkdown?: string
   }
 >((props, ref) => (
   <Editor
@@ -29,6 +30,7 @@ export const ForwardRefEditor = forwardRef<
     }
     markdown={props.markdown}
     readOnly={props.readOnly}
+    diffMarkdown={props.diffMarkdown}
   />
 ))
 

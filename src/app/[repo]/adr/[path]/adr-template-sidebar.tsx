@@ -48,6 +48,11 @@ import {
 } from '@/components/ui/right-sidebar'
 import Contributors from 'src/components/contributors'
 import type { Adr } from '@/lib/dexie-db'
+import {
+  ADR_TEMPLATES,
+  getTemplateById,
+  getTemplateParser,
+} from '@/app/[repo]/adr/[path]/adr-templates'
 
 interface ExtendedSection extends AdrTemplateSection {
   items?: string[]
@@ -57,21 +62,21 @@ type AdrStatus = 'todo' | 'in-progress' | 'done' | 'backlog'
 
 interface AdrTemplateSidebarProps {
   adr?: Adr | null
-
   onCancelAdr?: () => void
-
   children: React.ReactNode
+  fetchedContent?: string | null
 }
 
 export default function AdrTemplateSidebar({
   onCancelAdr,
-
   children,
+  fetchedContent,
 }: AdrTemplateSidebarProps) {
   const { repo, path }: { repo: string; path: string } = useParams()
   const formattedPath = path.replaceAll('~', '/')
   const adrName = formattedPath.split('/').filter(Boolean).pop() ?? ''
   const [sections, setSections] = useState<ExtendedSection[]>([])
+  const [showSynchronizeButton, setShowSynchronizeButton] = useState(false)
 
   const adr = useLiveQuery(
     () => getAdrByNameAndRepository(adrName, repo),
@@ -79,6 +84,9 @@ export default function AdrTemplateSidebar({
   )
 
   const [selectedTemplate, setSelectedTemplate] = useState<AdrTemplate | null>(
+    null,
+  )
+  const [detectedTemplate, setDetectedTemplate] = useState<AdrTemplate | null>(
     null,
   )
   const [showTemplateDialog, setShowTemplateDialog] = useState(false)
@@ -91,23 +99,153 @@ export default function AdrTemplateSidebar({
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
 
-  // Use live query to sync with database
-  const adrData = useLiveQuery(
-    () => getAdrByNameAndRepository(adrName, repo),
-    [adrName, repo],
-  )
+  // Check if synchronize button should be shown
+  useEffect(() => {
+    if (fetchedContent && adr?.contents) {
+      const shouldShow = fetchedContent.trim() !== adr.contents.trim()
+      setShowSynchronizeButton(shouldShow)
+    } else {
+      setShowSynchronizeButton(false)
+    }
+  }, [fetchedContent, adr?.contents])
+
+  // Handle synchronize button click
+  const handleSynchronize = useCallback(async () => {
+    if (fetchedContent && adr) {
+      try {
+        await updateAdrContents(adrName, repo, fetchedContent)
+        setShowSynchronizeButton(false)
+      } catch (error) {
+        console.error('Failed to synchronize ADR content:', error)
+      }
+    }
+  }, [fetchedContent, adr, adrName, repo])
 
   // Sync status and tags from database
   useEffect(() => {
-    if (adrData) {
-      if (adrData.status) {
-        setAdrStatus(adrData.status)
+    if (adr) {
+      if (adr.status) {
+        setAdrStatus(adr.status)
       }
-      if (adrData.tags) {
-        setTags(adrData.tags)
+      if (adr.tags) {
+        setTags(adr.tags)
       }
     }
-  }, [adrData])
+  }, [adr])
+
+  // Template detection logic
+  const detectTemplate = useCallback((content: string): AdrTemplate | null => {
+    if (!content || content.trim() === '') return null
+
+    // Check for Y-Statement template
+    const yStatementPatterns = [
+      /In the context of/i,
+      /facing/i,
+      /we decided for/i,
+      /and against/i,
+      /to achieve/i,
+      /accepting that/i,
+    ]
+
+    const yStatementMatches = yStatementPatterns.filter((pattern) =>
+      pattern.test(content),
+    )
+    if (yStatementMatches.length >= 4) {
+      // At least 4 out of 6 patterns
+      return getTemplateById('y-statement') ?? null
+    }
+
+    // Check for MADR templates
+    const madrFullPatterns = [
+      /^#{1,2}\s*Context and Problem Statement/im,
+      /^#{1,2}\s*Decision Drivers/im,
+      /^#{1,2}\s*Considered Options/im,
+      /^#{1,2}\s*Decision Outcome/im,
+      /^#{1,3}\s*Consequences/im,
+      /^#{1,3}\s*Confirmation/im,
+      /^#{1,2}\s*Pros and Cons of the Options/im,
+      /^#{1,2}\s*More Information/im,
+    ]
+
+    const madrMinimalPatterns = [
+      /^#{1,2}\s*Context and Problem Statement/im,
+      /^#{1,2}\s*Considered Options/im,
+      /^#{1,2}\s*Decision Outcome/im,
+      /^#{1,3}\s*Consequences/im,
+    ]
+
+    const madrFullMatches = madrFullPatterns.filter((pattern) =>
+      pattern.test(content),
+    )
+    const madrMinimalMatches = madrMinimalPatterns.filter((pattern) =>
+      pattern.test(content),
+    )
+
+    if (madrFullMatches.length >= 6) {
+      // Most MADR full patterns
+      return getTemplateById('madr-full') ?? null
+    } else if (madrMinimalMatches.length >= 3) {
+      // Most MADR minimal patterns
+      return getTemplateById('madr-minimal') ?? null
+    }
+
+    // Default to free-form if no specific template is detected
+    return getTemplateById('free-form') ?? null
+  }, [])
+
+  // Parse content when ADR changes externally
+  useEffect(() => {
+    if (adr?.contents) {
+      const detected = detectTemplate(adr.contents)
+      setDetectedTemplate(detected)
+
+      // Use the detected template or fall back to stored templateId
+      const templateToUse =
+        detected ?? (adr.templateId && getTemplateById(adr.templateId))
+
+      if (templateToUse && templateToUse.id !== 'free-form') {
+        setSelectedTemplate(templateToUse)
+
+        // Parse the content using the template's parser
+        const parser = getTemplateParser(templateToUse.id)
+        if (parser) {
+          const parsedSections = parser.parseMarkdown(adr.contents)
+
+          // Convert parsed sections to extended sections with items for list types
+          const extendedSections = parsedSections.map((section) => {
+            const isListType = [
+              'options',
+              'consequences',
+              'drivers',
+              'proscons',
+            ].includes(section.id)
+            if (isListType && section.content) {
+              // Parse list items from content
+              const items = section.content
+                .split('\n')
+                .filter(
+                  (line) =>
+                    line.trim().startsWith('*') || line.trim().startsWith('-'),
+                )
+                .map((line) => line.replace(/^[\s]*[-*]\s*/, '').trim())
+                .filter((item) => item.length > 0)
+
+              return { ...section, items }
+            }
+            return section
+          })
+
+          setSections(extendedSections)
+          setHasContent(true)
+        }
+      } else {
+        // For free-form or no template detected
+        setSelectedTemplate(getTemplateById('free-form') ?? null)
+        setSections([])
+        setHasContent(adr.contents.trim().length > 0)
+      }
+    }
+  }, [adr, detectTemplate])
 
   const generateMarkdownFromTemplate = useCallback((template: AdrTemplate) => {
     // Use the template's built-in generateMarkdown function with empty sections
@@ -120,36 +258,39 @@ export default function AdrTemplateSidebar({
     return template.generateMarkdown(emptySections)
   }, [])
 
-  useEffect(() => {
-    if (!selectedTemplate) return
+  const handleTemplateChange = useCallback(
+    (template: AdrTemplate) => {
+      setSelectedTemplate(template)
 
-    const newSections = selectedTemplate.sections.map((section) => {
-      const isListType = [
-        'options',
-        'consequences',
-        'drivers',
-        'proscons',
-      ].includes(section.id)
-      if (isListType) {
-        return { ...section, items: [] }
+      if (template.id !== 'free-form') {
+        const newSections = template.sections.map((section) => {
+          const isListType = [
+            'options',
+            'consequences',
+            'drivers',
+            'proscons',
+          ].includes(section.id)
+          if (isListType) {
+            return { ...section, items: [] }
+          }
+          return { ...section }
+        })
+        setSections(newSections)
+        setHasContent(false)
+
+        // Generate and save initial template content to database
+        const saveInitialContent = async () => {
+          const initialContent = generateMarkdownFromTemplate(template)
+          await updateAdrContents(adrName, repo, initialContent)
+        }
+
+        void saveInitialContent()
+      } else {
+        setSections([])
       }
-      return { ...section }
-    })
-    setSections(newSections)
-    setHasContent(false)
-
-    // Generate and save initial template content to database
-    const saveInitialContent = async () => {
-      const initialContent = generateMarkdownFromTemplate(selectedTemplate)
-      await updateAdrContents(adrName, repo, initialContent)
-    }
-
-    void saveInitialContent()
-  }, [selectedTemplate, generateMarkdownFromTemplate, adrName, repo])
-
-  const handleTemplateChange = useCallback((template: AdrTemplate) => {
-    setSelectedTemplate(template)
-  }, [])
+    },
+    [generateMarkdownFromTemplate, adrName, repo],
+  )
 
   const handleTemplateChangeWithWarning = useCallback(() => {
     if (hasContent) {
@@ -159,9 +300,6 @@ export default function AdrTemplateSidebar({
     }
   }, [hasContent])
 
-  const [localSectionContent, setLocalSectionContent] = useState<
-    Record<string, string>
-  >({})
   const [localItemContent, setLocalItemContent] = useState<
     Record<string, Record<number, string>>
   >({})
@@ -170,6 +308,44 @@ export default function AdrTemplateSidebar({
   const itemTimeoutRef = useRef<Record<string, Record<number, NodeJS.Timeout>>>(
     {},
   )
+  const generateMarkdownTimeoutRef = useRef<NodeJS.Timeout | undefined>(
+    undefined,
+  )
+
+  // Generate markdown and update database after changes
+  const generateAndUpdateMarkdown = useCallback(async () => {
+    if (!selectedTemplate || selectedTemplate.id === 'free-form') return
+
+    const parser = getTemplateParser(selectedTemplate.id)
+    if (!parser) return
+
+    // Convert sections back to proper format for markdown generation
+    const sectionsForMarkdown = sections.map((section) => {
+      if (section.items && section.items.length > 0) {
+        // Convert items array back to markdown list format
+        const listContent = section.items
+          .filter((item) => item.trim().length > 0)
+          .map((item) => `* ${item}`)
+          .join('\n')
+        return { ...section, content: listContent }
+      }
+      return section
+    })
+
+    const markdownContent = parser.generateMarkdown(sectionsForMarkdown)
+    await updateAdrContents(adrName, repo, markdownContent)
+  }, [selectedTemplate, sections, adrName, repo])
+
+  // Debounced update to database
+  const scheduleMarkdownUpdate = useCallback(() => {
+    if (generateMarkdownTimeoutRef.current) {
+      clearTimeout(generateMarkdownTimeoutRef.current)
+    }
+
+    generateMarkdownTimeoutRef.current = setTimeout(() => {
+      void generateAndUpdateMarkdown()
+    }, 500)
+  }, [generateAndUpdateMarkdown])
 
   const updateSectionContent = useCallback(
     (sectionId: string, content: string) => {
@@ -179,8 +355,9 @@ export default function AdrTemplateSidebar({
         ),
       )
       setHasContent(true)
+      scheduleMarkdownUpdate()
     },
-    [setSections],
+    [scheduleMarkdownUpdate],
   )
 
   const updateItemContent = useCallback(
@@ -196,26 +373,18 @@ export default function AdrTemplateSidebar({
         }),
       )
       setHasContent(true)
+      scheduleMarkdownUpdate()
     },
-    [setSections],
+    [scheduleMarkdownUpdate],
   )
 
   const handleSectionContentChange = useCallback(
     (sectionId: string, content: string) => {
-      setLocalSectionContent((prev) => ({ ...prev, [sectionId]: content }))
+      updateSectionContent(sectionId, content)
 
       if (sectionTimeoutRef.current[sectionId]) {
         clearTimeout(sectionTimeoutRef.current[sectionId])
       }
-
-      sectionTimeoutRef.current[sectionId] = setTimeout(() => {
-        updateSectionContent(sectionId, content)
-        setLocalSectionContent((prev) => {
-          const newState = { ...prev }
-          delete newState[sectionId]
-          return newState
-        })
-      }, 200)
     },
     [updateSectionContent],
   )
@@ -250,6 +419,7 @@ export default function AdrTemplateSidebar({
     [updateItemContent],
   )
 
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       Object.values(sectionTimeoutRef.current).forEach((timeout) => {
@@ -260,53 +430,63 @@ export default function AdrTemplateSidebar({
           if (timeout) clearTimeout(timeout)
         })
       })
+      if (generateMarkdownTimeoutRef.current) {
+        clearTimeout(generateMarkdownTimeoutRef.current)
+      }
     }
   }, [])
 
-  const addListItem = useCallback((sectionId: string) => {
-    setSections((prev) =>
-      prev.map((section) => {
-        if (section.id === sectionId) {
-          const existingItems = section.items ?? []
+  const addListItem = useCallback(
+    (sectionId: string) => {
+      setSections((prev) =>
+        prev.map((section) => {
+          if (section.id === sectionId) {
+            const existingItems = section.items ?? []
 
-          if (
-            existingItems.length > 0 &&
-            !existingItems[existingItems.length - 1]?.trim()
-          ) {
-            return section
+            if (
+              existingItems.length > 0 &&
+              !existingItems[existingItems.length - 1]?.trim()
+            ) {
+              return section
+            }
+
+            const newItemText = ''
+            const newItems = [...existingItems, newItemText]
+
+            // Schedule markdown update
+            scheduleMarkdownUpdate()
+
+            return { ...section, items: newItems }
           }
+          return section
+        }),
+      )
+    },
+    [scheduleMarkdownUpdate],
+  )
 
-          const newItemText =
-            section.id === 'options'
-              ? ''
-              : section.id === 'consequences'
-                ? ''
-                : section.id === 'drivers'
-                  ? ''
-                  : ''
+  const removeLastListItem = useCallback(
+    (sectionId: string) => {
+      setSections((prev) =>
+        prev.map((section) => {
+          if (
+            section.id === sectionId &&
+            section.items &&
+            section.items.length > 0
+          ) {
+            const newItems = section.items.slice(0, -1)
 
-          return { ...section, items: [...existingItems, newItemText] }
-        }
-        return section
-      }),
-    )
-  }, [])
+            // Schedule markdown update
+            scheduleMarkdownUpdate()
 
-  const removeLastListItem = useCallback((sectionId: string) => {
-    setSections((prev) =>
-      prev.map((section) => {
-        if (
-          section.id === sectionId &&
-          section.items &&
-          section.items.length > 0
-        ) {
-          const newItems = section.items.slice(0, -1)
-          return { ...section, items: newItems }
-        }
-        return section
-      }),
-    )
-  }, [])
+            return { ...section, items: newItems }
+          }
+          return section
+        }),
+      )
+    },
+    [scheduleMarkdownUpdate],
+  )
 
   const checkHasContent = useCallback((section: ExtendedSection) => {
     if (section.items) {
@@ -394,17 +574,36 @@ export default function AdrTemplateSidebar({
                 <h2 className="text-lg font-bold">ADR Builder</h2>
                 <p className="text-xs text-muted-foreground mt-1">
                   {selectedTemplate?.name ?? 'Free Form'}
+                  {detectedTemplate &&
+                    detectedTemplate.id !== selectedTemplate?.id && (
+                      <span className="ml-2 text-blue-600">
+                        (Detected: {detectedTemplate.name})
+                      </span>
+                    )}
                 </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTemplateChangeWithWarning}
-                className="flex items-center gap-1"
-              >
-                <RefreshCw className="w-3 h-3" />
-                {selectedTemplate ? 'Change' : 'Select Template'}
-              </Button>
+              <div className="flex flex-col gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTemplateChangeWithWarning}
+                  className="flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  {selectedTemplate ? 'Change' : 'Select Template'}
+                </Button>
+                {showSynchronizeButton && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSynchronize}
+                    className="flex items-center gap-1 text-xs"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Synchronize
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -619,10 +818,7 @@ export default function AdrTemplateSidebar({
                             <Input
                               id={`section-${section.id}`}
                               placeholder={section.placeholder}
-                              value={
-                                localSectionContent[section.id] ??
-                                section.content
-                              }
+                              value={section.content}
                               onChange={(e) =>
                                 handleSectionContentChange(
                                   section.id,
@@ -687,10 +883,7 @@ export default function AdrTemplateSidebar({
                                 isContext ? 'min-h-[100px]' : 'min-h-[60px]'
                               }`}
                               placeholder={section.placeholder}
-                              value={
-                                localSectionContent[section.id] ??
-                                section.content
-                              }
+                              value={section.content}
                               onChange={(e) =>
                                 handleSectionContentChange(
                                   section.id,

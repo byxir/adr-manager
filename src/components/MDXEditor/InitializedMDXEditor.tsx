@@ -44,10 +44,12 @@ import '@/styles/editor.css'
 export default function InitializedMDXEditor({
   editorRef,
   onEditorReady,
+  diffMarkdown,
   ...props
 }: {
   editorRef: ForwardedRef<MDXEditorMethods> | null
   onEditorReady?: (element: HTMLElement) => void
+  diffMarkdown?: string
 } & MDXEditorProps) {
   const defaultSnippetContent = `
 export default function App() {
@@ -136,7 +138,10 @@ export default function App() {
           }),
 
           // View modes - configured to start in source mode by default
-          diffSourcePlugin({ viewMode: 'rich-text' }),
+          diffSourcePlugin({
+            viewMode: 'rich-text',
+            diffMarkdown: diffMarkdown ?? '',
+          }),
 
           // Advanced features
           frontmatterPlugin(),
