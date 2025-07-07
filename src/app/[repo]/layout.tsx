@@ -17,6 +17,8 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import Link from 'next/link'
+import FirstTimeTour from '@/components/tour'
+import React, { useEffect, useState } from 'react'
 
 export const markdownAtom = atom<string>('')
 export const templateMarkdownAtom = atom<string>('')
@@ -51,64 +53,67 @@ export default function RepoLayout({
     null
 
   return (
-    <SidebarProvider>
-      <RightSidebarProvider>
-        <AppSidebar
-          repoTree={repoTree?.data ?? null}
-          activeRepo={activeRepo}
-          adrs={adrs ?? null}
-          owner={owner ?? repoOwner}
-          branch={branch ?? repoDefaultBranch}
-        >
-          <header className="flex w-full max-w-[calc(100%-250px)] h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4 w-full justify-between">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
-
-                <Separator
-                  orientation="vertical"
-                  className="mr-2 data-[orientation=vertical]:h-4"
-                />
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem className="hidden md:block">
-                      <Link
-                        href={`/${activeRepo}?owner=${owner}&branch=${branch}`}
-                      >
-                        {activeRepo}
-                      </Link>
-                    </BreadcrumbItem>
-                    {pathname.replace(`/${activeRepo}`, '').length > 0 && (
-                      <>
-                        <BreadcrumbSeparator className="hidden md:block" />
-
-                        <BreadcrumbItem>
-                          <BreadcrumbPage>
-                            {pathname
-                              .replace(`/${activeRepo}`, '')
-                              .replaceAll('~', '/')}
-                          </BreadcrumbPage>
-                        </BreadcrumbItem>
-                      </>
-                    )}
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
-              {pathname.includes('/adr/') && (
+    <div>
+      <SidebarProvider>
+        <RightSidebarProvider>
+          <AppSidebar
+            repoTree={repoTree?.data ?? null}
+            activeRepo={activeRepo}
+            adrs={adrs ?? null}
+            owner={owner ?? repoOwner}
+            branch={branch ?? repoDefaultBranch}
+          >
+            <header className="flex w-full max-w-[calc(100%-250px)] h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+              <div className="flex items-center gap-2 px-4 w-full justify-between">
                 <div className="flex items-center gap-2">
+                  <SidebarTrigger className="-ml-1" />
+
                   <Separator
                     orientation="vertical"
-                    className="ml-2 data-[orientation=vertical]:h-4"
+                    className="mr-2 data-[orientation=vertical]:h-4"
                   />
+                  <Breadcrumb>
+                    <BreadcrumbList>
+                      <BreadcrumbItem className="hidden md:block">
+                        <Link
+                          href={`/${activeRepo}?owner=${owner}&branch=${branch}`}
+                        >
+                          {activeRepo}
+                        </Link>
+                      </BreadcrumbItem>
+                      {pathname.replace(`/${activeRepo}`, '').length > 0 && (
+                        <>
+                          <BreadcrumbSeparator className="hidden md:block" />
 
-                  <RightSidebarTrigger className="-ml-1" />
+                          <BreadcrumbItem>
+                            <BreadcrumbPage>
+                              {pathname
+                                .replace(`/${activeRepo}`, '')
+                                .replaceAll('~', '/')}
+                            </BreadcrumbPage>
+                          </BreadcrumbItem>
+                        </>
+                      )}
+                    </BreadcrumbList>
+                  </Breadcrumb>
                 </div>
-              )}
-            </div>
-          </header>
-          {children}
-        </AppSidebar>
-      </RightSidebarProvider>
-    </SidebarProvider>
+                {pathname.includes('/adr/') && (
+                  <div className="flex items-center gap-2">
+                    <Separator
+                      orientation="vertical"
+                      className="ml-2 data-[orientation=vertical]:h-4"
+                    />
+
+                    <RightSidebarTrigger className="-ml-1" />
+                  </div>
+                )}
+              </div>
+            </header>
+            {children}
+          </AppSidebar>
+        </RightSidebarProvider>
+      </SidebarProvider>
+      <FirstTimeTour />
+    </div>
   )
 }
