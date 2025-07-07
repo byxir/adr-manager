@@ -18,7 +18,7 @@ export default function Home() {
 
   const handleRepoClick = (repo: Repo) => {
     router.push(
-      `/${repo.name}?owner=${repo.owner.login}&branch=${repo.default_branch}`,
+      `/${repo.name}?owner=${repo.owner.name}&branch=${repo.default_branch}`,
     )
   }
 

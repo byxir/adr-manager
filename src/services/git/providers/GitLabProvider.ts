@@ -7,6 +7,7 @@ import {
 } from './../GitAdapter'
 import { Gitlab, type ProjectSchema } from '@gitbeaker/rest'
 import { type JWT } from 'next-auth/jwt'
+import type { Repo } from '@/definitions/types'
 
 const baseUrl = process.env.GITLAB_HOST_URL ?? 'https://gitlab.com'
 
@@ -56,37 +57,18 @@ export class GitLabProvider {
     return projects.map((project: ProjectSchema) => {
       return {
         id: project.id,
-        node_id: project.id.toString(),
         name: project.name,
         full_name: project.path_with_namespace,
-        private: project.visibility !== 'public',
-        owner: {
-          login: project.namespace?.full_path,
-          id: project.namespace?.id,
-          node_id: project.namespace?.id?.toString(),
-          avatar_url: project.avatar_url ?? project.namespace.avatar_url,
-          url: project.web_url,
-          html_url: project.web_url,
-          type: 'User',
-          user_view_type: 'User',
-          site_admin: false,
-        },
-        html_url: project.web_url,
         description: project.description,
-        pushed_at: project.last_activity_at,
-        git_url: project.http_url_to_repo,
-        ssh_url: project.ssh_url_to_repo,
-        clone_url: project.http_url_to_repo,
-        stargazers_count: project.star_count,
-        has_issues: project.issues_enabled,
-        visibility: project.visibility,
+        private: project.visibility !== 'public',
         default_branch: project.default_branch,
-        permissions: {
-          admin: true,
-          maintain: true,
-          push: true,
-          triage: true,
-          pull: true,
+        last_updated_at: project.last_activity_at,
+        stars_count: project.star_count,
+        forks_count: project.forks_count,
+        owner: {
+          id: project.namespace?.id,
+          name: project.namespace?.full_path,
+          avatar: project.avatar_url ?? project.namespace.avatar_url,
         },
       }
     })

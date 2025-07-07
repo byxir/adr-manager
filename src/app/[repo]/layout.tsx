@@ -46,7 +46,7 @@ export default function RepoLayout({
   const { data: repos, error: reposError } = useRepos()
 
   const repoOwner = repos?.data?.find((repo) => repo.name === activeRepo)?.owner
-    ?.login
+    ?.name
 
   const repoDefaultBranch =
     repos?.data?.find((repo) => repo.name === activeRepo)?.default_branch ??

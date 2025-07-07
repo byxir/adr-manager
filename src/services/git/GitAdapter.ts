@@ -1,4 +1,5 @@
 import { type JWT } from 'next-auth/jwt'
+import type { Repo } from '@/definitions/types'
 
 export interface GitAdapterMethodInterface {
   accessToken: string
@@ -39,7 +40,7 @@ export interface GitAdapterCreateOrUpdateFile
 export interface GitAdapter {
   refreshAccessToken(token: JWT): Promise<JWT>
 
-  getUserRepos(params: GitAdapterMethodInterface): Promise<unknown>
+  getUserRepos(params: GitAdapterMethodInterface): Promise<Repo[]>
 
   getRepoTree(params: GitAdapterFetchTree): Promise<unknown>
 
