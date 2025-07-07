@@ -108,7 +108,7 @@ export default function AdrPage() {
               'Scenario 3: ADR exists only in repo, creating DB entry',
             )
 
-            const newAdr = await createAdr({
+            await createAdr({
               name: adrName,
               path: formattedPath,
               contents: fetchedContent,

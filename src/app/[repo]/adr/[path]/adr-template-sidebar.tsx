@@ -49,7 +49,6 @@ import {
 import Contributors from 'src/components/contributors'
 import type { Adr } from '@/lib/dexie-db'
 import {
-  ADR_TEMPLATES,
   getTemplateById,
   getTemplateParser,
 } from '@/app/[repo]/adr/[path]/adr-templates'
@@ -78,6 +77,8 @@ export default function AdrTemplateSidebar({
   const [sections, setSections] = useState<ExtendedSection[]>([])
   const [showSynchronizeButton, setShowSynchronizeButton] = useState(false)
 
+  console.log('sections ------>', sections)
+
   const adr = useLiveQuery(
     () => getAdrByNameAndRepository(adrName, repo),
     [adrName, repo],
@@ -98,6 +99,9 @@ export default function AdrTemplateSidebar({
 
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
+
+  // Track if any textarea is focused to prevent parsing during editing
+  const [isTextareaFocused, setIsTextareaFocused] = useState(false)
 
   // Check if synchronize button should be shown
   useEffect(() => {
@@ -195,7 +199,7 @@ export default function AdrTemplateSidebar({
 
   // Parse content when ADR changes externally
   useEffect(() => {
-    if (adr?.contents) {
+    if (adr?.contents && !isTextareaFocused) {
       const detected = detectTemplate(adr.contents)
       setDetectedTemplate(detected)
 
@@ -313,69 +317,82 @@ export default function AdrTemplateSidebar({
   )
 
   // Generate markdown and update database after changes
-  const generateAndUpdateMarkdown = useCallback(async () => {
-    if (!selectedTemplate || selectedTemplate.id === 'free-form') return
+  const generateAndUpdateMarkdown = useCallback(
+    async (currentSections?: ExtendedSection[]) => {
+      if (!selectedTemplate || selectedTemplate.id === 'free-form') return
 
-    const parser = getTemplateParser(selectedTemplate.id)
-    if (!parser) return
+      const parser = getTemplateParser(selectedTemplate.id)
+      if (!parser) return
 
-    // Convert sections back to proper format for markdown generation
-    const sectionsForMarkdown = sections.map((section) => {
-      if (section.items && section.items.length > 0) {
-        // Convert items array back to markdown list format
-        const listContent = section.items
-          .filter((item) => item.trim().length > 0)
-          .map((item) => `* ${item}`)
-          .join('\n')
-        return { ...section, content: listContent }
-      }
-      return section
-    })
+      // Use passed sections or fall back to state sections
+      const sectionsToUse = currentSections ?? sections
 
-    const markdownContent = parser.generateMarkdown(sectionsForMarkdown)
-    await updateAdrContents(adrName, repo, markdownContent)
-  }, [selectedTemplate, sections, adrName, repo])
+      // Convert sections back to proper format for markdown generation
+      const sectionsForMarkdown = sectionsToUse.map((section) => {
+        if (section.items && section.items.length > 0) {
+          // Convert items array back to markdown list format
+          const listContent = section.items
+            .filter((item) => item.trim().length > 0)
+            .map((item) => `* ${item}`)
+            .join('\n')
+          return { ...section, content: listContent }
+        }
+        return section
+      })
 
-  // Debounced update to database
-  const scheduleMarkdownUpdate = useCallback(() => {
-    if (generateMarkdownTimeoutRef.current) {
-      clearTimeout(generateMarkdownTimeoutRef.current)
-    }
-
-    generateMarkdownTimeoutRef.current = setTimeout(() => {
-      void generateAndUpdateMarkdown()
-    }, 500)
-  }, [generateAndUpdateMarkdown])
+      const markdownContent = parser.generateMarkdown(sectionsForMarkdown)
+      await updateAdrContents(adrName, repo, markdownContent)
+    },
+    [selectedTemplate, sections, adrName, repo],
+  )
 
   const updateSectionContent = useCallback(
     (sectionId: string, content: string) => {
-      setSections((prev) =>
-        prev.map((section) =>
+      setSections((prev) => {
+        const updatedSections = prev.map((section) =>
           section.id === sectionId ? { ...section, content } : section,
-        ),
-      )
+        )
+
+        // Schedule markdown update with the updated sections
+        if (generateMarkdownTimeoutRef.current) {
+          clearTimeout(generateMarkdownTimeoutRef.current)
+        }
+        generateMarkdownTimeoutRef.current = setTimeout(() => {
+          void generateAndUpdateMarkdown(updatedSections)
+        }, 500)
+
+        return updatedSections
+      })
       setHasContent(true)
-      scheduleMarkdownUpdate()
     },
-    [scheduleMarkdownUpdate],
+    [generateAndUpdateMarkdown],
   )
 
   const updateItemContent = useCallback(
     (sectionId: string, itemIndex: number, content: string) => {
-      setSections((prev) =>
-        prev.map((section) => {
+      setSections((prev) => {
+        const updatedSections = prev.map((section) => {
           if (section.id === sectionId && section.items) {
             const newItems = [...section.items]
             newItems[itemIndex] = content
             return { ...section, items: newItems }
           }
           return section
-        }),
-      )
+        })
+
+        // Schedule markdown update with the updated sections
+        if (generateMarkdownTimeoutRef.current) {
+          clearTimeout(generateMarkdownTimeoutRef.current)
+        }
+        generateMarkdownTimeoutRef.current = setTimeout(() => {
+          void generateAndUpdateMarkdown(updatedSections)
+        }, 500)
+
+        return updatedSections
+      })
       setHasContent(true)
-      scheduleMarkdownUpdate()
     },
-    [scheduleMarkdownUpdate],
+    [generateAndUpdateMarkdown],
   )
 
   const handleSectionContentChange = useCallback(
@@ -438,8 +455,9 @@ export default function AdrTemplateSidebar({
 
   const addListItem = useCallback(
     (sectionId: string) => {
-      setSections((prev) =>
-        prev.map((section) => {
+      console.log('ADD LIST ITEM CALLED')
+      setSections((prev) => {
+        const updatedSections = prev.map((section) => {
           if (section.id === sectionId) {
             const existingItems = section.items ?? []
 
@@ -453,22 +471,30 @@ export default function AdrTemplateSidebar({
             const newItemText = ''
             const newItems = [...existingItems, newItemText]
 
-            // Schedule markdown update
-            scheduleMarkdownUpdate()
-
             return { ...section, items: newItems }
           }
           return section
-        }),
-      )
+        })
+
+        // Schedule markdown update with the updated sections
+        if (generateMarkdownTimeoutRef.current) {
+          clearTimeout(generateMarkdownTimeoutRef.current)
+        }
+        generateMarkdownTimeoutRef.current = setTimeout(() => {
+          void generateAndUpdateMarkdown(updatedSections)
+        }, 500)
+
+        return updatedSections
+      })
     },
-    [scheduleMarkdownUpdate],
+    [generateAndUpdateMarkdown],
   )
 
   const removeLastListItem = useCallback(
     (sectionId: string) => {
-      setSections((prev) =>
-        prev.map((section) => {
+      console.log('REMOVE LAST LIST ITEM CALLED')
+      setSections((prev) => {
+        const updatedSections = prev.map((section) => {
           if (
             section.id === sectionId &&
             section.items &&
@@ -476,16 +502,23 @@ export default function AdrTemplateSidebar({
           ) {
             const newItems = section.items.slice(0, -1)
 
-            // Schedule markdown update
-            scheduleMarkdownUpdate()
-
             return { ...section, items: newItems }
           }
           return section
-        }),
-      )
+        })
+
+        // Schedule markdown update with the updated sections
+        if (generateMarkdownTimeoutRef.current) {
+          clearTimeout(generateMarkdownTimeoutRef.current)
+        }
+        generateMarkdownTimeoutRef.current = setTimeout(() => {
+          void generateAndUpdateMarkdown(updatedSections)
+        }, 500)
+
+        return updatedSections
+      })
     },
-    [scheduleMarkdownUpdate],
+    [generateAndUpdateMarkdown],
   )
 
   const checkHasContent = useCallback((section: ExtendedSection) => {
@@ -825,6 +858,8 @@ export default function AdrTemplateSidebar({
                                   e.target.value,
                                 )
                               }
+                              onFocus={() => setIsTextareaFocused(true)}
+                              onBlur={() => setIsTextareaFocused(false)}
                               className="font-medium text-xs"
                             />
                           ) : isListType && section.items ? (
@@ -866,6 +901,8 @@ export default function AdrTemplateSidebar({
                                           e.target.value,
                                         )
                                       }
+                                      onFocus={() => setIsTextareaFocused(true)}
+                                      onBlur={() => setIsTextareaFocused(false)}
                                     />
                                   </div>
                                 )
@@ -890,6 +927,8 @@ export default function AdrTemplateSidebar({
                                   e.target.value,
                                 )
                               }
+                              onFocus={() => setIsTextareaFocused(true)}
+                              onBlur={() => setIsTextareaFocused(false)}
                             />
                           )}
 

@@ -214,21 +214,21 @@ const generateMADRMinimalMarkdown = (
     {} as Record<string, string>,
   )
 
-  return `# ${sectionMap.title ?? '{short title, representative of solved problem and found solution}'}
+  return `# ${sectionMap.title ?? ''}
 
 ## Context and Problem Statement
 
-${sectionMap.context ?? '{Describe the context and problem statement, e.g., in free form using two to three sentences or in the form of an illustrative story. You may want to articulate the problem in form of a question and add links to collaboration boards or issue management systems.}'}
+${sectionMap.context ?? ''}
 
 ## Considered Options
 
-${sectionMap.options ?? '* {title of option 1}\n* {title of option 2}\n* {title of option 3}\n* …'}
+${sectionMap.options ?? ''}
 
 ## Decision Outcome
 
-${sectionMap.decision ?? 'Chosen option: "{title of option 1}", because {justification. e.g., only option, which meets k.o. criterion decision driver | which resolves force {force} | … | comes out best (see below)}.'}
+${sectionMap.decision ?? ''}
 
-${sectionMap.consequences ? '### Consequences\n\n' + sectionMap.consequences : '### Consequences\n\n* Good, because {positive consequence, e.g., improvement of one or more desired qualities, …}\n* Bad, because {negative consequence, e.g., compromising one or more desired qualities, …}\n* …'}
+${sectionMap.consequences ? '### Consequences\n\n' + sectionMap.consequences : ''}
 `
 }
 
@@ -241,29 +241,29 @@ const generateMADRFullMarkdown = (sections: AdrTemplateSection[]): string => {
     {} as Record<string, string>,
   )
 
-  return `${sectionMap.metadata ? '---\n# These are optional metadata elements. Feel free to remove any of them.\n' + sectionMap.metadata + '\n---\n\n' : '---\n# These are optional metadata elements. Feel free to remove any of them.\nstatus: "{proposed | rejected | accepted | deprecated | … | superseded by ADR-0123}"\ndate: {YYYY-MM-DD when the decision was last updated}\ndecision-makers: {list everyone involved in the decision}\nconsulted: {list everyone whose opinions are sought (typically subject-matter experts); and with whom there is a two-way communication}\ninformed: {list everyone who is kept up-to-date on progress; and with whom there is a one-way communication}\n---\n\n'}# ${sectionMap.title ?? '{short title, representative of solved problem and found solution}'}
+  return `${sectionMap.metadata ? '---\n# These are optional metadata elements. Feel free to remove any of them.\n' + sectionMap.metadata + '\n---\n\n' : '---\n# These are optional metadata elements. Feel free to remove any of them.\nstatus: "{proposed | rejected | accepted | deprecated | … | superseded by ADR-0123}"\ndate: {YYYY-MM-DD when the decision was last updated}\ndecision-makers: {list everyone involved in the decision}\nconsulted: {list everyone whose opinions are sought (typically subject-matter experts); and with whom there is a two-way communication}\ninformed: {list everyone who is kept up-to-date on progress; and with whom there is a one-way communication}\n---\n\n'}# ${sectionMap.title ?? ''}
 
 ## Context and Problem Statement
 
-${sectionMap.context ?? '{Describe the context and problem statement, e.g., in free form using two to three sentences or in the form of an illustrative story. You may want to articulate the problem in form of a question and add links to collaboration boards or issue management systems.}'}
+${sectionMap.context ?? '\n\n'}
 
-${sectionMap.drivers ? '## Decision Drivers\n\n' + sectionMap.drivers : '## Decision Drivers\n\n* {decision driver 1, e.g., a force, facing concern, …}\n* {decision driver 2, e.g., a force, facing concern, …}\n* …'}
+${sectionMap.drivers ? '## Decision Drivers\n\n' + sectionMap.drivers : ''}
 
 ## Considered Options
 
-${sectionMap.options ?? '* {title of option 1}\n* {title of option 2}\n* {title of option 3}\n* …'}
+${sectionMap.options ?? ''}
 
 ## Decision Outcome
 
-${sectionMap.decision ?? 'Chosen option: "{title of option 1}", because {justification. e.g., only option, which meets k.o. criterion decision driver | which resolves force {force} | … | comes out best (see below)}.'}
+${sectionMap.decision ?? ''}
 
-${sectionMap.consequences ? '### Consequences\n\n' + sectionMap.consequences : '### Consequences\n\n* Good, because {positive consequence, e.g., improvement of one or more desired qualities, …}\n* Bad, because {negative consequence, e.g., compromising one or more desired qualities, …}\n* …'}
+${sectionMap.consequences ? '### Consequences\n\n' + sectionMap.consequences : ''}
 
-${sectionMap.confirmation ? '### Confirmation\n\n' + sectionMap.confirmation : '### Confirmation\n\n{Describe how the implementation of/compliance with the ADR can/will be confirmed. Are the design that was decided for and its implementation in line with the decision made? E.g., a design/code review or a test with a library such as ArchUnit can help validate this. Not that although we classify this element as optional, it is included in many ADRs.}'}
+${sectionMap.confirmation ? '### Confirmation\n\n' + sectionMap.confirmation : ''}
 
-${sectionMap.proscons ? '## Pros and Cons of the Options\n\n' + sectionMap.proscons : '## Pros and Cons of the Options\n\n### {title of option 1}\n\n{example | description | pointer to more information | …}\n\n* Good, because {argument a}\n* Good, because {argument b}\n* Neutral, because {argument c}\n* Bad, because {argument d}\n* …\n\n### {title of other option}\n\n{example | description | pointer to more information | …}\n\n* Good, because {argument a}\n* Good, because {argument b}\n* Neutral, because {argument c}\n* Bad, because {argument d}\n* …'}
+${sectionMap.proscons ? '## Pros and Cons of the Options\n\n' + sectionMap.proscons : ''}
 
-${sectionMap.moreinfo ? '## More Information\n\n' + sectionMap.moreinfo : '## More Information\n\n{You might want to provide additional evidence/confidence for the decision outcome here and/or document the team agreement on the decision and/or define when/how this decision the decision should be realized and if/when it should be re-visited. Links to other decisions and resources might appear here as well.}'}
+${sectionMap.moreinfo ? '## More Information\n\n' + sectionMap.moreinfo : ''}
 `
 }
 
@@ -276,22 +276,22 @@ const generateYStatementMarkdown = (sections: AdrTemplateSection[]): string => {
     {} as Record<string, string>,
   )
 
-  return `# Y-Statement: ${sectionMap.decided ?? 'Decision Title'}
+  return `# Y-Statement: ${sectionMap.decided ?? ''}
 
-In the context of ${sectionMap.context ?? '{functional requirement (story, use case) or architectural component}'}
-facing ${sectionMap.facing ?? '{non-functional requirement, for instance a desired quality}'}
-we decided for ${sectionMap.decided ?? '{decision outcome (the most important part)}'}
-and against ${sectionMap.neglected ?? '{alternatives not chosen (not to be forgotten!)}'}
-to achieve ${sectionMap.achieve ?? '{benefits, the full or partial satisfaction of requirement(s)}'}
-accepting that ${sectionMap.accepting ?? '{drawbacks and other consequences, for instance impact on other properties/context and effort/cost}'}
+In the context of ${sectionMap.context ?? ''}
+facing ${sectionMap.facing ?? ''}
+we decided for ${sectionMap.decided ?? ''}
+and against ${sectionMap.neglected ?? ''}
+to achieve ${sectionMap.achieve ?? ''}
+accepting that ${sectionMap.accepting ?? ''}
 
 ## Rationale
 
-${sectionMap.rationale ?? 'This Y-statement captures the essential elements of our architectural decision in a concise format that emphasizes the "why" behind our choice.'}
+${sectionMap.rationale ?? ''}
 
 ## References
 
-${sectionMap.references ?? '- [Y-Statements: A light template for architectural decision capturing](https://medium.com/olzzio/y-statements-10eb07b5a177)'}
+${sectionMap.references ?? ''}
 `
 }
 
@@ -309,7 +309,6 @@ const generateFreeFormMarkdown = (sections: AdrTemplateSection[]): string => {
 
 const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   const sections = MADR_MINIMAL_SECTIONS.map((section) => ({ ...section }))
-  const lines = markdown.split('\n')
 
   const titleMatch = /^# (.+)/m.exec(markdown)
   if (titleMatch?.[1]) {
@@ -319,34 +318,34 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const contextMatch =
-    /## Context and Problem Statement\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(markdown)
+    /(?:^|\n)## Context and Problem Statement\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(
+      markdown,
+    )
+
   if (contextMatch?.[1]) {
     const contextSection = sections.find((s) => s.id === 'context')
     if (contextSection)
       contextSection.content = trimLineTrailingWhitespace(contextMatch[1])
   }
 
-  const optionsMatch = /## Considered Options\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const optionsMatch =
+    /(?:^|\n)## Considered Options\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
   if (optionsMatch?.[1]) {
     const optionsSection = sections.find((s) => s.id === 'options')
     if (optionsSection)
       optionsSection.content = trimLineTrailingWhitespace(optionsMatch[1])
   }
 
-  const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const decisionMatch =
+    /(?:^|\n)## Decision Outcome\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
   if (decisionMatch?.[1]) {
     const decisionSection = sections.find((s) => s.id === 'decision')
     if (decisionSection)
       decisionSection.content = trimLineTrailingWhitespace(decisionMatch[1])
   }
 
-  const consequencesMatch = /### Consequences\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const consequencesMatch =
+    /(?:^|\n)### Consequences\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
   if (consequencesMatch?.[1]) {
     const consequencesSection = sections.find((s) => s.id === 'consequences')
     if (consequencesSection)
@@ -380,43 +379,41 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const contextMatch =
-    /## Context and Problem Statement\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(markdown)
+    /(?:^|\n)## Context and Problem Statement\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(
+      markdown,
+    )
   if (contextMatch?.[1]) {
     const contextSection = sections.find((s) => s.id === 'context')
     if (contextSection)
       contextSection.content = trimLineTrailingWhitespace(contextMatch[1])
   }
 
-  const driversMatch = /## Decision Drivers\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const driversMatch =
+    /(?:^|\n)## Decision Drivers\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
   if (driversMatch?.[1]) {
     const driversSection = sections.find((s) => s.id === 'drivers')
     if (driversSection)
       driversSection.content = trimLineTrailingWhitespace(driversMatch[1])
   }
 
-  const optionsMatch = /## Considered Options\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const optionsMatch =
+    /(?:^|\n)## Considered Options\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
   if (optionsMatch?.[1]) {
     const optionsSection = sections.find((s) => s.id === 'options')
     if (optionsSection)
       optionsSection.content = trimLineTrailingWhitespace(optionsMatch[1])
   }
 
-  const decisionMatch = /## Decision Outcome\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const decisionMatch =
+    /(?:^|\n)## Decision Outcome\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
   if (decisionMatch?.[1]) {
     const decisionSection = sections.find((s) => s.id === 'decision')
     if (decisionSection)
       decisionSection.content = trimLineTrailingWhitespace(decisionMatch[1])
   }
 
-  const consequencesMatch = /### Consequences\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const consequencesMatch =
+    /(?:^|\n)### Consequences\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
   if (consequencesMatch?.[1]) {
     const consequencesSection = sections.find((s) => s.id === 'consequences')
     if (consequencesSection)
@@ -425,9 +422,8 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
       )
   }
 
-  const confirmationMatch = /### Confirmation\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const confirmationMatch =
+    /(?:^|\n)### Confirmation\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
   if (confirmationMatch?.[1]) {
     const confirmationSection = sections.find((s) => s.id === 'confirmation')
     if (confirmationSection)
@@ -437,16 +433,17 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const prosconsMatch =
-    /## Pros and Cons of the Options\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(markdown)
+    /(?:^|\n)## Pros and Cons of the Options\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(
+      markdown,
+    )
   if (prosconsMatch?.[1]) {
     const prosconsSection = sections.find((s) => s.id === 'proscons')
     if (prosconsSection)
       prosconsSection.content = trimLineTrailingWhitespace(prosconsMatch[1])
   }
 
-  const moreinfoMatch = /## More Information\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const moreinfoMatch =
+    /(?:^|\n)## More Information\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
   if (moreinfoMatch?.[1]) {
     const moreinfoSection = sections.find((s) => s.id === 'moreinfo')
     if (moreinfoSection)
@@ -525,18 +522,18 @@ const parseYStatementMarkdown = (markdown: string): AdrTemplateSection[] => {
       acceptingSection.content = trimLineTrailingWhitespace(acceptingMatch[1])
   }
 
-  const rationaleMatch = /## Rationale\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const rationaleMatch =
+    /(?:^|\n)## Rationale\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+
   if (rationaleMatch?.[1]) {
     const rationaleSection = sections.find((s) => s.id === 'rationale')
     if (rationaleSection)
       rationaleSection.content = trimLineTrailingWhitespace(rationaleMatch[1])
   }
 
-  const referencesMatch = /## References\s*\n([\s\S]*?)(?=^#+\s|$)/m.exec(
-    markdown,
-  )
+  const referencesMatch =
+    /(?:^|\n)## References\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+
   if (referencesMatch?.[1]) {
     const referencesSection = sections.find((s) => s.id === 'references')
     if (referencesSection)
