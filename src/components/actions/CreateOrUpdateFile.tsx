@@ -58,7 +58,7 @@ export default function UpdateOrCreateFileButton({
     <Button
       onClick={() => mutate()}
       loading={isLoading}
-      className="w-full text-xs h-8"
+      className="w-full text-xs h-8 updateOrCreateFile"
     >
       Push ADR
     </Button>

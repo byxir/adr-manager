@@ -7,6 +7,7 @@ import {
 } from './../GitAdapter'
 import { Octokit } from '@octokit/rest'
 import { type JWT } from 'next-auth/jwt'
+import type { Repo } from '@/definitions/types'
 
 const hostUrl = process.env.GITHUB_HOST_URL
 const baseUrl = hostUrl
@@ -60,10 +61,44 @@ export class GitHubProvider {
 
   static async getUserRepos({
     accessToken,
-  }: GitAdapterMethodInterface): Promise<any> {
+  }: GitAdapterMethodInterface): Promise<Repo[]> {
     const octokit = this.createClient(accessToken)
 
-    return (await octokit.rest.repos.listForAuthenticatedUser())?.data
+    const data = (await octokit.rest.repos.listForAuthenticatedUser())?.data
+
+    return data?.map((repo) => {
+      const {
+        id,
+        name,
+        full_name,
+        description,
+        language,
+        default_branch,
+        pushed_at,
+        stargazers_count,
+        forks_count,
+      } = repo
+
+      const owner = repo.owner
+
+      return {
+        id,
+        name,
+        full_name,
+        description,
+        language,
+        private: repo.private,
+        default_branch,
+        last_updated_at: pushed_at,
+        stars_count: stargazers_count,
+        forks_count,
+        owner: {
+          id: owner.id,
+          name: owner.login,
+          avatar: owner.avatar_url,
+        },
+      }
+    })
   }
 
   static async getRepoTree({

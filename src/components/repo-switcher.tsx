@@ -39,7 +39,7 @@ export function RepoSwitcher({
 
   const handleSwitchRepo = (repo: Repo) => {
     router.push(
-      `/${repo.name}?owner=${repo.owner.login}&branch=${repo.default_branch}`,
+      `/${repo.name}?owner=${repo.owner.name}&branch=${repo.default_branch}`,
     )
   }
 
@@ -55,8 +55,7 @@ export function RepoSwitcher({
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 <img
                   src={
-                    repos.find((repo) => repo.name === activeRepo)?.owner
-                      .avatar_url
+                    repos.find((repo) => repo.name === activeRepo)?.owner.avatar
                   }
                   className="rounded-lg"
                 />
@@ -85,8 +84,8 @@ export function RepoSwitcher({
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
                   <img
-                    src={repo.owner.avatar_url}
-                    alt={repo.owner.login}
+                    src={repo.owner.avatar}
+                    alt={repo.owner.name}
                     className="size-3.5 shrink-0"
                   />
                 </div>

@@ -356,6 +356,7 @@ export default function AdrPage() {
             typeof markdown === 'string' &&
             currentAdrKey === adrKey ? (
             <ForwardRefEditor
+              className={'textEditor'}
               key={adrKey}
               ref={editorRef}
               onEditorReady={handleEditorReady}

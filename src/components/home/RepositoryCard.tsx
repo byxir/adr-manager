@@ -27,17 +27,15 @@ export default function RepositoryCard({
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={repo.owner.avatar_url} alt={repo.owner.login} />
-              <AvatarFallback>
-                {repo.owner.login[0]?.toUpperCase()}
-              </AvatarFallback>
+              <AvatarImage src={repo.owner.avatar} alt={repo.owner.name} />
+              <AvatarFallback>{repo.owner.name?.toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
               <CardTitle className="text-lg line-clamp-1">
                 {repo.name}
               </CardTitle>
               <CardDescription className="text-sm">
-                {repo.owner.login}
+                {repo.owner.name}
               </CardDescription>
             </div>
           </div>
@@ -67,7 +65,7 @@ export default function RepositoryCard({
             )}
             <div className="flex items-center space-x-1">
               <Star className="h-3 w-3" />
-              <span>{repo.stargazers_count}</span>
+              <span>{repo.stars_count}</span>
             </div>
             <div className="flex items-center space-x-1">
               <GitFork className="h-3 w-3" />
