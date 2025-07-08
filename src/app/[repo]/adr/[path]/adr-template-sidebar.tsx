@@ -223,18 +223,24 @@ export default function AdrTemplateSidebar({
               'drivers',
               'proscons',
             ].includes(section.id)
-            if (isListType && section.content) {
-              // Parse list items from content
-              const items = section.content
-                .split('\n')
-                .filter(
-                  (line) =>
-                    line.trim().startsWith('*') || line.trim().startsWith('-'),
-                )
-                .map((line) => line.replace(/^[\s]*[-*]\s*/, '').trim())
-                .filter((item) => item.length > 0)
+            if (isListType) {
+              if (section.content) {
+                // Parse list items from content
+                const items = section.content
+                  .split('\n')
+                  .filter(
+                    (line) =>
+                      line.trim().startsWith('*') ||
+                      line.trim().startsWith('-'),
+                  )
+                  .map((line) => line.replace(/^[\s]*[-*]\s*/, '').trim())
+                  .filter((item) => item.length > 0)
 
-              return { ...section, items }
+                return { ...section, items }
+              } else {
+                // Empty list type section should still have items array
+                return { ...section, items: [] }
+              }
             }
             return section
           })

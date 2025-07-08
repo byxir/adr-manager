@@ -2,14 +2,7 @@ import type { AdrTemplate, AdrTemplateSection } from '@/definitions/types'
 
 // Utility function to trim trailing whitespace from each line and overall content
 const trimLineTrailingWhitespace = (content: string): string => {
-  return (
-    content
-      // .split('\n')
-      // .map((line) => line.replace(/\s+$/, '')) // Remove trailing whitespace from each line
-      // .join('\n')
-      .replace('&#x20;', '')
-      .trim()
-  ) // Remove leading/trailing whitespace from overall content
+  return content.replace('&#x20;', '').trim() // Remove leading/trailing whitespace from overall content
 }
 
 const MADR_MINIMAL_SECTIONS: AdrTemplateSection[] = [
@@ -228,7 +221,9 @@ ${sectionMap.options ?? ''}
 
 ${sectionMap.decision ?? ''}
 
-${sectionMap.consequences ? '### Consequences\n\n' + sectionMap.consequences : ''}
+### Consequences
+
+${sectionMap.consequences ?? ''}
 `
 }
 
@@ -247,7 +242,9 @@ const generateMADRFullMarkdown = (sections: AdrTemplateSection[]): string => {
 
 ${sectionMap.context ?? '\n\n'}
 
-${sectionMap.drivers ? '## Decision Drivers\n\n' + sectionMap.drivers : ''}
+## Decision Drivers
+
+${sectionMap.drivers ?? ''}
 
 ## Considered Options
 
@@ -257,13 +254,21 @@ ${sectionMap.options ?? ''}
 
 ${sectionMap.decision ?? ''}
 
-${sectionMap.consequences ? '### Consequences\n\n' + sectionMap.consequences : ''}
+### Consequences
 
-${sectionMap.confirmation ? '### Confirmation\n\n' + sectionMap.confirmation : ''}
+${sectionMap.consequences ?? ''}
 
-${sectionMap.proscons ? '## Pros and Cons of the Options\n\n' + sectionMap.proscons : ''}
+### Confirmation
 
-${sectionMap.moreinfo ? '## More Information\n\n' + sectionMap.moreinfo : ''}
+${sectionMap.confirmation ?? ''}
+
+## Pros and Cons of the Options
+
+${sectionMap.proscons ?? ''}
+
+## More Information
+
+${sectionMap.moreinfo ?? ''}
 `
 }
 
@@ -318,7 +323,7 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const contextMatch =
-    /(?:^|\n)## Context and Problem Statement\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(
+    /(?:^|\n)## Context and Problem Statement\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(
       markdown,
     )
 
@@ -329,7 +334,9 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const optionsMatch =
-    /(?:^|\n)## Considered Options\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+    /(?:^|\n)## Considered Options\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(
+      markdown,
+    )
   if (optionsMatch?.[1]) {
     const optionsSection = sections.find((s) => s.id === 'options')
     if (optionsSection)
@@ -337,7 +344,7 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const decisionMatch =
-    /(?:^|\n)## Decision Outcome\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+    /(?:^|\n)## Decision Outcome\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(markdown)
   if (decisionMatch?.[1]) {
     const decisionSection = sections.find((s) => s.id === 'decision')
     if (decisionSection)
@@ -345,7 +352,7 @@ const parseMADRMinimalMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const consequencesMatch =
-    /(?:^|\n)### Consequences\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+    /(?:^|\n)### Consequences\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(markdown)
   if (consequencesMatch?.[1]) {
     const consequencesSection = sections.find((s) => s.id === 'consequences')
     if (consequencesSection)
@@ -379,7 +386,7 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const contextMatch =
-    /(?:^|\n)## Context and Problem Statement\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(
+    /(?:^|\n)## Context and Problem Statement\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(
       markdown,
     )
   if (contextMatch?.[1]) {
@@ -389,7 +396,7 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const driversMatch =
-    /(?:^|\n)## Decision Drivers\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+    /(?:^|\n)## Decision Drivers\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(markdown)
   if (driversMatch?.[1]) {
     const driversSection = sections.find((s) => s.id === 'drivers')
     if (driversSection)
@@ -397,7 +404,9 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const optionsMatch =
-    /(?:^|\n)## Considered Options\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+    /(?:^|\n)## Considered Options\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(
+      markdown,
+    )
   if (optionsMatch?.[1]) {
     const optionsSection = sections.find((s) => s.id === 'options')
     if (optionsSection)
@@ -405,7 +414,7 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const decisionMatch =
-    /(?:^|\n)## Decision Outcome\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+    /(?:^|\n)## Decision Outcome\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(markdown)
   if (decisionMatch?.[1]) {
     const decisionSection = sections.find((s) => s.id === 'decision')
     if (decisionSection)
@@ -413,7 +422,7 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const consequencesMatch =
-    /(?:^|\n)### Consequences\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+    /(?:^|\n)### Consequences\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(markdown)
   if (consequencesMatch?.[1]) {
     const consequencesSection = sections.find((s) => s.id === 'consequences')
     if (consequencesSection)
@@ -423,7 +432,7 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const confirmationMatch =
-    /(?:^|\n)### Confirmation\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+    /(?:^|\n)### Confirmation\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(markdown)
   if (confirmationMatch?.[1]) {
     const confirmationSection = sections.find((s) => s.id === 'confirmation')
     if (confirmationSection)
@@ -433,7 +442,7 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const prosconsMatch =
-    /(?:^|\n)## Pros and Cons of the Options\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(
+    /(?:^|\n)## Pros and Cons of the Options\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(
       markdown,
     )
   if (prosconsMatch?.[1]) {
@@ -443,7 +452,7 @@ const parseMADRFullMarkdown = (markdown: string): AdrTemplateSection[] => {
   }
 
   const moreinfoMatch =
-    /(?:^|\n)## More Information\s[^\n]*\n(.*?)(?=\n##?\s|$)/gs.exec(markdown)
+    /(?:^|\n)## More Information\s[^\n]*\n(.*?)(?=\n#{2,}\s|$)/gs.exec(markdown)
   if (moreinfoMatch?.[1]) {
     const moreinfoSection = sections.find((s) => s.id === 'moreinfo')
     if (moreinfoSection)
