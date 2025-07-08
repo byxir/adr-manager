@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @next/next/no-img-element */
 'use client'
 
@@ -53,13 +54,16 @@ export function RepoSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <img
-                  src={
-                    repos.find((repo) => repo.name === activeRepo)?.owner
-                      .avatar ?? ''
-                  }
-                  className="rounded-lg"
-                />
+                {repos.find((repo) => repo.name === activeRepo)?.owner
+                  .avatar ? (
+                  <img
+                    src={
+                      repos.find((repo) => repo.name === activeRepo)?.owner
+                        .avatar ?? ''
+                    }
+                    className="rounded-lg"
+                  />
+                ) : null}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{activeRepo}</span>

@@ -226,15 +226,15 @@ export default function AdrTemplateSidebar({
             if (isListType) {
               if (section.content) {
                 // Parse list items from content
-                const items = section.content
-                  .split('\n')
-                  .filter(
-                    (line) =>
-                      line.trim().startsWith('*') ||
-                      line.trim().startsWith('-'),
-                  )
-                  .map((line) => line.replace(/^[\s]*[-*]\s*/, '').trim())
-                  .filter((item) => item.length > 0)
+                const lines = section.content.split('\n')
+                const listLines = lines.filter(
+                  (line) =>
+                    line.trim().startsWith('*') || line.trim().startsWith('-'),
+                )
+
+                const items = listLines.map((line) =>
+                  line.replace(/^[\s]*[-*]\s*/, '').trim(),
+                )
 
                 return { ...section, items }
               } else {
@@ -338,7 +338,6 @@ export default function AdrTemplateSidebar({
         if (section.items && section.items.length > 0) {
           // Convert items array back to markdown list format
           const listContent = section.items
-            .filter((item) => item.trim().length > 0)
             .map((item) => `* ${item}`)
             .join('\n')
           return { ...section, content: listContent }
