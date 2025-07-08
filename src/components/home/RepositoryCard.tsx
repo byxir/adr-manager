@@ -27,7 +27,10 @@ export default function RepositoryCard({
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={repo.owner.avatar} alt={repo.owner.name} />
+              <AvatarImage
+                src={repo.owner.avatar ?? ''}
+                alt={repo.owner.name}
+              />
               <AvatarFallback>{repo.owner.name?.toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
@@ -77,7 +80,9 @@ export default function RepositoryCard({
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center space-x-1">
             <Calendar className="h-3 w-3" />
-            <span>Updated {new Date(repo.pushed_at).toLocaleDateString()}</span>
+            <span>
+              Updated {new Date(repo.last_updated_at).toLocaleDateString()}
+            </span>
           </div>
           <div className="bg-border px-2 py-1 rounded-md">
             <span>{repo.default_branch}</span>

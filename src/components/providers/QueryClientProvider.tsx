@@ -8,9 +8,8 @@ import {
 } from '@tanstack/react-query'
 import React, { type ReactNode } from 'react'
 import { toast } from 'sonner'
-import type { ErrorResponse } from '@/definitions/axios.types'
 
-const onErrorHandler = (error: ErrorResponse) => {
+const onErrorHandler = (error: any) => {
   toast.error('Error Occurred', {
     description:
       error.response?.data?.message ?? error.message ?? 'Something happened...',
