@@ -116,8 +116,6 @@ export default function AdrPage() {
               branch: branch ?? '',
               owner: owner ?? '',
               createdAt: new Date(),
-              status: 'todo',
-              tags: [],
               sha: fileResponse.data?.sha ?? '',
               id: uuidv4(),
             })
