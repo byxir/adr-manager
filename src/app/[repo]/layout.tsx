@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/breadcrumb'
 import Link from 'next/link'
 import FirstTimeTour from '@/components/tour'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 
 export const markdownAtom = atom<string>('')
 export const templateMarkdownAtom = atom<string>('')
@@ -63,7 +63,7 @@ export default function RepoLayout({
             owner={owner ?? repoOwner}
             branch={branch ?? repoDefaultBranch}
           >
-            <header className="flex w-full max-w-[calc(100%-250px)] h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <header className="flex w-full max-w-[calc(100%-312px)] h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
               <div className="flex items-center gap-2 px-4 w-full justify-between">
                 <div className="flex items-center gap-2">
                   <SidebarTrigger className="-ml-1" />

@@ -22,14 +22,20 @@ const trimLineTrailingWhitespace = (content: string): string => {
 const generateFrontmatter = (options: GenerateMarkdownOptions): string => {
   const frontmatterItems: string[] = []
 
-  // Always include status (default to 'todo' if not provided)
-  const status = options.status ?? 'todo'
-  frontmatterItems.push(`status: "${status}"`)
+  // Include status only if provided
+  if (options.status) {
+    frontmatterItems.push(`status: "${options.status}"`)
+  }
 
   // Include tags if provided
   if (options.tags && options.tags.length > 0) {
     const tagList = options.tags.map((tag) => `"${tag}"`).join(', ')
     frontmatterItems.push(`tags: [${tagList}]`)
+  }
+
+  // Only generate frontmatter if there are items to include
+  if (frontmatterItems.length === 0) {
+    return ''
   }
 
   return `---\n${frontmatterItems.join('\n')}\n---\n\n`
@@ -43,14 +49,22 @@ const parseFrontmatter = (
     markdown,
   )
 
-  if (!frontmatterMatch?.[1] || !frontmatterMatch?.[2]) {
+  console.log('parseFrontmatter COMMON -> ', { frontmatterMatch })
+
+  if (!frontmatterMatch || frontmatterMatch.length < 3) {
+    console.log('NO FRONTMATTER FOUND')
+    console.log('MATCHED -> ', { frontmatterMatch })
     return { content: markdown }
   }
 
-  const frontmatterContent = frontmatterMatch[1]
-  const remainingContent = frontmatterMatch[2]
+  console.log('MADE IT PAST CHECK')
+
+  const frontmatterContent = frontmatterMatch[1]!
+  const remainingContent = frontmatterMatch[2]!
   const status = extractStatusFromFrontmatter(frontmatterContent)
   const tags = extractTagsFromFrontmatter(frontmatterContent)
+
+  console.log('EXTRACTED -> ', { status, tags })
 
   return {
     content: remainingContent,
@@ -285,9 +299,8 @@ const generateMADRMinimalMarkdown = (
     {} as Record<string, string>,
   )
 
-  const frontmatter = options
-    ? generateFrontmatter(options)
-    : generateFrontmatter({})
+  // Always generate frontmatter, even if no options provided
+  const frontmatter = generateFrontmatter(options ?? {})
 
   return `${frontmatter}# ${sectionMap.title ?? ''}
 
@@ -321,9 +334,8 @@ const generateMADRFullMarkdown = (
     {} as Record<string, string>,
   )
 
-  const frontmatter = options
-    ? generateFrontmatter(options)
-    : generateFrontmatter({})
+  // Always generate frontmatter, even if no options provided
+  const frontmatter = generateFrontmatter(options ?? {})
 
   return `${frontmatter}# ${sectionMap.title ?? ''}
 
@@ -373,9 +385,8 @@ const generateYStatementMarkdown = (
     {} as Record<string, string>,
   )
 
-  const frontmatter = options
-    ? generateFrontmatter(options)
-    : generateFrontmatter({})
+  // Always generate frontmatter, even if no options provided
+  const frontmatter = generateFrontmatter(options ?? {})
 
   return `${frontmatter}# Y-Statement: ${sectionMap.decided ?? ''}
 
@@ -408,9 +419,8 @@ const generateFreeFormMarkdown = (
     {} as Record<string, string>,
   )
 
-  const frontmatter = options
-    ? generateFrontmatter(options)
-    : generateFrontmatter({})
+  // Always generate frontmatter, even if no options provided
+  const frontmatter = generateFrontmatter(options ?? {})
   const content = sectionMap.content ?? ''
 
   return frontmatter + content
@@ -555,6 +565,7 @@ const parseMADRFullMarkdown = (markdown: string): ParsedAdrContent => {
 
 const parseYStatementMarkdown = (markdown: string): ParsedAdrContent => {
   const { content, status, tags } = parseFrontmatter(markdown)
+  console.log('parseYStatementMarkdown', { content, status, tags })
   const sections = Y_STATEMENT_SECTIONS.map((section) => ({ ...section }))
 
   const titleMatch = /# Y-Statement: (.+)/m.exec(content)
@@ -645,9 +656,8 @@ const parseYStatementMarkdown = (markdown: string): ParsedAdrContent => {
 
 const parseFreeFormMarkdown = (markdown: string): ParsedAdrContent => {
   const { content, status, tags } = parseFrontmatter(markdown)
+  console.log('parseFreeFormMarkdown', { content, status, tags })
   const sections = FREE_FORM_SECTIONS.map((section) => ({ ...section }))
-
-  console.log('content in free form parser', content)
 
   const contentSection = sections.find((s) => s.id === 'content')
   if (contentSection) {
@@ -748,4 +758,73 @@ export const parseMarkdownToSections = (
   template: AdrTemplate,
 ): ParsedAdrContent => {
   return markdownToSections(markdown, template.id)
+}
+
+// Generic frontmatter utilities that work independently of templates
+export const extractFrontmatterFromMarkdown = (
+  markdown: string,
+): {
+  content: string
+  status?: AdrStatus
+  tags?: string[]
+} => {
+  return parseFrontmatter(markdown)
+}
+
+export const addFrontmatterToMarkdown = (
+  content: string,
+  options: GenerateMarkdownOptions,
+): string => {
+  // Check if content already has frontmatter
+  const { content: existingContent, status, tags } = parseFrontmatter(content)
+
+  // Merge existing frontmatter with new options
+  const mergedOptions: GenerateMarkdownOptions = {
+    status: options.status ?? status,
+    tags: options.tags ?? tags,
+  }
+
+  // Generate new frontmatter and combine with content
+  const frontmatter = generateFrontmatter(mergedOptions)
+  return frontmatter + existingContent
+}
+
+export const updateFrontmatterInMarkdown = (
+  markdown: string,
+  options: Partial<GenerateMarkdownOptions>,
+): string => {
+  const { content, status, tags } = parseFrontmatter(markdown)
+
+  const updatedOptions: GenerateMarkdownOptions = {
+    status: options.status ?? status,
+    tags: options.tags ?? tags,
+  }
+
+  return generateFrontmatter(updatedOptions) + content
+}
+
+// Fallback function for when no template is selected but frontmatter is needed
+export const ensureFrontmatterInMarkdown = (
+  markdown: string,
+  options?: GenerateMarkdownOptions,
+): string => {
+  const { content, status, tags } = parseFrontmatter(markdown)
+
+  // If no frontmatter exists, add it only if there's content to add
+  if (!markdown.startsWith('---')) {
+    const frontmatterOptions: GenerateMarkdownOptions = {
+      status: options?.status ?? status,
+      tags: options?.tags ?? tags ?? [],
+    }
+    const frontmatter = generateFrontmatter(frontmatterOptions)
+    return frontmatter + markdown
+  }
+
+  // If frontmatter exists but options are provided, update it
+  if (options && (options.status || options.tags)) {
+    return updateFrontmatterInMarkdown(markdown, options)
+  }
+
+  // Return as-is if frontmatter exists and no updates needed
+  return markdown
 }

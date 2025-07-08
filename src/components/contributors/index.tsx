@@ -69,67 +69,70 @@ export default function Contributors({ isOpen }: { isOpen: boolean }) {
     ) ?? []
 
   return (
-    <div className="p-4 border-b">
-      <CollapsibleTrigger asChild>
-        <Button
-          variant="ghost"
-          className="w-full justify-between p-0 h-auto font-semibold text-sm"
-        >
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Contributors{' '}
-            {!isLoading && pathExistsInTree ? `(${contributors.length})` : ''}
-          </div>
-          {isOpen ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="space-y-3 mt-3">
-        <div className="space-y-2 max-h-24 overflow-y-auto">
-          {pathExistsInTree ? (
-            contributors.map((contributor: Contributor, index: number) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1.5"
-              >
-                <Avatar className="w-5 h-5">
-                  <AvatarImage
-                    src={contributor.avatar}
-                    alt={contributor.name}
-                  />
-                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                    {contributor.username
-                      ?.split(' ')
-                      .map((n: string) => n[0])
-                      .join('')
-                      .toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium truncate">
-                    {contributor.name}
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    @{contributor.username}
-                  </div>
+    <>
+      {/* Update the count in the parent's subtitle */}
+      <div className="space-y-2 max-h-32 overflow-y-auto">
+        {pathExistsInTree ? (
+          contributors.map((contributor: Contributor, index: number) => (
+            <div
+              key={index}
+              className="flex items-center gap-3 bg-white dark:bg-slate-700 rounded-lg p-3 border border-slate-200 dark:border-slate-600 hover:shadow-sm transition-shadow"
+            >
+              <Avatar className="w-8 h-8 border-2 border-blue-200 dark:border-blue-700">
+                <AvatarImage src={contributor.avatar} alt={contributor.name} />
+                <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold">
+                  {contributor.username
+                    ?.split(' ')
+                    .map((n: string) => n[0])
+                    .join('')
+                    .toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                  {contributor.name}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                  @{contributor.username}
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="text-xs text-muted-foreground italic text-center py-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-6">
+            <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-2">
+              <Users className="w-6 h-6 text-slate-400" />
+            </div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
               File not found in repository
             </div>
-          )}
-          {pathExistsInTree && contributors.length === 0 && !isLoading && (
-            <div className="text-xs text-muted-foreground italic text-center py-2">
-              No collaborators assigned
+          </div>
+        )}
+        {pathExistsInTree && contributors.length === 0 && !isLoading && (
+          <div className="text-center py-6">
+            <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-2">
+              <Users className="w-6 h-6 text-slate-400" />
             </div>
-          )}
-        </div>
-      </CollapsibleContent>
-    </div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              No contributors found
+            </div>
+            <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              Contributors will appear here once changes are made
+            </div>
+          </div>
+        )}
+        {isLoading && (
+          <div className="text-center py-6">
+            <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-2 animate-pulse">
+              <Users className="w-6 h-6 text-slate-400" />
+            </div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              Loading contributors...
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   )
 }

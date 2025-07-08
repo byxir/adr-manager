@@ -20,6 +20,7 @@ import {
   PlayCircle,
   CheckCircle,
   Archive,
+  Users,
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
@@ -49,6 +50,7 @@ import type { Adr } from '@/lib/dexie-db'
 import {
   getTemplateById,
   getTemplateParser,
+  ensureFrontmatterInMarkdown,
   type AdrStatus,
 } from '@/app/[repo]/adr/[path]/adr-templates'
 
@@ -61,6 +63,48 @@ interface AdrTemplateSidebarProps {
   onCancelAdr?: () => void
   children: React.ReactNode
   fetchedContent?: string | null
+}
+
+// Contributors Section Component
+function ContributorsSection({
+  isOpen,
+  onOpenChange,
+}: {
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  return (
+    <Collapsible open={isOpen} onOpenChange={onOpenChange}>
+      <div className="border-b p-4" onClick={() => onOpenChange(!isOpen)}>
+        <div className="flex items-center justify-between cursor-pointer">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+              <Users className="w-4 h-4 text-white" />
+            </div>
+            <div className="text-left">
+              <div className="font-semibold">Contributors</div>
+              <div className="text-xs text-muted-foreground">
+                View team members
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full" />
+            {isOpen ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
+          </div>
+        </div>
+        <CollapsibleContent className="space-y-3 mt-4">
+          <div className="rounded-lg p-3 border">
+            <Contributors isOpen={isOpen} />
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  )
 }
 
 export default function AdrTemplateSidebar({
@@ -92,7 +136,7 @@ export default function AdrTemplateSidebar({
 
   const [isTeamOpen, setIsTeamOpen] = useState(false)
   const [isTagsOpen, setIsTagsOpen] = useState(false)
-  const [adrStatus, setAdrStatus] = useState<AdrStatus>('todo')
+  const [adrStatus, setAdrStatus] = useState<AdrStatus | undefined>(undefined)
 
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
@@ -124,7 +168,10 @@ export default function AdrTemplateSidebar({
 
   // Template detection logic
   const detectTemplate = useCallback((content: string): AdrTemplate | null => {
-    if (!content || content.trim() === '') return null
+    if (!content || content.trim() === '') {
+      // For empty content, default to free-form template
+      return getTemplateById('free-form') ?? null
+    }
 
     // Check for Y-Statement template
     const yStatementPatterns = [
@@ -184,6 +231,18 @@ export default function AdrTemplateSidebar({
 
   // Parse content when ADR changes externally
   useEffect(() => {
+    // Handle case where ADR exists but has no content (new ADR)
+    if (adr && (!adr.contents || adr.contents.trim() === '')) {
+      const freeFormTemplate = getTemplateById('free-form')
+      setSelectedTemplate(freeFormTemplate ?? null)
+      setDetectedTemplate(freeFormTemplate ?? null)
+      setSections([])
+      setHasContent(false)
+      setAdrStatus(undefined)
+      setTags([])
+      return
+    }
+
     if (adr?.contents && !isTextareaFocused) {
       const detected = detectTemplate(adr.contents)
       setDetectedTemplate(detected)
@@ -201,13 +260,10 @@ export default function AdrTemplateSidebar({
           const parsedContent = parser.parseMarkdown(adr.contents)
 
           // Update status and tags from parsed frontmatter if they exist
-          if (parsedContent.status && parsedContent.status !== adrStatus) {
+          if (parsedContent.status) {
             setAdrStatus(parsedContent.status)
           }
-          if (
-            parsedContent.tags &&
-            JSON.stringify(parsedContent.tags) !== JSON.stringify(tags)
-          ) {
+          if (parsedContent.tags) {
             setTags(parsedContent.tags)
           }
 
@@ -245,20 +301,61 @@ export default function AdrTemplateSidebar({
           setHasContent(true)
         }
       } else {
-        // For free-form or no template detected
+        // For free-form template
         setSelectedTemplate(getTemplateById('free-form') ?? null)
         setSections([])
+
+        // Parse frontmatter for free-form template
+        const parser = getTemplateParser('free-form')
+        if (parser) {
+          const parsedContent = parser.parseMarkdown(adr.contents)
+
+          // Update status and tags from parsed frontmatter if they exist
+          if (parsedContent.status) {
+            setAdrStatus(parsedContent.status)
+          }
+          if (parsedContent.tags) {
+            setTags(parsedContent.tags)
+          }
+
+          // If no frontmatter exists, add it to enable status/tags functionality
+          if (!adr.contents.startsWith('---')) {
+            const contentWithFrontmatter = ensureFrontmatterInMarkdown(
+              adr.contents,
+              {
+                status: parsedContent.status,
+                tags: parsedContent.tags ?? [],
+              },
+            )
+            // Update the content with frontmatter
+            void updateAdrContents(adrName, repo, contentWithFrontmatter)
+          }
+        }
+
         setHasContent(adr.contents.trim().length > 0)
       }
     }
-  }, [adr, detectTemplate])
+  }, [adr?.contents, detectTemplate, isTextareaFocused, adrName, repo])
+
+  // Initial setup effect for completely new ADRs
+  useEffect(() => {
+    if (!adr && !selectedTemplate) {
+      const freeFormTemplate = getTemplateById('free-form')
+      setSelectedTemplate(freeFormTemplate ?? null)
+      setDetectedTemplate(freeFormTemplate ?? null)
+      setSections([])
+      setHasContent(false)
+      setAdrStatus(undefined)
+      setTags([])
+    }
+  }, [adr, selectedTemplate])
 
   const handleTemplateChange = useCallback(
     (template: AdrTemplate) => {
       setSelectedTemplate(template)
 
-      // Set default status and tags when selecting a template
-      setAdrStatus('todo')
+      // Clear status and tags when selecting a template
+      setAdrStatus(undefined)
       setTags([])
 
       if (template.id !== 'free-form') {
@@ -277,7 +374,7 @@ export default function AdrTemplateSidebar({
         setSections(newSections)
         setHasContent(false)
 
-        // Generate and save initial template content to database with default status
+        // Generate and save initial template content to database
         const saveInitialContent = async () => {
           const parser = getTemplateParser(template.id)
           if (parser) {
@@ -286,7 +383,6 @@ export default function AdrTemplateSidebar({
               content: '',
             }))
             const initialContent = parser.generateMarkdown(emptySections, {
-              status: 'todo',
               tags: [],
             })
             await updateAdrContents(adrName, repo, initialContent)
@@ -297,7 +393,7 @@ export default function AdrTemplateSidebar({
       } else {
         setSections([])
 
-        // For free-form, still generate frontmatter with default status
+        // For free-form, generate minimal frontmatter
         const saveInitialContent = async () => {
           const parser = getTemplateParser('free-form')
           if (parser) {
@@ -311,7 +407,6 @@ export default function AdrTemplateSidebar({
               },
             ]
             const initialContent = parser.generateMarkdown(emptySections, {
-              status: 'todo',
               tags: [],
             })
             await updateAdrContents(adrName, repo, initialContent)
@@ -688,35 +783,43 @@ export default function AdrTemplateSidebar({
           </div>
 
           <div className="flex-1 overflow-y-auto min-h-0">
-            {/* Status Section - Always visible */}
+            {/* Status Section - Redesigned */}
             <div className="p-4 border-b">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium flex items-center gap-2">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  Status
-                </Label>
+                  <Label className="text-sm font-semibold">Status</Label>
+                </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className={`w-full justify-between text-sm h-8 ${getStatusColor(adrStatus)}`}
+                      className="w-full justify-between text-sm h-10"
                     >
-                      <span className="flex items-center gap-2">
-                        {React.createElement(getStatusIcon(adrStatus), {
-                          className: 'w-4 h-4',
-                        })}
-                        {adrStatus === 'todo'
-                          ? 'To Do'
-                          : adrStatus === 'in-progress'
-                            ? 'In Progress'
-                            : adrStatus === 'done'
-                              ? 'Done'
-                              : 'Backlog'}
+                      <span className="flex items-center gap-3">
+                        {adrStatus ? (
+                          React.createElement(getStatusIcon(adrStatus), {
+                            className: 'w-4 h-4',
+                          })
+                        ) : (
+                          <CircleDot className="w-4 h-4 opacity-50" />
+                        )}
+                        <span className="font-medium">
+                          {adrStatus === 'todo'
+                            ? 'To Do'
+                            : adrStatus === 'in-progress'
+                              ? 'In Progress'
+                              : adrStatus === 'done'
+                                ? 'Done'
+                                : adrStatus === 'backlog'
+                                  ? 'Backlog'
+                                  : 'Select Status'}
+                        </span>
                       </span>
                       <ChevronDown className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-40">
+                  <DropdownMenuContent className="w-44">
                     {(['todo', 'in-progress', 'done', 'backlog'] as const).map(
                       (status) => {
                         const StatusIcon = getStatusIcon(status)
@@ -732,11 +835,11 @@ export default function AdrTemplateSidebar({
                           <DropdownMenuItem
                             key={status}
                             onClick={() => handleStatusChange(status)}
-                            className="text-sm"
+                            className="text-sm cursor-pointer"
                           >
-                            <span className="flex items-center gap-2">
+                            <span className="flex items-center gap-3">
                               <StatusIcon className="w-4 h-4" />
-                              {displayName}
+                              <span className="font-medium">{displayName}</span>
                             </span>
                           </DropdownMenuItem>
                         )
@@ -747,71 +850,105 @@ export default function AdrTemplateSidebar({
               </div>
             </div>
 
-            {/* Team Section - Collapsible */}
-            <Collapsible open={isTeamOpen} onOpenChange={setIsTeamOpen}>
-              <Contributors isOpen={isTeamOpen} />
-            </Collapsible>
+            {/* Contributors Section - Redesigned */}
+            <ContributorsSection
+              isOpen={isTeamOpen}
+              onOpenChange={setIsTeamOpen}
+            />
 
+            {/* Tags Section - Redesigned */}
             <Collapsible open={isTagsOpen} onOpenChange={setIsTagsOpen}>
-              <div className="p-4 border-b">
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-between p-0 h-auto font-semibold text-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Tag className="w-4 h-4" />
-                      Tags ({tags.length})
+              <div
+                className="p-4 border-b"
+                onClick={(e) => {
+                  // Only close if clicking outside of input, tags, or plus button
+                  const target = e.target as HTMLElement
+                  const isInput = target.closest('input')
+                  const isTag = target.closest('[data-tag]')
+                  const isPlusButton = target.closest('[data-plus-button]')
+
+                  if (!isInput && !isTag && !isPlusButton) {
+                    setIsTagsOpen(!isTagsOpen)
+                  }
+                }}
+              >
+                <div className="flex items-center justify-between cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                      <Tag className="w-4 h-4 text-white" />
                     </div>
+                    <div className="text-left">
+                      <div className="font-semibold">Tags</div>
+                      <div className="text-xs text-muted-foreground">
+                        {tags.length} {tags.length === 1 ? 'tag' : 'tags'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-2 h-2 rounded-full ${tags.length > 0 ? 'bg-purple-500' : 'bg-gray-300'}`}
+                    />
                     {isTagsOpen ? (
                       <ChevronDown className="w-4 h-4" />
                     ) : (
                       <ChevronRight className="w-4 h-4" />
                     )}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-3 mt-3">
-                  <div className="flex gap-1">
-                    <Input
-                      placeholder="Add tag..."
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      className="text-xs h-6 flex-1"
-                      onKeyPress={(e) => e.key === 'Enter' && addTag()}
-                    />
-                    <Button
-                      size="sm"
-                      onClick={addTag}
-                      className="h-6 w-6 p-0"
-                      disabled={!newTag.trim()}
-                    >
-                      <Plus className="w-2 h-2" />
-                    </Button>
+                  </div>
+                </div>
+                <CollapsibleContent className="space-y-4 mt-4">
+                  {/* Add Tag Input */}
+                  <div className="rounded-lg p-3 border">
+                    <Label className="text-xs font-medium mb-2 block">
+                      Add New Tag
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter tag name..."
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        className="text-sm h-8 flex-1"
+                        onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={addTag}
+                        className="h-8 px-3"
+                        disabled={!newTag.trim()}
+                        data-plus-button
+                      >
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                    {tags.map((tag, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full px-2 py-1 text-xs"
-                      >
-                        <Tag className="w-2 h-2" />
-                        <span>{tag}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeTag(tag)}
-                          className="h-3 w-3 p-0 hover:bg-red-100 hover:text-red-600 rounded-full"
+                  {/* Tags Display */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Current Tags</Label>
+                    <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto p-2 rounded-lg border">
+                      {tags.map((tag, index) => (
+                        <div
+                          key={index}
+                          className="group flex items-center gap-2 bg-muted text-muted-foreground rounded-full px-3 py-1.5 text-xs border"
+                          data-tag
                         >
-                          <X className="w-2 h-2" />
-                        </Button>
-                      </div>
-                    ))}
-                    {tags.length === 0 && (
-                      <div className="text-xs text-muted-foreground italic text-center py-2 w-full">
-                        No tags added
-                      </div>
-                    )}
+                          <Tag className="w-3 h-3" />
+                          <span className="font-medium">{tag}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeTag(tag)}
+                            className="h-4 w-4 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </Button>
+                        </div>
+                      ))}
+                      {tags.length === 0 && (
+                        <div className="text-xs text-muted-foreground italic text-center py-4 w-full">
+                          No tags added yet
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CollapsibleContent>
               </div>
@@ -994,25 +1131,19 @@ export default function AdrTemplateSidebar({
               <div className="p-4">
                 <div className="text-center space-y-2">
                   <Edit3 className="w-8 h-8 mx-auto text-muted-foreground" />
-                  <h3 className="font-semibold">
-                    {selectedTemplate
-                      ? 'Free Form Template'
-                      : 'Free Form Editor'}
-                  </h3>
+                  <h3 className="font-semibold">Free Form Template</h3>
                   <p className="text-sm text-muted-foreground">
-                    {selectedTemplate
-                      ? 'Write your ADR in the editor. This template provides complete freedom to structure your document as you prefer.'
-                      : 'You&apos;re using the free form editor. Write your ADR however you prefer, or select a template for guided structure.'}
+                    Write your ADR in the editor with complete freedom to
+                    structure your document as you prefer. Status and tags are
+                    fully supported.
                   </p>
-                  {!selectedTemplate && (
-                    <Button
-                      onClick={() => setShowTemplateDialog(true)}
-                      variant="outline"
-                      className="w-full mt-2"
-                    >
-                      Select Template
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => setShowTemplateDialog(true)}
+                    variant="outline"
+                    className="w-full mt-2"
+                  >
+                    Change Template
+                  </Button>
                 </div>
               </div>
             )}
