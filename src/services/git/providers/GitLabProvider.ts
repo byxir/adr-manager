@@ -48,7 +48,9 @@ export class GitLabProvider {
     return new Gitlab({ host: baseUrl, oauthToken: token })
   }
 
-  static async getUserRepos({ accessToken }: GitAdapterMethodInterface) {
+  static async getUserRepos({
+    accessToken,
+  }: GitAdapterMethodInterface): Promise<Repo[]> {
     const client = this.createClient(accessToken)
     const projects = await client.Projects.all({
       owned: true,
@@ -71,7 +73,7 @@ export class GitLabProvider {
           avatar: project.avatar_url ?? project.namespace.avatar_url,
         },
       }
-    })
+    }) as Repo[]
   }
 
   static async getRepoTree({

@@ -98,7 +98,7 @@ export class GitHubProvider {
           avatar: owner.avatar_url,
         },
       }
-    })
+    }) as Repo[]
   }
 
   static async getRepoTree({

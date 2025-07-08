@@ -55,7 +55,8 @@ export function RepoSwitcher({
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 <img
                   src={
-                    repos.find((repo) => repo.name === activeRepo)?.owner.avatar
+                    repos.find((repo) => repo.name === activeRepo)?.owner
+                      .avatar ?? ''
                   }
                   className="rounded-lg"
                 />
@@ -84,7 +85,7 @@ export function RepoSwitcher({
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
                   <img
-                    src={repo.owner.avatar}
+                    src={repo.owner.avatar ?? ''}
                     alt={repo.owner.name}
                     className="size-3.5 shrink-0"
                   />
