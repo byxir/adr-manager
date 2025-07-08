@@ -143,43 +143,6 @@ export async function updateAdrName(
   await adrDB.adrs.update(id, { name: newName, path: newPath })
 }
 
-export async function updateAdrStatus(
-  name: string,
-  repository: string,
-  status: 'todo' | 'in-progress' | 'done' | 'backlog',
-) {
-  // Validate parameters to prevent IndexedDB key errors
-  if (!name || !repository || !name.trim() || !repository.trim()) {
-    console.warn('Invalid parameters for updateAdrStatus:', {
-      name,
-      repository,
-    })
-    return
-  }
-
-  await adrDB.adrs
-    .where(['name', 'repository'])
-    .equals([name.trim(), repository.trim()])
-    .modify({ status })
-}
-
-export async function updateAdrTags(
-  name: string,
-  repository: string,
-  tags: string[],
-) {
-  // Validate parameters to prevent IndexedDB key errors
-  if (!name || !repository || !name.trim() || !repository.trim()) {
-    console.warn('Invalid parameters for updateAdrTags:', { name, repository })
-    return
-  }
-
-  await adrDB.adrs
-    .where(['name', 'repository'])
-    .equals([name.trim(), repository.trim()])
-    .modify({ tags })
-}
-
 // Add liveQuery function for a specific ADR
 export function getAdrLiveQuery(name: string, repository: string) {
   if (!name || !repository || !name.trim() || !repository.trim()) {

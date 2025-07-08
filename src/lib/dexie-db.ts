@@ -10,8 +10,6 @@ export interface Adr {
   owner: string
   createdAt: Date
   templateId?: string // Optional for backward compatibility
-  status?: 'todo' | 'in-progress' | 'done' | 'backlog' // ADR status
-  tags?: string[] // ADR tags
   sha?: string
 }
 
@@ -20,8 +18,8 @@ class AdrDatabase extends Dexie {
 
   constructor() {
     super('AdrDatabase')
-    this.version(9).stores({
-      adrs: '&id, name, path, repository, branch, owner, createdAt, templateId, status, tags, sha, [name+repository]',
+    this.version(10).stores({
+      adrs: '&id, name, path, repository, branch, owner, createdAt, templateId, sha, [name+repository]',
     })
     this.adrs = this.table('adrs')
   }

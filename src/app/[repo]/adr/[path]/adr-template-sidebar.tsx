@@ -23,8 +23,6 @@ import {
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
-  updateAdrStatus,
-  updateAdrTags,
   getAdrByNameAndRepository,
   updateAdrContents,
 } from '@/lib/adr-db-actions'
@@ -51,13 +49,12 @@ import type { Adr } from '@/lib/dexie-db'
 import {
   getTemplateById,
   getTemplateParser,
+  type AdrStatus,
 } from '@/app/[repo]/adr/[path]/adr-templates'
 
 interface ExtendedSection extends AdrTemplateSection {
   items?: string[]
 }
-
-type AdrStatus = 'todo' | 'in-progress' | 'done' | 'backlog'
 
 interface AdrTemplateSidebarProps {
   adr?: Adr | null
@@ -124,18 +121,6 @@ export default function AdrTemplateSidebar({
       }
     }
   }, [fetchedContent, adr, adrName, repo])
-
-  // Sync status and tags from database
-  useEffect(() => {
-    if (adr) {
-      if (adr.status) {
-        setAdrStatus(adr.status)
-      }
-      if (adr.tags) {
-        setTags(adr.tags)
-      }
-    }
-  }, [adr])
 
   // Template detection logic
   const detectTemplate = useCallback((content: string): AdrTemplate | null => {
@@ -213,10 +198,21 @@ export default function AdrTemplateSidebar({
         // Parse the content using the template's parser
         const parser = getTemplateParser(templateToUse.id)
         if (parser) {
-          const parsedSections = parser.parseMarkdown(adr.contents)
+          const parsedContent = parser.parseMarkdown(adr.contents)
+
+          // Update status and tags from parsed frontmatter if they exist
+          if (parsedContent.status && parsedContent.status !== adrStatus) {
+            setAdrStatus(parsedContent.status)
+          }
+          if (
+            parsedContent.tags &&
+            JSON.stringify(parsedContent.tags) !== JSON.stringify(tags)
+          ) {
+            setTags(parsedContent.tags)
+          }
 
           // Convert parsed sections to extended sections with items for list types
-          const extendedSections = parsedSections.map((section) => {
+          const extendedSections = parsedContent.sections.map((section) => {
             const isListType = [
               'options',
               'consequences',
@@ -257,20 +253,13 @@ export default function AdrTemplateSidebar({
     }
   }, [adr, detectTemplate])
 
-  const generateMarkdownFromTemplate = useCallback((template: AdrTemplate) => {
-    // Use the template's built-in generateMarkdown function with empty sections
-    // This will generate the template with placeholder content
-    const emptySections = template.sections.map((section) => ({
-      ...section,
-      content: '',
-    }))
-
-    return template.generateMarkdown(emptySections)
-  }, [])
-
   const handleTemplateChange = useCallback(
     (template: AdrTemplate) => {
       setSelectedTemplate(template)
+
+      // Set default status and tags when selecting a template
+      setAdrStatus('todo')
+      setTags([])
 
       if (template.id !== 'free-form') {
         const newSections = template.sections.map((section) => {
@@ -288,18 +277,51 @@ export default function AdrTemplateSidebar({
         setSections(newSections)
         setHasContent(false)
 
-        // Generate and save initial template content to database
+        // Generate and save initial template content to database with default status
         const saveInitialContent = async () => {
-          const initialContent = generateMarkdownFromTemplate(template)
-          await updateAdrContents(adrName, repo, initialContent)
+          const parser = getTemplateParser(template.id)
+          if (parser) {
+            const emptySections = template.sections.map((section) => ({
+              ...section,
+              content: '',
+            }))
+            const initialContent = parser.generateMarkdown(emptySections, {
+              status: 'todo',
+              tags: [],
+            })
+            await updateAdrContents(adrName, repo, initialContent)
+          }
         }
 
         void saveInitialContent()
       } else {
         setSections([])
+
+        // For free-form, still generate frontmatter with default status
+        const saveInitialContent = async () => {
+          const parser = getTemplateParser('free-form')
+          if (parser) {
+            const emptySections = [
+              {
+                id: 'content',
+                title: 'Free Form Content',
+                placeholder: '',
+                content: '',
+                isRequired: true,
+              },
+            ]
+            const initialContent = parser.generateMarkdown(emptySections, {
+              status: 'todo',
+              tags: [],
+            })
+            await updateAdrContents(adrName, repo, initialContent)
+          }
+        }
+
+        void saveInitialContent()
       }
     },
-    [generateMarkdownFromTemplate, adrName, repo],
+    [adrName, repo],
   )
 
   const handleTemplateChangeWithWarning = useCallback(() => {
@@ -324,14 +346,22 @@ export default function AdrTemplateSidebar({
 
   // Generate markdown and update database after changes
   const generateAndUpdateMarkdown = useCallback(
-    async (currentSections?: ExtendedSection[]) => {
-      if (!selectedTemplate || selectedTemplate.id === 'free-form') return
+    async (
+      currentSections?: ExtendedSection[],
+      currentStatus?: AdrStatus,
+      currentTags?: string[],
+    ) => {
+      if (!selectedTemplate) return
 
       const parser = getTemplateParser(selectedTemplate.id)
       if (!parser) return
 
       // Use passed sections or fall back to state sections
       const sectionsToUse = currentSections ?? sections
+
+      // Use passed status/tags or fall back to state values
+      const statusToUse = currentStatus ?? adrStatus
+      const tagsToUse = currentTags ?? tags
 
       // Convert sections back to proper format for markdown generation
       const sectionsForMarkdown = sectionsToUse.map((section) => {
@@ -345,10 +375,19 @@ export default function AdrTemplateSidebar({
         return section
       })
 
-      const markdownContent = parser.generateMarkdown(sectionsForMarkdown)
+      // Pass status and tags as options to the generate function
+      const generateOptions = {
+        status: statusToUse,
+        tags: tagsToUse.length > 0 ? tagsToUse : undefined,
+      }
+
+      const markdownContent = parser.generateMarkdown(
+        sectionsForMarkdown,
+        generateOptions,
+      )
       await updateAdrContents(adrName, repo, markdownContent)
     },
-    [selectedTemplate, sections, adrName, repo],
+    [selectedTemplate, sections, adrName, repo, adrStatus, tags],
   )
 
   const updateSectionContent = useCallback(
@@ -363,14 +402,14 @@ export default function AdrTemplateSidebar({
           clearTimeout(generateMarkdownTimeoutRef.current)
         }
         generateMarkdownTimeoutRef.current = setTimeout(() => {
-          void generateAndUpdateMarkdown(updatedSections)
+          void generateAndUpdateMarkdown(updatedSections, adrStatus, tags)
         }, 500)
 
         return updatedSections
       })
       setHasContent(true)
     },
-    [generateAndUpdateMarkdown],
+    [generateAndUpdateMarkdown, adrStatus, tags],
   )
 
   const updateItemContent = useCallback(
@@ -390,14 +429,14 @@ export default function AdrTemplateSidebar({
           clearTimeout(generateMarkdownTimeoutRef.current)
         }
         generateMarkdownTimeoutRef.current = setTimeout(() => {
-          void generateAndUpdateMarkdown(updatedSections)
+          void generateAndUpdateMarkdown(updatedSections, adrStatus, tags)
         }, 500)
 
         return updatedSections
       })
       setHasContent(true)
     },
-    [generateAndUpdateMarkdown],
+    [generateAndUpdateMarkdown, adrStatus, tags],
   )
 
   const handleSectionContentChange = useCallback(
@@ -486,13 +525,13 @@ export default function AdrTemplateSidebar({
           clearTimeout(generateMarkdownTimeoutRef.current)
         }
         generateMarkdownTimeoutRef.current = setTimeout(() => {
-          void generateAndUpdateMarkdown(updatedSections)
+          void generateAndUpdateMarkdown(updatedSections, adrStatus, tags)
         }, 500)
 
         return updatedSections
       })
     },
-    [generateAndUpdateMarkdown],
+    [generateAndUpdateMarkdown, adrStatus, tags],
   )
 
   const removeLastListItem = useCallback(
@@ -517,13 +556,13 @@ export default function AdrTemplateSidebar({
           clearTimeout(generateMarkdownTimeoutRef.current)
         }
         generateMarkdownTimeoutRef.current = setTimeout(() => {
-          void generateAndUpdateMarkdown(updatedSections)
+          void generateAndUpdateMarkdown(updatedSections, adrStatus, tags)
         }, 500)
 
         return updatedSections
       })
     },
-    [generateAndUpdateMarkdown],
+    [generateAndUpdateMarkdown, adrStatus, tags],
   )
 
   const checkHasContent = useCallback((section: ExtendedSection) => {
@@ -541,30 +580,33 @@ export default function AdrTemplateSidebar({
     )
   }, [])
 
-  const addTag = useCallback(async () => {
+  const addTag = useCallback(() => {
     if (newTag.trim() && !tags.includes(newTag.trim().toLowerCase())) {
       const updatedTags = [...tags, newTag.trim().toLowerCase()]
       setTags(updatedTags)
       setNewTag('')
-      await updateAdrTags(adrName, repo, updatedTags)
+      // Trigger markdown regeneration with new tags
+      void generateAndUpdateMarkdown(undefined, adrStatus, updatedTags)
     }
-  }, [newTag, tags, adrName, repo])
+  }, [newTag, tags, generateAndUpdateMarkdown, adrStatus])
 
   const removeTag = useCallback(
-    async (tag: string) => {
+    (tag: string) => {
       const updatedTags = tags.filter((t) => t !== tag)
       setTags(updatedTags)
-      await updateAdrTags(adrName, repo, updatedTags)
+      // Trigger markdown regeneration with updated tags
+      void generateAndUpdateMarkdown(undefined, adrStatus, updatedTags)
     },
-    [tags, adrName, repo],
+    [tags, generateAndUpdateMarkdown, adrStatus],
   )
 
   const handleStatusChange = useCallback(
-    async (status: AdrStatus) => {
+    (status: AdrStatus) => {
       setAdrStatus(status)
-      await updateAdrStatus(adrName, repo, status)
+      // Trigger markdown regeneration with new status
+      void generateAndUpdateMarkdown(undefined, status, tags)
     },
-    [adrName, repo],
+    [generateAndUpdateMarkdown, tags],
   )
 
   const getStatusColor = useCallback((status: AdrStatus) => {

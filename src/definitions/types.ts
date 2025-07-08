@@ -51,12 +51,17 @@ export interface AdrTemplateSection {
   isRequired?: boolean
 }
 
+import type { GenerateMarkdownOptions } from '@/app/[repo]/adr/[path]/adr-templates'
+
 export interface AdrTemplate {
   id: string
   name: string
   description: string
   sections: AdrTemplateSection[]
-  generateMarkdown: (sections: AdrTemplateSection[]) => string
+  generateMarkdown: (
+    sections: AdrTemplateSection[],
+    options?: GenerateMarkdownOptions,
+  ) => string
 }
 
 export interface TemplateFormData {
