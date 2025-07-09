@@ -45,21 +45,7 @@ export default function ProfileDropdown() {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <BoltIcon size={16} className="opacity-60" aria-hidden="true" />
-            <span>Option 1</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Layers2Icon size={16} className="opacity-60" aria-hidden="true" />
-            <span>Option 2</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <BookOpenIcon size={16} className="opacity-60" aria-hidden="true" />
-            <span>Option 3</span>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
+
         <DropdownMenuItem>
           <LogOutIcon size={16} className="opacity-60" aria-hidden="true" />
           <span onClick={() => signOut()}>Sign out</span>

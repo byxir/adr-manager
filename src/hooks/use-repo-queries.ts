@@ -45,9 +45,7 @@ export function useRepoTree(
 export function useRepoAdrs(activeRepo: string | null) {
   return useLiveQuery(async () => {
     if (!activeRepo || typeof activeRepo !== 'string') return null
-    console.log('useRepoAdrs: Fetching ADRs for repository:', activeRepo)
     const adrs = await getAdrsByRepository(activeRepo)
-    console.log('useRepoAdrs: Found ADRs:', adrs)
     return adrs
   }, [activeRepo])
 }
@@ -65,8 +63,6 @@ export const useAdr = (
 
   // Helper function to check if ADR exists in repo tree
   const adrExistsInRepo = () => {
-    console.log('Formatted path:', formattedPath)
-
     if (!repoTreeData?.tree) return false
     return repoTreeData.tree.some((item: any) => item.path === formattedPath)
   }
@@ -82,15 +78,6 @@ export const useAdr = (
 
       const existingAdr = await getAdrByNameAndRepository(adrName, repo)
       const existsInRepo = adrExistsInRepo()
-
-      console.log('ADR exists in DB:', !!existingAdr)
-      console.log('ADR exists in repo:', existsInRepo)
-      console.log('Repo tree data:', repoTreeData)
-      console.log('Formatted path:', formattedPath)
-      console.log(
-        'Repo tree paths:',
-        repoTreeData?.tree?.map((item: any) => item.path),
-      )
 
       // Scenario 1: ADR exists in DB but not in repo
       if (existingAdr && !existsInRepo) {

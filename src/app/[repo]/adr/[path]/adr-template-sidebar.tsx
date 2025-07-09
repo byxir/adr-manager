@@ -114,8 +114,6 @@ export default function AdrTemplateSidebar({
   const [sections, setSections] = useState<ExtendedSection[]>([])
   const [showSynchronizeButton, setShowSynchronizeButton] = useState(false)
 
-  console.log('sections ------>', sections)
-
   const adr = useLiveQuery(
     () => getAdrByNameAndRepository(adrName, repo),
     [adrName, repo],
@@ -595,7 +593,6 @@ export default function AdrTemplateSidebar({
 
   const addListItem = useCallback(
     (sectionId: string) => {
-      console.log('ADD LIST ITEM CALLED')
       setSections((prev) => {
         const updatedSections = prev.map((section) => {
           if (section.id === sectionId) {
@@ -632,7 +629,6 @@ export default function AdrTemplateSidebar({
 
   const removeLastListItem = useCallback(
     (sectionId: string) => {
-      console.log('REMOVE LAST LIST ITEM CALLED')
       setSections((prev) => {
         const updatedSections = prev.map((section) => {
           if (

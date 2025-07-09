@@ -27,13 +27,6 @@ export default function UpdateOrCreateFileButton({
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => {
-      console.log('createOrUpdateFile', {
-        owner,
-        repo: repo,
-        branch,
-        path,
-        message: 'Create or update ADR',
-      })
       return createOrUpdateFile({
         repo,
         path,

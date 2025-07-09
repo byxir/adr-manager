@@ -49,22 +49,14 @@ const parseFrontmatter = (
     markdown,
   )
 
-  console.log('parseFrontmatter COMMON -> ', { frontmatterMatch })
-
   if (!frontmatterMatch || frontmatterMatch.length < 3) {
-    console.log('NO FRONTMATTER FOUND')
-    console.log('MATCHED -> ', { frontmatterMatch })
     return { content: markdown }
   }
-
-  console.log('MADE IT PAST CHECK')
 
   const frontmatterContent = frontmatterMatch[1]!
   const remainingContent = frontmatterMatch[2]!
   const status = extractStatusFromFrontmatter(frontmatterContent)
   const tags = extractTagsFromFrontmatter(frontmatterContent)
-
-  console.log('EXTRACTED -> ', { status, tags })
 
   return {
     content: remainingContent,
@@ -108,8 +100,7 @@ const MADR_MINIMAL_SECTIONS: AdrTemplateSection[] = [
   {
     id: 'title',
     title: 'Title',
-    placeholder:
-      'Short title, representative of solved problem and found solution',
+    placeholder: 'Short title',
     content: '',
     isRequired: true,
   },
@@ -148,8 +139,7 @@ const MADR_FULL_SECTIONS: AdrTemplateSection[] = [
   {
     id: 'title',
     title: 'Title',
-    placeholder:
-      'Short title, representative of solved problem and found solution',
+    placeholder: 'Short title',
     content: '',
     isRequired: true,
   },
@@ -565,7 +555,6 @@ const parseMADRFullMarkdown = (markdown: string): ParsedAdrContent => {
 
 const parseYStatementMarkdown = (markdown: string): ParsedAdrContent => {
   const { content, status, tags } = parseFrontmatter(markdown)
-  console.log('parseYStatementMarkdown', { content, status, tags })
   const sections = Y_STATEMENT_SECTIONS.map((section) => ({ ...section }))
 
   const titleMatch = /# Y-Statement: (.+)/m.exec(content)
@@ -656,7 +645,6 @@ const parseYStatementMarkdown = (markdown: string): ParsedAdrContent => {
 
 const parseFreeFormMarkdown = (markdown: string): ParsedAdrContent => {
   const { content, status, tags } = parseFrontmatter(markdown)
-  console.log('parseFreeFormMarkdown', { content, status, tags })
   const sections = FREE_FORM_SECTIONS.map((section) => ({ ...section }))
 
   const contentSection = sections.find((s) => s.id === 'content')

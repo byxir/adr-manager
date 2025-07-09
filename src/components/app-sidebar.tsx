@@ -134,10 +134,6 @@ function FileTree({
   const router = useRouter()
   const pathname = usePathname()
   const queryClient = useQueryClient()
-  console.log(
-    'selectedAdr FROM APP SIDEBAR FILE TREE --------------> ',
-    selectedAdr,
-  )
 
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -240,8 +236,6 @@ function FileTree({
       const adrExistsInRepo =
         repoTree?.tree?.some((item) => item.path === selectedAdr.path) ?? false
 
-      console.log('ADR exists in repo:', adrExistsInRepo)
-
       // Only delete from GitHub if the file actually exists in the repository
       if (adrExistsInRepo) {
         await deleteFile({
@@ -251,11 +245,6 @@ function FileTree({
           sha: selectedAdr.sha ?? '',
           branch: branch,
         })
-        console.log('Deleted ADR from repository')
-      } else {
-        console.log(
-          'ADR only exists in local database, skipping repository deletion',
-        )
       }
 
       // Always delete from local database
@@ -305,11 +294,7 @@ function FileTree({
           branch: branch,
           content: selectedAdr.contents ?? '',
         })
-        console.log('Moved ADR in repository')
       } else if (selectedAdr.path !== newPath) {
-        console.log(
-          'ADR only exists in local database, skipping repository move',
-        )
       }
 
       // Update the local database
@@ -349,9 +334,10 @@ function FileTree({
     getItemName: (item) => item.getItemData()?.name ?? 'Unknown',
     isItemFolder: (item) => item.getItemData()?.isFolder,
     canReorder: true,
-    canDrag: (items) => {
-      return items.every((item) => item.getItemData()?.isAdr === true)
-    },
+    // canDrag: (items) => {
+    //   return items.every((item) => item.getItemData()?.isAdr === true)
+    // },
+    canDrag: () => false,
     onDrop: createOnDropHandler((parentItem, newChildrenIds) => {
       setItems((prevItems: Record<string, Item> | null) => {
         if (!prevItems) return null
@@ -948,7 +934,7 @@ export function AppSidebar({
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
-      <div className="h-screen overflow-hidden flex-shrink z-50 w-full">
+      <div className="h-screen overflow-hidden flex-shrink z-0 w-full">
         {children}
       </div>
     </div>

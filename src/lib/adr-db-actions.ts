@@ -6,9 +6,6 @@ export async function getAllAdrs(): Promise<Adr[]> {
 }
 
 export async function getAdrsByRepository(repository: string): Promise<Adr[]> {
-  // console.log('Searching for repository:', repository)
-
-  // Validate repository parameter to prevent IndexedDB key errors
   if (!repository?.trim()) {
     console.warn(
       'Invalid repository parameter for getAdrsByRepository:',
@@ -17,13 +14,10 @@ export async function getAdrsByRepository(repository: string): Promise<Adr[]> {
     return []
   }
 
-  const allAdrs = await adrDB.adrs.toArray()
-  // console.log('All ADRs in DB:', allAdrs)
   const res = await adrDB.adrs
     .where('repository')
     .equals(repository.trim())
     .toArray()
-  // console.log('RESPONSE FROM DEXIE for repository', repository, ':', res)
   return res
 }
 
@@ -31,9 +25,6 @@ export async function getAdrByNameAndRepository(
   name: string,
   repository: string,
 ): Promise<Adr | undefined> {
-  // console.log('name, repository', name, repository)
-
-  // Validate parameters to prevent IndexedDB key errors
   if (!name || !repository || !name.trim() || !repository.trim()) {
     console.warn('Invalid parameters for getAdrByNameAndRepository:', {
       name,
@@ -57,21 +48,7 @@ export async function deleteAdr(id: string) {
 }
 
 export async function createAdr(adr: Adr) {
-  // console.log('Creating ADR:', adr)
   await adrDB.adrs.add(adr)
-  // console.log('ADR created successfully in database')
-
-  // Force a query to make sure the change is committed
-  const verifyCount = await adrDB.adrs
-    .where('repository')
-    .equals(adr.repository)
-    .count()
-  // console.log(
-  //   'ADR count after creation for repository',
-  //   adr.repository,
-  //   ':',
-  //   verifyCount,
-  // )
 }
 
 export async function updateAdrContentAndPath(
@@ -80,7 +57,6 @@ export async function updateAdrContentAndPath(
   contents: string,
   path: string,
 ) {
-  // Validate parameters to prevent IndexedDB key errors
   if (!name || !repository || !name.trim() || !repository.trim()) {
     console.warn('Invalid parameters for updateAdrContentAndPath:', {
       name,

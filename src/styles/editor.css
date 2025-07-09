@@ -6,6 +6,109 @@
   --editor-color: var(--foreground);
   --editor-background: var(--background);
   width: 100%;
+  position: relative;
+}
+
+/* Hide delete buttons on MDX editor elements */
+.mdxeditor button[aria-label*='delete'],
+.mdxeditor button[aria-label*='Delete'],
+.mdxeditor button[aria-label*='remove'],
+.mdxeditor button[aria-label*='Remove'],
+.mdxeditor button[title*='delete'],
+.mdxeditor button[title*='Delete'],
+.mdxeditor button[title*='remove'],
+.mdxeditor button[title*='Remove'],
+.mdxeditor [data-testid*='delete'],
+.mdxeditor [data-testid*='remove'],
+.mdxeditor button[data-editor-action='delete'],
+.mdxeditor button[data-editor-action='remove'],
+.mdxeditor .delete-button,
+.mdxeditor .remove-button {
+  display: none !important;
+}
+
+/* Hide delete buttons on code blocks */
+.mdxeditor [data-lexical-node='code'] button[aria-label*='delete'],
+.mdxeditor [data-lexical-node='code'] button[aria-label*='Delete'],
+.mdxeditor [data-lexical-node='code'] button[title*='delete'],
+.mdxeditor [data-lexical-node='code'] button[title*='Delete'],
+.mdxeditor .code-block-wrapper button[aria-label*='delete'],
+.mdxeditor .code-block-wrapper button[aria-label*='Delete'] {
+  display: none !important;
+}
+
+/* Hide delete buttons on tables */
+.mdxeditor table button[aria-label*='delete'],
+.mdxeditor table button[aria-label*='Delete'],
+.mdxeditor table button[title*='delete'],
+.mdxeditor table button[title*='Delete'],
+.mdxeditor .table-wrapper button[aria-label*='delete'],
+.mdxeditor .table-wrapper button[aria-label*='Delete'] {
+  display: none !important;
+}
+
+/* Hide delete buttons on sandpack components */
+.mdxeditor [data-sandpack] button[aria-label*='delete'],
+.mdxeditor [data-sandpack] button[aria-label*='Delete'],
+.mdxeditor [data-sandpack] button[title*='delete'],
+.mdxeditor [data-sandpack] button[title*='Delete'],
+.mdxeditor .sandpack-wrapper button[aria-label*='delete'],
+.mdxeditor .sandpack-wrapper button[aria-label*='Delete'] {
+  display: none !important;
+}
+
+/* Hide delete buttons on images */
+.mdxeditor img + button[aria-label*='delete'],
+.mdxeditor img + button[aria-label*='Delete'],
+.mdxeditor img + button[title*='delete'],
+.mdxeditor img + button[title*='Delete'],
+.mdxeditor .image-wrapper button[aria-label*='delete'],
+.mdxeditor .image-wrapper button[aria-label*='Delete'] {
+  display: none !important;
+}
+
+/* Hide any floating delete buttons */
+.mdxeditor [data-floating-ui-portal] button[aria-label*='delete'],
+.mdxeditor [data-floating-ui-portal] button[aria-label*='Delete'],
+.mdxeditor [data-floating-ui-portal] button[title*='delete'],
+.mdxeditor [data-floating-ui-portal] button[title*='Delete'] {
+  display: none !important;
+}
+
+/* Hide delete buttons with common delete icons/symbols */
+.mdxeditor button:has(svg[data-testid*='delete']),
+.mdxeditor button:has(svg[data-testid*='remove']),
+.mdxeditor button:has(svg[data-testid*='trash']),
+.mdxeditor button:has(.delete-icon),
+.mdxeditor button:has(.remove-icon),
+.mdxeditor button:has(.trash-icon) {
+  display: none !important;
+}
+
+/* Hide buttons that contain common delete symbols */
+.mdxeditor button[aria-label='×'],
+.mdxeditor button[title='×'],
+.mdxeditor button:has([data-icon='×']),
+.mdxeditor button:has([data-icon='✕']),
+.mdxeditor button:has([data-icon='🗑']),
+.mdxeditor button:has([data-icon='trash']) {
+  display: none !important;
+}
+
+/* Hide any element deletion controls */
+.mdxeditor [data-element-controls] button[aria-label*='delete'],
+.mdxeditor [data-element-controls] button[aria-label*='Delete'],
+.mdxeditor [data-element-controls] button[title*='delete'],
+.mdxeditor [data-element-controls] button[title*='Delete'] {
+  display: none !important;
+}
+
+/* Additional selectors for specific MDX editor element types */
+.mdxeditor [data-lexical-editor] button[aria-label*='delete'],
+.mdxeditor [data-lexical-editor] button[aria-label*='Delete'],
+.mdxeditor [data-lexical-editor] button[title*='delete'],
+.mdxeditor [data-lexical-editor] button[title*='Delete'] {
+  display: none !important;
 }
 
 /* Toolbar styles */
@@ -59,6 +162,84 @@
 .mdxeditor .toolbar select:hover {
   background-color: var(--accent);
   color: var(--accent-foreground);
+}
+
+/* Fix dropdown positioning for BlockTypeSelect and other toolbar dropdowns */
+/* Target specific MDX editor dropdown elements */
+.mdxeditor [role='listbox'],
+.mdxeditor [role='menu'],
+.mdxeditor [data-floating-ui-portal] {
+  position: absolute !important;
+  z-index: 2000 !important;
+}
+
+/* Override default dropdown positioning for MDX editor */
+.mdxeditor .toolbar select[aria-expanded='true'] + [role='listbox'],
+.mdxeditor .toolbar button[aria-expanded='true'] + [role='listbox'],
+.mdxeditor .toolbar button[aria-expanded='true'] + [role='menu'],
+.mdxeditor .toolbar [data-state='open'] + [role='listbox'],
+.mdxeditor .toolbar [data-state='open'] + [role='menu'] {
+  position: absolute !important;
+  z-index: 2000 !important;
+}
+
+/* Force dropdown content to appear below the actual text cursor */
+.mdxeditor [role='listbox'],
+.mdxeditor [role='menu'] {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  padding: 0.25rem;
+  box-shadow:
+    0 10px 15px -3px hsl(var(--foreground) / 0.1),
+    0 4px 6px -2px hsl(var(--foreground) / 0.05);
+  min-width: 8rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mdxeditor [role='listbox'] [role='option'],
+.mdxeditor [role='menu'] [role='menuitem'] {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.mdxeditor [role='listbox'] [role='option']:hover,
+.mdxeditor [role='menu'] [role='menuitem']:hover,
+.mdxeditor [role='listbox'] [role='option'][aria-selected='true'],
+.mdxeditor [role='menu'] [role='menuitem'][aria-selected='true'] {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* Specific targeting for MDX editor's BlockTypeSelect dropdown */
+.mdxeditor .toolbar [data-block-type-select] + [role='listbox'],
+.mdxeditor .toolbar [data-block-type-select] + * [role='listbox'],
+.mdxeditor .toolbar .mdx-block-type-select-dropdown {
+  position: absolute !important;
+  z-index: 2000 !important;
+  /* Position relative to the text cursor, not the toolbar */
+  transform: translateY(0) !important;
+}
+
+/* Try to position dropdown near the text cursor */
+.mdxeditor .lexical-editor-wrapper {
+  position: relative;
+}
+
+.mdxeditor .lexical-editor-wrapper [role='listbox'],
+.mdxeditor .lexical-editor-wrapper [role='menu'] {
+  position: absolute !important;
+  top: auto !important;
+  left: auto !important;
+  z-index: 2000 !important;
 }
 
 /* Heading styles */
@@ -246,10 +427,38 @@
   color: var(--foreground);
 }
 
+.mdxeditor ul {
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
+.mdxeditor ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+
 .mdxeditor li {
   margin-top: 0.25em;
   margin-bottom: 0.25em;
   color: var(--foreground);
+  display: list-item;
+}
+
+/* Nested list styles */
+.mdxeditor ul ul {
+  list-style-type: circle;
+}
+
+.mdxeditor ul ul ul {
+  list-style-type: square;
+}
+
+.mdxeditor ol ol {
+  list-style-type: lower-alpha;
+}
+
+.mdxeditor ol ol ol {
+  list-style-type: lower-roman;
 }
 
 /* Table styles */

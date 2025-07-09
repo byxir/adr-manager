@@ -23,13 +23,6 @@ export function createOrUpdateFile({
   branch: string
   content: string
 }): Promise<{ code: number }> {
-  console.log('createOrUpdateFile', {
-    repo,
-    path,
-    owner,
-    sha,
-    branch,
-  })
   return axios.post(
     '/api/git/file',
     {
@@ -54,14 +47,6 @@ export function deleteFile({
   sha: string
   branch: string
 }): Promise<{ code: number }> {
-  console.log('deleteFile', {
-    repo,
-    path,
-    owner,
-    sha,
-    branch,
-  })
-
   return axios.delete('/api/git/file', {
     params: { repo, path, owner, sha, branch },
   })
@@ -84,15 +69,6 @@ export function moveFile({
   branch: string
   content: string
 }): Promise<{ code: number }> {
-  console.log('moveFile', {
-    repo,
-    oldPath,
-    newPath,
-    owner,
-    sha,
-    branch,
-  })
-
   // Moving a file is done by creating the new file and deleting the old one
   return axios.post(
     '/api/git/file/move',

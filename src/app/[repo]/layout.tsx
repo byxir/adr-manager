@@ -41,7 +41,6 @@ export default function RepoLayout({
   const { repo, path } = useParams()
   const searchParams = useSearchParams()
   const pathname = usePathname()
-  console.log('pathname', pathname)
   const owner = searchParams.get('owner')
   const branch = searchParams.get('branch')
 

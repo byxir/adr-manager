@@ -5,11 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useLiveQuery } from 'dexie-react-hooks'
 import '@mdxeditor/editor/style.css'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import {
-  updateAdrContents,
-  deleteAdr,
-  getAdrLiveQuery,
-} from '@/lib/adr-db-actions'
+import { updateAdrContents, getAdrLiveQuery } from '@/lib/adr-db-actions'
 import type { MDXEditorMethods } from '@mdxeditor/editor'
 import { SkeletonEditor } from '@/lib/helpers'
 import AdrTemplateSidebar from '@/app/[repo]/adr/[path]/adr-template-sidebar'
@@ -27,7 +23,6 @@ export default function AdrPage() {
   const formattedPath = path.replaceAll('~', '/')
   const adrName = formattedPath.split('/').filter(Boolean).pop() ?? ''
   const router = useRouter()
-  const queryClient = useQueryClient()
   const [currentAdrKey, setCurrentAdrKey] = useState<string>('')
 
   const editorRef = useRef<MDXEditorMethods>(null)
@@ -177,7 +172,14 @@ export default function AdrPage() {
           }
         }, 0)
 
-        const events = ['input', 'keydown', 'keyup', 'paste', 'cut', 'drop']
+        const keyboardEvents = [
+          'input',
+          'keydown',
+          'keyup',
+          'paste',
+          'cut',
+          'drop',
+        ]
 
         const handleFocusIn = () => {
           console.log('FOCUS IN CALLED')
@@ -189,20 +191,41 @@ export default function AdrPage() {
           getEditorContent()
         }
 
-        events.forEach((event) => {
+        // Handle toolbar button clicks
+        const handleToolbarClick = (event: MouseEvent) => {
+          const target = event.target as HTMLElement
+          // Check if the clicked element is a toolbar button
+          if (
+            target.closest('button[data-editor-toolbar-button]') ||
+            target.closest('[role="button"]') ||
+            target.closest('button')
+          ) {
+            // Delay slightly to allow the editor to process the change
+            setTimeout(() => {
+              handleUserActivity()
+            }, 100)
+          }
+        }
+
+        // Add keyboard event listeners
+        keyboardEvents.forEach((event) => {
           element.addEventListener(event, handleUserActivity, {
             passive: true,
           })
         })
+
+        // Add toolbar click listener
+        element.addEventListener('click', handleToolbarClick, { passive: true })
 
         // Use focusin/focusout which bubble up from child elements
         element.addEventListener('focusin', handleFocusIn, { passive: true })
         element.addEventListener('focusout', handleFocusOut, { passive: true })
 
         eventListenersRef.current = () => {
-          events.forEach((event) => {
+          keyboardEvents.forEach((event) => {
             element.removeEventListener(event, handleUserActivity)
           })
+          element.removeEventListener('click', handleToolbarClick)
           element.removeEventListener('focusin', handleFocusIn)
           element.removeEventListener('focusout', handleFocusOut)
           if (inactivityTimeoutRef.current) {
