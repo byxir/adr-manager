@@ -44,6 +44,7 @@ import {
   deleteAdr,
   updateAdrName,
 } from '@/lib/adr-db-actions'
+import { deleteFile, moveFile } from '@/app/actions'
 import { useRouter, usePathname } from 'next/navigation'
 import type { Adr } from '@/lib/dexie-db'
 import { getFileIcon } from '@/lib/helpers'
@@ -110,6 +111,9 @@ function FileTree({
   owner,
   branch,
   adrs,
+  selectedAdr,
+  setSelectedAdr,
+  repoTree,
 }: {
   activeRepo: string | null
   items: Record<string, Item> | null
@@ -123,15 +127,21 @@ function FileTree({
   owner: string | undefined | null
   branch: string | null
   adrs: Adr[] | null
+  selectedAdr: Adr | null
+  setSelectedAdr: (adr: Adr | null) => void
+  repoTree: RepoTree | null
 }) {
   const router = useRouter()
   const pathname = usePathname()
   const queryClient = useQueryClient()
+  console.log(
+    'selectedAdr FROM APP SIDEBAR FILE TREE --------------> ',
+    selectedAdr,
+  )
 
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [selectedAdr, setSelectedAdr] = useState<Adr | null>(null)
   const [editName, setEditName] = useState('')
 
   // Search states
@@ -219,29 +229,40 @@ function FileTree({
 
   // Delete handler
   const handleDeleteAdr = async () => {
-    if (!selectedAdr) return
+    if (!selectedAdr || !activeRepo || !owner || !branch) return
 
     try {
       // Check if we're currently viewing the ADR being deleted
-      const currentAdrPath = `/${activeRepo}/adr/${selectedAdr.name}`
+      const currentAdrPath = `/${activeRepo}/adr/${selectedAdr.path.replaceAll('/', '~')}`
       const isCurrentlyViewing = pathname === currentAdrPath
 
+      // Check if the ADR exists in the repository before attempting to delete it
+      const adrExistsInRepo =
+        repoTree?.tree?.some((item) => item.path === selectedAdr.path) ?? false
+
+      console.log('ADR exists in repo:', adrExistsInRepo)
+
+      // Only delete from GitHub if the file actually exists in the repository
+      if (adrExistsInRepo) {
+        await deleteFile({
+          repo: activeRepo,
+          path: selectedAdr.path,
+          owner: owner,
+          sha: selectedAdr.sha ?? '',
+          branch: branch,
+        })
+        console.log('Deleted ADR from repository')
+      } else {
+        console.log(
+          'ADR only exists in local database, skipping repository deletion',
+        )
+      }
+
+      // Always delete from local database
       await deleteAdr(selectedAdr.id)
 
       await queryClient.invalidateQueries({
-        predicate: (query) => {
-          const queryKey = query.queryKey
-          return (
-            queryKey.includes('adr') ||
-            queryKey.includes('ADR') ||
-            (Array.isArray(queryKey) &&
-              queryKey.some(
-                (key) =>
-                  typeof key === 'string' &&
-                  (key.includes('adr') || key === activeRepo),
-              ))
-          )
-        },
+        queryKey: ['repoTree', activeRepo, owner, branch],
       })
 
       // Redirect to repo page if we were viewing the deleted ADR
@@ -258,7 +279,8 @@ function FileTree({
 
   // Edit handler
   const handleEditAdr = async () => {
-    if (!selectedAdr || !editName.trim()) return
+    if (!selectedAdr || !editName.trim() || !activeRepo || !owner || !branch)
+      return
 
     try {
       const newName = editName.endsWith('.md') ? editName : `${editName}.md`
@@ -268,23 +290,30 @@ function FileTree({
       const currentAdrPath = `/${activeRepo}/adr/${selectedAdr.name}`
       const isCurrentlyViewing = pathname === currentAdrPath
 
-      await updateAdrName(selectedAdr.id, newName, newPath)
+      // Check if the ADR exists in the repository before attempting to move it
+      const adrExistsInRepo =
+        repoTree?.tree?.some((item) => item.path === selectedAdr.path) ?? false
 
-      await queryClient.invalidateQueries({
-        predicate: (query) => {
-          const queryKey = query.queryKey
-          return (
-            queryKey.includes('adr') ||
-            queryKey.includes('ADR') ||
-            (Array.isArray(queryKey) &&
-              queryKey.some(
-                (key) =>
-                  typeof key === 'string' &&
-                  (key.includes('adr') || key === activeRepo),
-              ))
-          )
-        },
-      })
+      // If the path is different and file exists in repo, move the file in GitHub
+      if (selectedAdr.path !== newPath && adrExistsInRepo) {
+        await moveFile({
+          repo: activeRepo,
+          oldPath: selectedAdr.path,
+          newPath: newPath,
+          owner: owner,
+          sha: selectedAdr.sha ?? '',
+          branch: branch,
+          content: selectedAdr.contents ?? '',
+        })
+        console.log('Moved ADR in repository')
+      } else if (selectedAdr.path !== newPath) {
+        console.log(
+          'ADR only exists in local database, skipping repository move',
+        )
+      }
+
+      // Update the local database
+      await updateAdrName(selectedAdr.id, newName, newPath)
 
       // Redirect to new ADR name if we were viewing the edited ADR
       if (isCurrentlyViewing) {
@@ -330,6 +359,59 @@ function FileTree({
         const dropParentId = parentItem.getId()
         const isAdrsFolder =
           dropParentId === 'adrs' || prevItems[dropParentId]?.name === 'adrs'
+
+        // Handle file moves in GitHub
+        const handleFileMoves = async () => {
+          if (!activeRepo || !owner || !branch || !adrs) return
+
+          // Find moved ADR files
+          for (const childId of newChildrenIds) {
+            const item = prevItems[childId]
+            if (item?.isAdr && item.name) {
+              const adr = adrs.find((a) => a.name === item.name)
+              if (adr) {
+                // Determine new path based on drop location
+                let newPath = adr.path
+
+                if (isAdrsFolder) {
+                  // Moved to adrs folder
+                  newPath = `adrs/${item.name}`
+                } else if (dropParentId === 'root') {
+                  // Moved to root
+                  newPath = item.name
+                } else {
+                  // Moved to another folder
+                  const parentPath =
+                    dropParentId === 'root' ? '' : `${dropParentId}/`
+                  newPath = `${parentPath}${item.name}`
+                }
+
+                // Only move if path changed
+                if (adr.path !== newPath) {
+                  try {
+                    await moveFile({
+                      repo: activeRepo,
+                      oldPath: adr.path,
+                      newPath: newPath,
+                      owner: owner,
+                      sha: adr.sha ?? '',
+                      branch: branch,
+                      content: adr.contents ?? '',
+                    })
+
+                    // Update local database
+                    await updateAdrName(adr.id, item.name, newPath)
+                  } catch (error) {
+                    console.error('Error moving file:', error)
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Execute file moves asynchronously
+        void handleFileMoves()
 
         const sortedChildren = [...newChildrenIds].sort((a, b) => {
           const itemA = prevItems[a]
@@ -549,24 +631,8 @@ function FileTree({
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 
-      await queryClient.invalidateQueries({
-        predicate: (query) => {
-          const queryKey = query.queryKey
-          return (
-            queryKey.includes('adr') ||
-            queryKey.includes('ADR') ||
-            (Array.isArray(queryKey) &&
-              queryKey.some(
-                (key) =>
-                  typeof key === 'string' &&
-                  (key.includes('adr') || key === activeRepo),
-              ))
-          )
-        },
-      })
-
       router.push(
-        `/${activeRepo}/adr/${newAdrName}?owner=${owner}&branch=${branch}`,
+        `/${activeRepo}/adr/adrs~${newAdrName}?owner=${owner}&branch=${branch}`,
       )
     } catch (error) {
       console.error('Error creating ADR:', error)
@@ -805,6 +871,8 @@ export function AppSidebar({
   owner,
   adrs,
   branch,
+  selectedAdr,
+  setSelectedAdr,
 }: {
   children: React.ReactNode
   repoTree: RepoTree | null
@@ -812,6 +880,8 @@ export function AppSidebar({
   owner: string | undefined | null
   adrs: Adr[] | null
   branch: string | null
+  selectedAdr: Adr | null
+  setSelectedAdr: (adr: Adr | null) => void
 }) {
   const { data: session } = useSession()
 
@@ -865,6 +935,9 @@ export function AppSidebar({
               adrs={adrs}
               owner={owner}
               branch={branch}
+              selectedAdr={selectedAdr}
+              setSelectedAdr={setSelectedAdr}
+              repoTree={repoTree}
             />
           ) : (
             <SkeletonTree />

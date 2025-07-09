@@ -28,11 +28,7 @@ import {
   updateAdrContents,
 } from '@/lib/adr-db-actions'
 import { useParams } from 'next/navigation'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -460,12 +456,17 @@ export default function AdrTemplateSidebar({
 
       // Convert sections back to proper format for markdown generation
       const sectionsForMarkdown = sectionsToUse.map((section) => {
-        if (section.items && section.items.length > 0) {
-          // Convert items array back to markdown list format
-          const listContent = section.items
-            .map((item) => `* ${item}`)
-            .join('\n')
-          return { ...section, content: listContent }
+        if (section.items !== undefined) {
+          // For list sections, convert items array to markdown list format
+          if (section.items.length > 0) {
+            const listContent = section.items
+              .map((item) => `* ${item}`)
+              .join('\n')
+            return { ...section, content: listContent }
+          } else {
+            // Empty list should have empty content
+            return { ...section, content: '' }
+          }
         }
         return section
       })
@@ -703,21 +704,6 @@ export default function AdrTemplateSidebar({
     },
     [generateAndUpdateMarkdown, tags],
   )
-
-  const getStatusColor = useCallback((status: AdrStatus) => {
-    switch (status) {
-      case 'todo':
-        return 'bg-slate-50 text-slate-600 border-slate-200'
-      case 'in-progress':
-        return 'bg-blue-50 text-blue-600 border-blue-200'
-      case 'done':
-        return 'bg-green-50 text-green-600 border-green-200'
-      case 'backlog':
-        return 'bg-amber-50 text-amber-600 border-amber-200'
-      default:
-        return 'bg-slate-50 text-slate-600 border-slate-200'
-    }
-  }, [])
 
   const getStatusIcon = useCallback((status: AdrStatus) => {
     switch (status) {

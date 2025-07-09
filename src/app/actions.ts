@@ -41,6 +41,70 @@ export function createOrUpdateFile({
   )
 }
 
+export function deleteFile({
+  repo,
+  path,
+  owner,
+  sha,
+  branch,
+}: {
+  repo: string
+  path: string
+  owner: string
+  sha: string
+  branch: string
+}): Promise<{ code: number }> {
+  console.log('deleteFile', {
+    repo,
+    path,
+    owner,
+    sha,
+    branch,
+  })
+
+  return axios.delete('/api/git/file', {
+    params: { repo, path, owner, sha, branch },
+  })
+}
+
+export function moveFile({
+  repo,
+  oldPath,
+  newPath,
+  owner,
+  sha,
+  branch,
+  content,
+}: {
+  repo: string
+  oldPath: string
+  newPath: string
+  owner: string
+  sha: string
+  branch: string
+  content: string
+}): Promise<{ code: number }> {
+  console.log('moveFile', {
+    repo,
+    oldPath,
+    newPath,
+    owner,
+    sha,
+    branch,
+  })
+
+  // Moving a file is done by creating the new file and deleting the old one
+  return axios.post(
+    '/api/git/file/move',
+    {
+      body: content,
+    },
+    {
+      params: { repo, oldPath, newPath, owner, sha, branch },
+    },
+  )
+}
+
 export function getRepoTree(
   repo: string,
   branch: string,

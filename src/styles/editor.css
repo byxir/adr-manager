@@ -20,6 +20,7 @@
   align-items: flex-start;
   min-height: auto;
   width: 100%;
+  z-index: 1000;
 }
 
 .mdxeditor .toolbar button {
@@ -290,6 +291,7 @@
   border-radius: 0.5rem;
   padding: 1rem;
   color: var(--foreground);
+  z-index: 1000;
   /* transform: translateX(2000px); */
 }
 
