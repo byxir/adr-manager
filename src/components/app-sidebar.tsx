@@ -481,14 +481,25 @@ function FileTree({
     // Combine both sources of existing names
     const existingNames = [...existingNamesFromDb, ...existingNamesFromTree]
 
-    let newAdrName = 'new-adr.md'
-    let counter = 1
+    // Find the highest existing number
+    let maxNumber = 0
+    const adrPattern = /^(\d{4})-adr\.md$/
+    existingNames.forEach((name) => {
+      // Match pattern like "0001-adr.md"
+      if (name) {
+        const match = adrPattern.exec(name)
+        if (match?.[1]) {
+          const number = parseInt(match[1], 10)
+          if (number > maxNumber) {
+            maxNumber = number
+          }
+        }
+      }
+    })
 
-    // Keep checking until we find a unique name
-    while (existingNames.includes(newAdrName)) {
-      newAdrName = `new-adr-${counter}.md`
-      counter++
-    }
+    // Use next number after the highest
+    const counter = maxNumber + 1
+    const newAdrName = `${counter.toString().padStart(4, '0')}-adr.md`
 
     const preparedAdr = {
       id: uuidv4(),
