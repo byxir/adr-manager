@@ -250,6 +250,10 @@ function FileTree({
       // Always delete from local database
       await deleteAdr(selectedAdr.id)
 
+      // Wait a bit for the live query to update before invalidating the repo tree
+      // This ensures the tree transformation happens with the updated ADRs data
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
       await queryClient.invalidateQueries({
         queryKey: ['repoTree', activeRepo, owner, branch],
       })
@@ -300,20 +304,20 @@ function FileTree({
       // Update the local database
       await updateAdrName(selectedAdr.id, newName, newPath)
 
+      // Wait a bit for the live query to update before invalidating the repo tree
+      // This ensures the tree transformation happens with the updated ADRs data
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      // Invalidate the repo tree query to trigger a proper refresh
+      await queryClient.invalidateQueries({
+        queryKey: ['repoTree', activeRepo, owner, branch],
+      })
+
       // Redirect to new ADR name if we were viewing the edited ADR
       if (isCurrentlyViewing) {
         router.push(
           `/${activeRepo}/adr/${newName}?owner=${owner}&branch=${branch}`,
         )
-      }
-
-      // Collapse and expand tree
-      const rootItem = tree.getItems().find((item) => item.getId() === 'root')
-      if (rootItem) {
-        rootItem.collapse()
-        setTimeout(() => {
-          rootItem.expand()
-        }, 0)
       }
 
       setEditDialogOpen(false)
