@@ -21,7 +21,6 @@ import {
   InsertFrontmatter,
   InsertImage,
   InsertSandpack,
-  InsertTable,
   InsertThematicBreak,
   linkDialogPlugin,
   linkPlugin,
@@ -166,7 +165,6 @@ export default function App() {
                 <BlockTypeSelect />
                 <CreateLink />
                 <InsertImage />
-                <InsertTable />
                 <InsertThematicBreak />
                 <ListsToggle />
                 <CodeToggle />

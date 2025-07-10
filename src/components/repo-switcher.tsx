@@ -95,7 +95,7 @@ export function RepoSwitcher({
                   />
                 </div>
                 {repo.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                {/* <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut> */}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
