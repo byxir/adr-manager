@@ -812,8 +812,8 @@ export default function AdrTemplateSidebar({
       <div className="flex-shrink overflow-y-scroll w-full px-4">
         {children}
       </div>
-      <RightSidebar side="right" className="templateSidebar">
-        <RightSidebarContent className="flex-shrink-0 h-screen bg-background border-l flex flex-col">
+      <RightSidebar side="right" className="">
+        <RightSidebarContent className="flex-shrink-0 h-screen bg-background border-l flex flex-col templateSidebar">
           <div className="p-4 border-b flex-shrink-0">
             <div className="flex items-center justify-between">
               <div>

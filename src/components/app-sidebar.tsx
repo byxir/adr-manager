@@ -843,7 +843,7 @@ export function AppSidebar({
 
   return (
     <div className="flex h-full w-full">
-      <Sidebar collapsible="icon" className="h-full z-0 fileTreeSidebar">
+      <Sidebar collapsible="icon" className="h-full z-0">
         <SidebarHeader>
           <RepoSwitcher
             repos={reposData?.data ?? []}
@@ -851,7 +851,7 @@ export function AppSidebar({
             owner={owner}
           />
         </SidebarHeader>
-        <SidebarContent className="overflow-x-hidden">
+        <SidebarContent className="overflow-x-hidden fileTreeSidebar">
           {items ? (
             <FileTree
               activeRepo={activeRepo}
