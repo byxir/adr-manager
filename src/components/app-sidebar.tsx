@@ -842,8 +842,8 @@ export function AppSidebar({
   }
 
   return (
-    <div className="flex h-screen w-full">
-      <Sidebar collapsible="icon" className="h-screen z-0 fileTreeSidebar">
+    <div className="flex h-full w-full">
+      <Sidebar collapsible="icon" className="h-full z-0 fileTreeSidebar">
         <SidebarHeader>
           <RepoSwitcher
             repos={reposData?.data ?? []}
@@ -873,7 +873,7 @@ export function AppSidebar({
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
-      <div className="h-screen overflow-hidden flex-shrink z-0 w-full">
+      <div className="h-full overflow-hidden flex-shrink z-0 w-full">
         {children}
       </div>
     </div>
