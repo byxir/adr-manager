@@ -1,5 +1,4 @@
 'use client'
-// ForwardRefEditor.tsx
 import dynamic from 'next/dynamic'
 import { forwardRef } from 'react'
 import { type MDXEditorMethods, type MDXEditorProps } from '@mdxeditor/editor'

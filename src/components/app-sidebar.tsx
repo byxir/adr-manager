@@ -6,7 +6,6 @@ import { useEffect, useState, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  createOnDropHandler,
   dragAndDropFeature,
   hotkeysCoreFeature,
   keyboardDragAndDropFeature,
@@ -555,16 +554,6 @@ function FileTree({
 
           return newItems
         })
-
-        // const rootItem = tree.getItems().find((item) => item.getId() === 'root')
-        // if (rootItem) {
-        //   console.log('rootItem', rootItem)
-        //   rootItem.collapse()
-
-        //   setTimeout(() => {
-        //     rootItem.expand()
-        //   }, 0)
-        // }
       }
 
       router.push(

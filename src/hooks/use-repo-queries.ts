@@ -13,7 +13,6 @@ import type { ApiResponse, RepoTree } from '@/definitions/types'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
-import { useCallback } from 'react'
 
 export function useRepos() {
   const { data: session } = useSession()

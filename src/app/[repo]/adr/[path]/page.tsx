@@ -189,80 +189,16 @@ export default function AdrPage() {
         const handleToolbarClick = (event: MouseEvent) => {
           const target = event.target as HTMLElement
 
-          // Add debugging to see what's being clicked
-          console.log('Click detected on:', target)
-          console.log('Target tagName:', target.tagName)
-          console.log('Target className:', target.className)
-          console.log('Target id:', target.id)
-          console.log('Target aria-label:', target.getAttribute('aria-label'))
-          console.log('Target title:', target.getAttribute('title'))
-          console.log('Target closest button:', target.closest('button'))
-          console.log('Target innerHTML:', target.innerHTML)
-          console.log(
-            'Parent elements:',
-            target.parentElement?.className,
-            target.parentElement?.parentElement?.className,
-          )
-
           // Check if the clicked element is a toolbar button
           if (
             target.closest('button[data-editor-toolbar-button]') ||
             target.closest('[role="button"]') ||
             target.closest('button')
           ) {
-            console.log('Regular toolbar button clicked')
-            // Delay slightly to allow the editor to process the change
             setTimeout(() => {
               handleUserActivity()
             }, 100)
             return
-          }
-
-          // Check for remove/delete buttons within MDX editor elements
-          // These are typically buttons with specific classes or roles within editor components
-          if (
-            target.closest('[data-remove-button]') ||
-            target.closest('[data-delete-button]') ||
-            target.closest('[aria-label*="remove"]') ||
-            target.closest('[aria-label*="delete"]') ||
-            target.closest('[title*="remove"]') ||
-            target.closest('[title*="delete"]') ||
-            target.closest('.remove-button') ||
-            target.closest('.delete-button') ||
-            // MDX editor specific selectors for element controls
-            target.closest(
-              '[data-lexical-editor-theme] button[aria-label*="remove"]',
-            ) ||
-            target.closest(
-              '[data-lexical-editor-theme] button[aria-label*="delete"]',
-            ) ||
-            target.closest(
-              '[data-lexical-editor-theme] button[title*="remove"]',
-            ) ||
-            target.closest(
-              '[data-lexical-editor-theme] button[title*="delete"]',
-            ) ||
-            // Check for buttons within code blocks, tables, and other elements
-            target.closest('.code-block-container button') ||
-            target.closest('.table-container button') ||
-            target.closest('.sandpack-container button') ||
-            // Generic patterns for element removal buttons
-            target.closest('[class*="remove"]') ||
-            target.closest('[class*="delete"]') ||
-            target.closest('[class*="close"]') ||
-            // SVG icons within buttons (common pattern for remove buttons)
-            (target.closest('button') &&
-              (target.closest('svg[data-icon*="remove"]') ||
-                target.closest('svg[data-icon*="delete"]') ||
-                target.closest('svg[data-icon*="close"]') ||
-                target.closest('svg[data-icon*="trash"]') ||
-                target.closest('svg[data-icon*="x"]')))
-          ) {
-            console.log('Remove button clicked - triggering update')
-            // Delay slightly to allow the editor to process the change
-            setTimeout(() => {
-              handleUserActivity()
-            }, 150) // Slightly longer delay for element removal
           }
         }
 
@@ -322,7 +258,6 @@ export default function AdrPage() {
           })
 
           if (shouldTriggerUpdate) {
-            console.log('DOM change detected in editor elements')
             setTimeout(() => {
               handleUserActivity()
             }, 200) // Delay to allow editor state to stabilize
