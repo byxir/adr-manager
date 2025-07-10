@@ -38,12 +38,7 @@ import type { Item, RepoTree } from '@/definitions/types'
 import { transformAndAppendTreeData } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from './ui/button'
-import {
-  createAdr,
-  getAdrByNameAndRepository,
-  deleteAdr,
-  updateAdrName,
-} from '@/lib/adr-db-actions'
+import { createAdr, deleteAdr, updateAdrName } from '@/lib/adr-db-actions'
 import { deleteFile, moveFile } from '@/app/actions'
 import { useRouter, usePathname } from 'next/navigation'
 import type { Adr } from '@/lib/dexie-db'
@@ -338,119 +333,9 @@ function FileTree({
     getItemName: (item) => item.getItemData()?.name ?? 'Unknown',
     isItemFolder: (item) => item.getItemData()?.isFolder,
     canReorder: true,
-    // canDrag: (items) => {
-    //   return items.every((item) => item.getItemData()?.isAdr === true)
-    // },
+
     canDrag: () => false,
-    onDrop: createOnDropHandler((parentItem, newChildrenIds) => {
-      setItems((prevItems: Record<string, Item> | null) => {
-        if (!prevItems) return null
 
-        const dropParentId = parentItem.getId()
-        const isAdrsFolder =
-          dropParentId === 'adrs' || prevItems[dropParentId]?.name === 'adrs'
-
-        // Handle file moves in GitHub
-        const handleFileMoves = async () => {
-          if (!activeRepo || !owner || !branch || !adrs) return
-
-          // Find moved ADR files
-          for (const childId of newChildrenIds) {
-            const item = prevItems[childId]
-            if (item?.isAdr && item.name) {
-              const adr = adrs.find((a) => a.name === item.name)
-              if (adr) {
-                // Determine new path based on drop location
-                let newPath = adr.path
-
-                if (isAdrsFolder) {
-                  // Moved to adrs folder
-                  newPath = `adrs/${item.name}`
-                } else if (dropParentId === 'root') {
-                  // Moved to root
-                  newPath = item.name
-                } else {
-                  // Moved to another folder
-                  const parentPath =
-                    dropParentId === 'root' ? '' : `${dropParentId}/`
-                  newPath = `${parentPath}${item.name}`
-                }
-
-                // Only move if path changed
-                if (adr.path !== newPath) {
-                  try {
-                    await moveFile({
-                      repo: activeRepo,
-                      oldPath: adr.path,
-                      newPath: newPath,
-                      owner: owner,
-                      sha: adr.sha ?? '',
-                      branch: branch,
-                      content: adr.contents ?? '',
-                    })
-
-                    // Update local database
-                    await updateAdrName(adr.id, item.name, newPath)
-                  } catch (error) {
-                    console.error('Error moving file:', error)
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        // Execute file moves asynchronously
-        void handleFileMoves()
-
-        const sortedChildren = [...newChildrenIds].sort((a, b) => {
-          const itemA = prevItems[a]
-          const itemB = prevItems[b]
-
-          if (!itemA || !itemB || newChildrenIds.length === 0) return 0
-
-          if (itemA?.name === 'adrs') return -1
-          if (itemB?.name === 'adrs') return 1
-
-          if (isAdrsFolder && adrs) {
-            const isAFile = (itemA?.children?.length ?? 0) === 0
-            const isBFile = (itemB?.children?.length ?? 0) === 0
-
-            if (isAFile && isBFile) {
-              const adrA = adrs.find((adr) => adr.name === itemA?.name)
-              const adrB = adrs.find((adr) => adr.name === itemB?.name)
-
-              if (adrA && adrB) {
-                return (
-                  new Date(adrA.createdAt).getTime() -
-                  new Date(adrB.createdAt).getTime()
-                )
-              }
-            }
-          }
-
-          const isAFolder = (itemA?.children?.length ?? 0) > 0
-          const isBFolder = (itemB?.children?.length ?? 0) > 0
-
-          if (isAFolder && !isBFolder) return -1
-          if (!isAFolder && isBFolder) return 1
-
-          return (itemA?.name ?? '').localeCompare(itemB?.name ?? '')
-        })
-
-        const parentId = parentItem.getId()
-        const parentData = prevItems[parentId]
-        if (!parentData) return prevItems
-
-        return {
-          ...prevItems,
-          [parentId]: {
-            ...parentData,
-            children: sortedChildren,
-          },
-        }
-      })
-    }),
     dataLoader: {
       getItem: (itemId) => {
         if (itemId === 'root') {
@@ -578,6 +463,9 @@ function FileTree({
   }, [items])
 
   const addNewAdr = async () => {
+    // Check if this is the first ADR being created
+    const isFirstAdr = !adrs || adrs.length === 0
+
     // Check for existing ADRs with similar names in database
     const existingNamesFromDb = adrs?.map((adr) => adr.name) ?? []
 
@@ -620,6 +508,64 @@ function FileTree({
       await createAdr(preparedAdr)
 
       await new Promise((resolve) => setTimeout(resolve, 100))
+
+      // If this is the first ADR, simulate invalidation by closing and reopening the root element
+      if (isFirstAdr) {
+        // Create the "adrs" folder and new ADR file in the tree structure
+        setItems((prevItems) => {
+          if (!prevItems) return null
+
+          const newItems = { ...prevItems }
+
+          // Create or update the "adrs" folder
+          if (!newItems.adrs) {
+            newItems.adrs = {
+              name: 'adrs',
+              isFolder: true,
+              isAdr: false,
+              children: [],
+            }
+
+            // Add "adrs" folder to root's children if not already there
+            if (newItems.root && !newItems.root.children?.includes('adrs')) {
+              newItems.root = {
+                ...newItems.root,
+                children: [...(newItems.root.children ?? []), 'adrs'],
+              }
+            }
+          }
+
+          // Create the new ADR file
+          const adrId = `adrs/${newAdrName}`
+          newItems[adrId] = {
+            name: newAdrName,
+            isFolder: false,
+            isAdr: true,
+            children: [],
+            fileExtension: '.md',
+          }
+
+          // Add the new ADR to the "adrs" folder's children
+          if (newItems.adrs && !newItems.adrs.children?.includes(adrId)) {
+            newItems.adrs = {
+              ...newItems.adrs,
+              children: [...(newItems.adrs.children ?? []), adrId],
+            }
+          }
+
+          return newItems
+        })
+
+        // const rootItem = tree.getItems().find((item) => item.getId() === 'root')
+        // if (rootItem) {
+        //   console.log('rootItem', rootItem)
+        //   rootItem.collapse()
+
+        //   setTimeout(() => {
+        //     rootItem.expand()
+        //   }, 0)
+        // }
+      }
 
       router.push(
         `/${activeRepo}/adr/adrs~${newAdrName}?owner=${owner}&branch=${branch}`,

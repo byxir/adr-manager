@@ -15,18 +15,6 @@ export interface GenerateMarkdownOptions {
   frontmatter?: Record<string, any>
 }
 
-// Default MADR Full frontmatter template
-const DEFAULT_MADR_FULL_FRONTMATTER = `---
-# These are optional metadata elements. Feel free to remove any of them.
-status: "proposed"
-date: ${new Date().toISOString().split('T')[0]}
-decision-makers: ""
-consulted: ""
-informed: ""
----
-
-`
-
 // Utility function to trim trailing whitespace from each line and overall content
 const trimLineTrailingWhitespace = (content: string): string => {
   return content.replace('&#x20;', '').trim().replace(/&+$/, '') // Remove leading/trailing whitespace and trailing & characters
