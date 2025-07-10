@@ -1,7 +1,6 @@
 'use client'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useQueryClient } from '@tanstack/react-query'
 import { useLiveQuery } from 'dexie-react-hooks'
 import '@mdxeditor/editor/style.css'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
@@ -71,7 +70,6 @@ export default function AdrPage() {
 
   // Update database when markdown changes
   useEffect(() => {
-    console.log('UPDATE EFFECT CALLED')
     if (adrName.trim() && currentAdrKey === adrKey && isEditorFocused) {
       void updateAdrContents(adrName, repo, markdown).catch((error) => {
         console.error('Failed to update ADR contents:', error)
@@ -81,7 +79,6 @@ export default function AdrPage() {
 
   // Listen to database changes and update markdown content (database changes + not focused scenario)
   useEffect(() => {
-    console.log('LIVE QUERY EFFECT CALLED')
     if (liveAdr && liveAdr.contents !== markdown && !isEditorFocused) {
       const newMarkdown = liveAdr.contents ?? ''
       setMarkdown(newMarkdown)
@@ -95,7 +92,6 @@ export default function AdrPage() {
 
   // Initialize markdown when ADR data is available
   useEffect(() => {
-    console.log('LAST USEEFFECT CALLED')
     if (adrQuery.data?.adr) {
       const initialMarkdown = adrQuery.data.adr.contents ?? ''
       setMarkdown(initialMarkdown)
@@ -182,11 +178,9 @@ export default function AdrPage() {
         ]
 
         const handleFocusIn = () => {
-          console.log('FOCUS IN CALLED')
           setIsEditorFocused(true)
         }
         const handleFocusOut = () => {
-          console.log('FOCUS OUT CALLED')
           setIsEditorFocused(false)
           getEditorContent()
         }
@@ -194,16 +188,81 @@ export default function AdrPage() {
         // Handle toolbar button clicks
         const handleToolbarClick = (event: MouseEvent) => {
           const target = event.target as HTMLElement
+
+          // Add debugging to see what's being clicked
+          console.log('Click detected on:', target)
+          console.log('Target tagName:', target.tagName)
+          console.log('Target className:', target.className)
+          console.log('Target id:', target.id)
+          console.log('Target aria-label:', target.getAttribute('aria-label'))
+          console.log('Target title:', target.getAttribute('title'))
+          console.log('Target closest button:', target.closest('button'))
+          console.log('Target innerHTML:', target.innerHTML)
+          console.log(
+            'Parent elements:',
+            target.parentElement?.className,
+            target.parentElement?.parentElement?.className,
+          )
+
           // Check if the clicked element is a toolbar button
           if (
             target.closest('button[data-editor-toolbar-button]') ||
             target.closest('[role="button"]') ||
             target.closest('button')
           ) {
+            console.log('Regular toolbar button clicked')
             // Delay slightly to allow the editor to process the change
             setTimeout(() => {
               handleUserActivity()
             }, 100)
+            return
+          }
+
+          // Check for remove/delete buttons within MDX editor elements
+          // These are typically buttons with specific classes or roles within editor components
+          if (
+            target.closest('[data-remove-button]') ||
+            target.closest('[data-delete-button]') ||
+            target.closest('[aria-label*="remove"]') ||
+            target.closest('[aria-label*="delete"]') ||
+            target.closest('[title*="remove"]') ||
+            target.closest('[title*="delete"]') ||
+            target.closest('.remove-button') ||
+            target.closest('.delete-button') ||
+            // MDX editor specific selectors for element controls
+            target.closest(
+              '[data-lexical-editor-theme] button[aria-label*="remove"]',
+            ) ||
+            target.closest(
+              '[data-lexical-editor-theme] button[aria-label*="delete"]',
+            ) ||
+            target.closest(
+              '[data-lexical-editor-theme] button[title*="remove"]',
+            ) ||
+            target.closest(
+              '[data-lexical-editor-theme] button[title*="delete"]',
+            ) ||
+            // Check for buttons within code blocks, tables, and other elements
+            target.closest('.code-block-container button') ||
+            target.closest('.table-container button') ||
+            target.closest('.sandpack-container button') ||
+            // Generic patterns for element removal buttons
+            target.closest('[class*="remove"]') ||
+            target.closest('[class*="delete"]') ||
+            target.closest('[class*="close"]') ||
+            // SVG icons within buttons (common pattern for remove buttons)
+            (target.closest('button') &&
+              (target.closest('svg[data-icon*="remove"]') ||
+                target.closest('svg[data-icon*="delete"]') ||
+                target.closest('svg[data-icon*="close"]') ||
+                target.closest('svg[data-icon*="trash"]') ||
+                target.closest('svg[data-icon*="x"]')))
+          ) {
+            console.log('Remove button clicked - triggering update')
+            // Delay slightly to allow the editor to process the change
+            setTimeout(() => {
+              handleUserActivity()
+            }, 150) // Slightly longer delay for element removal
           }
         }
 
@@ -217,6 +276,66 @@ export default function AdrPage() {
         // Add toolbar click listener
         element.addEventListener('click', handleToolbarClick, { passive: true })
 
+        // Add mutation observer to detect DOM changes (fallback for element removal/addition)
+        const mutationObserver = new MutationObserver((mutations) => {
+          let shouldTriggerUpdate = false
+
+          mutations.forEach((mutation) => {
+            // Check if nodes were added or removed
+            if (
+              mutation.addedNodes.length > 0 ||
+              mutation.removedNodes.length > 0
+            ) {
+              // Check if the changes involve editor elements
+              const relevantChange = [
+                ...mutation.addedNodes,
+                ...mutation.removedNodes,
+              ].some((node) => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                  const element = node as Element
+
+                  // Check if element itself matches editor element selectors
+                  const elementMatches =
+                    element.matches &&
+                    (element.matches('.code-block-container') ||
+                      element.matches('.table-container') ||
+                      element.matches('.sandpack-container') ||
+                      element.matches('[data-lexical-editor-theme]'))
+
+                  // Check if element contains editor elements
+                  const containsEditorElements =
+                    element.querySelector &&
+                    (element.querySelector('.code-block-container') ??
+                      element.querySelector('.table-container') ??
+                      element.querySelector('.sandpack-container') ??
+                      element.querySelector('[data-lexical-editor-theme]'))
+
+                  return elementMatches || containsEditorElements
+                }
+                return false
+              })
+
+              if (relevantChange) {
+                shouldTriggerUpdate = true
+              }
+            }
+          })
+
+          if (shouldTriggerUpdate) {
+            console.log('DOM change detected in editor elements')
+            setTimeout(() => {
+              handleUserActivity()
+            }, 200) // Delay to allow editor state to stabilize
+          }
+        })
+
+        // Start observing the editor container
+        mutationObserver.observe(element, {
+          childList: true,
+          subtree: true,
+          attributes: false,
+        })
+
         // Use focusin/focusout which bubble up from child elements
         element.addEventListener('focusin', handleFocusIn, { passive: true })
         element.addEventListener('focusout', handleFocusOut, { passive: true })
@@ -228,6 +347,7 @@ export default function AdrPage() {
           element.removeEventListener('click', handleToolbarClick)
           element.removeEventListener('focusin', handleFocusIn)
           element.removeEventListener('focusout', handleFocusOut)
+          mutationObserver.disconnect()
           if (inactivityTimeoutRef.current) {
             clearTimeout(inactivityTimeoutRef.current)
           }
@@ -253,7 +373,6 @@ export default function AdrPage() {
 
   // Cleanup event listeners on unmount or key change
   useEffect(() => {
-    console.log('CLEANUP EFFECT CALLED')
     return () => {
       cleanupEventListeners()
     }

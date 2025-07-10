@@ -134,6 +134,7 @@ export default function AdrTemplateSidebar({
 
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
+  const [frontmatter, setFrontmatter] = useState<Record<string, any>>({})
 
   // Track if any textarea is focused to prevent parsing during editing
   const [isTextareaFocused, setIsTextareaFocused] = useState(false)
@@ -234,6 +235,7 @@ export default function AdrTemplateSidebar({
       setHasContent(false)
       setAdrStatus(undefined)
       setTags([])
+      setFrontmatter({})
       return
     }
 
@@ -253,12 +255,15 @@ export default function AdrTemplateSidebar({
         if (parser) {
           const parsedContent = parser.parseMarkdown(adr.contents)
 
-          // Update status and tags from parsed frontmatter if they exist
+          // Update status, tags, and frontmatter from parsed content
           if (parsedContent.status) {
             setAdrStatus(parsedContent.status)
           }
           if (parsedContent.tags) {
             setTags(parsedContent.tags)
+          }
+          if (parsedContent.frontmatter) {
+            setFrontmatter(parsedContent.frontmatter)
           }
 
           // Convert parsed sections to extended sections with items for list types
@@ -304,12 +309,15 @@ export default function AdrTemplateSidebar({
         if (parser) {
           const parsedContent = parser.parseMarkdown(adr.contents)
 
-          // Update status and tags from parsed frontmatter if they exist
+          // Update status, tags, and frontmatter from parsed content
           if (parsedContent.status) {
             setAdrStatus(parsedContent.status)
           }
           if (parsedContent.tags) {
             setTags(parsedContent.tags)
+          }
+          if (parsedContent.frontmatter) {
+            setFrontmatter(parsedContent.frontmatter)
           }
 
           // If no frontmatter exists, add it to enable status/tags functionality
@@ -341,6 +349,7 @@ export default function AdrTemplateSidebar({
       setHasContent(false)
       setAdrStatus(undefined)
       setTags([])
+      setFrontmatter({})
     }
   }, [adr, selectedTemplate])
 
@@ -348,9 +357,10 @@ export default function AdrTemplateSidebar({
     (template: AdrTemplate) => {
       setSelectedTemplate(template)
 
-      // Clear status and tags when selecting a template
+      // Clear status, tags, and frontmatter when selecting a template
       setAdrStatus(undefined)
       setTags([])
+      setFrontmatter({})
 
       if (template.id !== 'free-form') {
         const newSections = template.sections.map((section) => {
@@ -376,9 +386,26 @@ export default function AdrTemplateSidebar({
               ...section,
               content: '',
             }))
-            const initialContent = parser.generateMarkdown(emptySections, {
+
+            // For MADR full template, set up default frontmatter
+            const generateOptions: any = {
               tags: [],
-            })
+            }
+            if (template.id === 'madr-full') {
+              generateOptions.frontmatter = {
+                '#comment': true,
+                status: 'proposed',
+                date: new Date().toISOString().split('T')[0],
+                'decision-makers': '',
+                consulted: '',
+                informed: '',
+              }
+            }
+
+            const initialContent = parser.generateMarkdown(
+              emptySections,
+              generateOptions,
+            )
             await updateAdrContents(adrName, repo, initialContent)
           }
         }
@@ -402,6 +429,7 @@ export default function AdrTemplateSidebar({
             ]
             const initialContent = parser.generateMarkdown(emptySections, {
               tags: [],
+              frontmatter: {},
             })
             await updateAdrContents(adrName, repo, initialContent)
           }
@@ -439,18 +467,39 @@ export default function AdrTemplateSidebar({
       currentSections?: ExtendedSection[],
       currentStatus?: AdrStatus,
       currentTags?: string[],
+      currentFrontmatter?: Record<string, any>,
     ) => {
       if (!selectedTemplate) return
 
+      // Use passed status/tags/frontmatter or fall back to state values
+      const statusToUse = currentStatus ?? adrStatus
+      const tagsToUse = currentTags ?? tags
+      const frontmatterToUse = currentFrontmatter ?? frontmatter
+
+      // For free-form templates, we need to preserve existing content
+      // and only update the frontmatter
+      if (selectedTemplate.id === 'free-form') {
+        if (adr?.contents) {
+          // Use the updateFrontmatterInMarkdown utility to preserve content
+          const { updateFrontmatterInMarkdown } = await import(
+            './adr-templates'
+          )
+          const updatedMarkdown = updateFrontmatterInMarkdown(adr.contents, {
+            status: statusToUse,
+            tags: tagsToUse,
+            frontmatter: frontmatterToUse,
+          })
+          await updateAdrContents(adrName, repo, updatedMarkdown)
+        }
+        return
+      }
+
+      // For structured templates, use the normal generation process
       const parser = getTemplateParser(selectedTemplate.id)
       if (!parser) return
 
       // Use passed sections or fall back to state sections
       const sectionsToUse = currentSections ?? sections
-
-      // Use passed status/tags or fall back to state values
-      const statusToUse = currentStatus ?? adrStatus
-      const tagsToUse = currentTags ?? tags
 
       // Convert sections back to proper format for markdown generation
       const sectionsForMarkdown = sectionsToUse.map((section) => {
@@ -469,10 +518,11 @@ export default function AdrTemplateSidebar({
         return section
       })
 
-      // Pass status and tags as options to the generate function
+      // Pass status, tags, and frontmatter as options to the generate function
       const generateOptions = {
         status: statusToUse,
-        tags: tagsToUse.length > 0 ? tagsToUse : undefined,
+        tags: tagsToUse, // Always pass tags array, even if empty
+        frontmatter: frontmatterToUse,
       }
 
       const markdownContent = parser.generateMarkdown(
@@ -481,7 +531,16 @@ export default function AdrTemplateSidebar({
       )
       await updateAdrContents(adrName, repo, markdownContent)
     },
-    [selectedTemplate, sections, adrName, repo, adrStatus, tags],
+    [
+      selectedTemplate,
+      sections,
+      adrName,
+      repo,
+      adrStatus,
+      tags,
+      frontmatter,
+      adr?.contents,
+    ],
   )
 
   const updateSectionContent = useCallback(
@@ -496,14 +555,19 @@ export default function AdrTemplateSidebar({
           clearTimeout(generateMarkdownTimeoutRef.current)
         }
         generateMarkdownTimeoutRef.current = setTimeout(() => {
-          void generateAndUpdateMarkdown(updatedSections, adrStatus, tags)
+          void generateAndUpdateMarkdown(
+            updatedSections,
+            adrStatus,
+            tags,
+            frontmatter,
+          )
         }, 500)
 
         return updatedSections
       })
       setHasContent(true)
     },
-    [generateAndUpdateMarkdown, adrStatus, tags],
+    [generateAndUpdateMarkdown, adrStatus, tags, frontmatter],
   )
 
   const updateItemContent = useCallback(
@@ -523,14 +587,19 @@ export default function AdrTemplateSidebar({
           clearTimeout(generateMarkdownTimeoutRef.current)
         }
         generateMarkdownTimeoutRef.current = setTimeout(() => {
-          void generateAndUpdateMarkdown(updatedSections, adrStatus, tags)
+          void generateAndUpdateMarkdown(
+            updatedSections,
+            adrStatus,
+            tags,
+            frontmatter,
+          )
         }, 500)
 
         return updatedSections
       })
       setHasContent(true)
     },
-    [generateAndUpdateMarkdown, adrStatus, tags],
+    [generateAndUpdateMarkdown, adrStatus, tags, frontmatter],
   )
 
   const handleSectionContentChange = useCallback(
@@ -618,13 +687,18 @@ export default function AdrTemplateSidebar({
           clearTimeout(generateMarkdownTimeoutRef.current)
         }
         generateMarkdownTimeoutRef.current = setTimeout(() => {
-          void generateAndUpdateMarkdown(updatedSections, adrStatus, tags)
+          void generateAndUpdateMarkdown(
+            updatedSections,
+            adrStatus,
+            tags,
+            frontmatter,
+          )
         }, 500)
 
         return updatedSections
       })
     },
-    [generateAndUpdateMarkdown, adrStatus, tags],
+    [generateAndUpdateMarkdown, adrStatus, tags, frontmatter],
   )
 
   const removeLastListItem = useCallback(
@@ -648,13 +722,18 @@ export default function AdrTemplateSidebar({
           clearTimeout(generateMarkdownTimeoutRef.current)
         }
         generateMarkdownTimeoutRef.current = setTimeout(() => {
-          void generateAndUpdateMarkdown(updatedSections, adrStatus, tags)
+          void generateAndUpdateMarkdown(
+            updatedSections,
+            adrStatus,
+            tags,
+            frontmatter,
+          )
         }, 500)
 
         return updatedSections
       })
     },
-    [generateAndUpdateMarkdown, adrStatus, tags],
+    [generateAndUpdateMarkdown, adrStatus, tags, frontmatter],
   )
 
   const checkHasContent = useCallback((section: ExtendedSection) => {
@@ -678,27 +757,37 @@ export default function AdrTemplateSidebar({
       setTags(updatedTags)
       setNewTag('')
       // Trigger markdown regeneration with new tags
-      void generateAndUpdateMarkdown(undefined, adrStatus, updatedTags)
+      void generateAndUpdateMarkdown(
+        undefined,
+        adrStatus,
+        updatedTags,
+        frontmatter,
+      )
     }
-  }, [newTag, tags, generateAndUpdateMarkdown, adrStatus])
+  }, [newTag, tags, generateAndUpdateMarkdown, adrStatus, frontmatter])
 
   const removeTag = useCallback(
     (tag: string) => {
       const updatedTags = tags.filter((t) => t !== tag)
       setTags(updatedTags)
       // Trigger markdown regeneration with updated tags
-      void generateAndUpdateMarkdown(undefined, adrStatus, updatedTags)
+      void generateAndUpdateMarkdown(
+        undefined,
+        adrStatus,
+        updatedTags,
+        frontmatter,
+      )
     },
-    [tags, generateAndUpdateMarkdown, adrStatus],
+    [tags, generateAndUpdateMarkdown, adrStatus, frontmatter],
   )
 
   const handleStatusChange = useCallback(
     (status: AdrStatus) => {
       setAdrStatus(status)
       // Trigger markdown regeneration with new status
-      void generateAndUpdateMarkdown(undefined, status, tags)
+      void generateAndUpdateMarkdown(undefined, status, tags, frontmatter)
     },
-    [generateAndUpdateMarkdown, tags],
+    [generateAndUpdateMarkdown, tags, frontmatter],
   )
 
   const getStatusIcon = useCallback((status: AdrStatus) => {

@@ -6,45 +6,41 @@ export interface ParsedAdrContent {
   sections: AdrTemplateSection[]
   status?: AdrStatus
   tags?: string[]
+  frontmatter?: Record<string, any>
 }
 
 export interface GenerateMarkdownOptions {
   status?: AdrStatus
   tags?: string[]
+  frontmatter?: Record<string, any>
 }
+
+// Default MADR Full frontmatter template
+const DEFAULT_MADR_FULL_FRONTMATTER = `---
+# These are optional metadata elements. Feel free to remove any of them.
+status: "proposed"
+date: ${new Date().toISOString().split('T')[0]}
+decision-makers: ""
+consulted: ""
+informed: ""
+---
+
+`
 
 // Utility function to trim trailing whitespace from each line and overall content
 const trimLineTrailingWhitespace = (content: string): string => {
   return content.replace('&#x20;', '').trim().replace(/&+$/, '') // Remove leading/trailing whitespace and trailing & characters
 }
 
-// Helper function to generate frontmatter
-const generateFrontmatter = (options: GenerateMarkdownOptions): string => {
-  const frontmatterItems: string[] = []
-
-  // Include status only if provided
-  if (options.status) {
-    frontmatterItems.push(`status: "${options.status}"`)
-  }
-
-  // Include tags if provided
-  if (options.tags && options.tags.length > 0) {
-    const tagList = options.tags.map((tag) => `"${tag}"`).join(', ')
-    frontmatterItems.push(`tags: [${tagList}]`)
-  }
-
-  // Only generate frontmatter if there are items to include
-  if (frontmatterItems.length === 0) {
-    return ''
-  }
-
-  return `---\n${frontmatterItems.join('\n')}\n---\n\n`
-}
-
-// Helper function to parse frontmatter
+// Helper function to parse frontmatter and preserve all content
 const parseFrontmatter = (
   markdown: string,
-): { content: string; status?: AdrStatus; tags?: string[] } => {
+): {
+  content: string
+  status?: AdrStatus
+  tags?: string[]
+  frontmatter?: Record<string, any>
+} => {
   const frontmatterMatch = /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/m.exec(
     markdown,
   )
@@ -57,12 +53,123 @@ const parseFrontmatter = (
   const remainingContent = frontmatterMatch[2]!
   const status = extractStatusFromFrontmatter(frontmatterContent)
   const tags = extractTagsFromFrontmatter(frontmatterContent)
+  const frontmatter = parseFrontmatterToObject(frontmatterContent)
 
   return {
     content: remainingContent,
     status,
     tags,
+    frontmatter,
   }
+}
+
+// Helper function to parse frontmatter into an object
+const parseFrontmatterToObject = (
+  frontmatterContent: string,
+): Record<string, any> => {
+  const frontmatter: Record<string, any> = {}
+  const lines = frontmatterContent.split('\n')
+
+  for (const line of lines) {
+    // Skip comments and empty lines
+    if (line.trim().startsWith('#') || line.trim() === '') {
+      continue
+    }
+
+    const match = /^([^:]+):\s*(.*)$/.exec(line)
+    if (match) {
+      const key = match[1]!.trim()
+      const value = match[2]!.trim()
+
+      // Handle different value types
+      if (value.startsWith('[') && value.endsWith(']')) {
+        // Array value
+        try {
+          frontmatter[key] = JSON.parse(value)
+        } catch {
+          frontmatter[key] = value
+        }
+      } else if (value.startsWith('"') && value.endsWith('"')) {
+        // String value
+        frontmatter[key] = value.slice(1, -1)
+      } else if (value.startsWith("'") && value.endsWith("'")) {
+        // String value with single quotes
+        frontmatter[key] = value.slice(1, -1)
+      } else {
+        // Plain value
+        frontmatter[key] = value
+      }
+    }
+  }
+
+  return frontmatter
+}
+
+// Helper function to generate frontmatter from object
+const generateFrontmatter = (options: GenerateMarkdownOptions): string => {
+  const frontmatter = { ...options.frontmatter }
+
+  // Update status if provided
+  if (options.status) {
+    frontmatter.status = options.status
+  }
+
+  // Update tags if provided (including empty array to remove tags)
+  if (options.tags !== undefined) {
+    if (options.tags.length > 0) {
+      frontmatter.tags = options.tags
+    } else {
+      // Remove tags from frontmatter if empty array is passed
+      delete frontmatter.tags
+    }
+  }
+
+  // If no frontmatter content, return empty string
+  if (!frontmatter || Object.keys(frontmatter).length === 0) {
+    return ''
+  }
+
+  const frontmatterLines: string[] = []
+
+  // Add comments if they exist
+  if (frontmatter['#comment']) {
+    frontmatterLines.push(
+      '# These are optional metadata elements. Feel free to remove any of them.',
+    )
+  }
+
+  // Add all frontmatter fields
+  for (const [key, value] of Object.entries(frontmatter)) {
+    if (key.startsWith('#')) continue // Skip comments
+
+    if (Array.isArray(value)) {
+      const tagList = value.map((tag) => `"${tag}"`).join(', ')
+      frontmatterLines.push(`${key}: [${tagList}]`)
+    } else if (typeof value === 'string') {
+      frontmatterLines.push(`${key}: "${value}"`)
+    } else {
+      frontmatterLines.push(`${key}: ${value}`)
+    }
+  }
+
+  return `---\n${frontmatterLines.join('\n')}\n---\n\n`
+}
+
+// Helper function to create MADR full frontmatter
+const createMADRFullFrontmatter = (
+  existingFrontmatter?: Record<string, any>,
+): Record<string, any> => {
+  const defaultFrontmatter = {
+    '#comment': true,
+    status: 'proposed',
+    date: new Date().toISOString().split('T')[0],
+    'decision-makers': '',
+    consulted: '',
+    informed: '',
+  }
+
+  // Merge with existing frontmatter, preserving existing values
+  return { ...defaultFrontmatter, ...existingFrontmatter }
 }
 
 // Helper function to extract status from frontmatter
@@ -324,8 +431,13 @@ const generateMADRFullMarkdown = (
     {} as Record<string, string>,
   )
 
-  // Always generate frontmatter, even if no options provided
-  const frontmatter = generateFrontmatter(options ?? {})
+  // For MADR Full, always include the default metadata if no frontmatter exists
+  const frontmatterOptions: GenerateMarkdownOptions = {
+    ...options,
+    frontmatter: createMADRFullFrontmatter(options?.frontmatter),
+  }
+
+  const frontmatter = generateFrontmatter(frontmatterOptions)
 
   return `${frontmatter}# ${sectionMap.title ?? ''}
 
@@ -417,7 +529,7 @@ const generateFreeFormMarkdown = (
 }
 
 const parseMADRMinimalMarkdown = (markdown: string): ParsedAdrContent => {
-  const { content, status, tags } = parseFrontmatter(markdown)
+  const { content, status, tags, frontmatter } = parseFrontmatter(markdown)
   const sections = MADR_MINIMAL_SECTIONS.map((section) => ({ ...section }))
 
   const titleMatch = /^# (.+)/m.exec(content)
@@ -464,11 +576,11 @@ const parseMADRMinimalMarkdown = (markdown: string): ParsedAdrContent => {
       )
   }
 
-  return { sections, status, tags }
+  return { sections, status, tags, frontmatter }
 }
 
 const parseMADRFullMarkdown = (markdown: string): ParsedAdrContent => {
-  const { content, status, tags } = parseFrontmatter(markdown)
+  const { content, status, tags, frontmatter } = parseFrontmatter(markdown)
   const sections = MADR_FULL_SECTIONS.map((section) => ({ ...section }))
 
   const titleMatch = /^# (.+)/m.exec(content)
@@ -550,11 +662,11 @@ const parseMADRFullMarkdown = (markdown: string): ParsedAdrContent => {
       moreinfoSection.content = trimLineTrailingWhitespace(moreinfoMatch[1])
   }
 
-  return { sections, status, tags }
+  return { sections, status, tags, frontmatter }
 }
 
 const parseYStatementMarkdown = (markdown: string): ParsedAdrContent => {
-  const { content, status, tags } = parseFrontmatter(markdown)
+  const { content, status, tags, frontmatter } = parseFrontmatter(markdown)
   const sections = Y_STATEMENT_SECTIONS.map((section) => ({ ...section }))
 
   const titleMatch = /# Y-Statement: (.+)/m.exec(content)
@@ -640,11 +752,11 @@ const parseYStatementMarkdown = (markdown: string): ParsedAdrContent => {
       referencesSection.content = trimLineTrailingWhitespace(referencesMatch[1])
   }
 
-  return { sections, status, tags }
+  return { sections, status, tags, frontmatter }
 }
 
 const parseFreeFormMarkdown = (markdown: string): ParsedAdrContent => {
-  const { content, status, tags } = parseFrontmatter(markdown)
+  const { content, status, tags, frontmatter } = parseFrontmatter(markdown)
   const sections = FREE_FORM_SECTIONS.map((section) => ({ ...section }))
 
   const contentSection = sections.find((s) => s.id === 'content')
@@ -652,7 +764,7 @@ const parseFreeFormMarkdown = (markdown: string): ParsedAdrContent => {
     contentSection.content = content
   }
 
-  return { sections, status, tags }
+  return { sections, status, tags, frontmatter }
 }
 
 export const TEMPLATE_PARSERS = {
@@ -755,6 +867,7 @@ export const extractFrontmatterFromMarkdown = (
   content: string
   status?: AdrStatus
   tags?: string[]
+  frontmatter?: Record<string, any>
 } => {
   return parseFrontmatter(markdown)
 }
@@ -764,28 +877,35 @@ export const addFrontmatterToMarkdown = (
   options: GenerateMarkdownOptions,
 ): string => {
   // Check if content already has frontmatter
-  const { content: existingContent, status, tags } = parseFrontmatter(content)
+  const {
+    content: existingContent,
+    status,
+    tags,
+    frontmatter,
+  } = parseFrontmatter(content)
 
   // Merge existing frontmatter with new options
   const mergedOptions: GenerateMarkdownOptions = {
     status: options.status ?? status,
     tags: options.tags ?? tags,
+    frontmatter: { ...frontmatter, ...options.frontmatter },
   }
 
   // Generate new frontmatter and combine with content
-  const frontmatter = generateFrontmatter(mergedOptions)
-  return frontmatter + existingContent
+  const newFrontmatter = generateFrontmatter(mergedOptions)
+  return newFrontmatter + existingContent
 }
 
 export const updateFrontmatterInMarkdown = (
   markdown: string,
   options: Partial<GenerateMarkdownOptions>,
 ): string => {
-  const { content, status, tags } = parseFrontmatter(markdown)
+  const { content, status, tags, frontmatter } = parseFrontmatter(markdown)
 
   const updatedOptions: GenerateMarkdownOptions = {
     status: options.status ?? status,
     tags: options.tags ?? tags,
+    frontmatter: { ...frontmatter, ...options.frontmatter },
   }
 
   return generateFrontmatter(updatedOptions) + content
@@ -796,20 +916,21 @@ export const ensureFrontmatterInMarkdown = (
   markdown: string,
   options?: GenerateMarkdownOptions,
 ): string => {
-  const { content, status, tags } = parseFrontmatter(markdown)
+  const { content, status, tags, frontmatter } = parseFrontmatter(markdown)
 
   // If no frontmatter exists, add it only if there's content to add
   if (!markdown.startsWith('---')) {
     const frontmatterOptions: GenerateMarkdownOptions = {
       status: options?.status ?? status,
       tags: options?.tags ?? tags ?? [],
+      frontmatter: { ...frontmatter, ...options?.frontmatter },
     }
-    const frontmatter = generateFrontmatter(frontmatterOptions)
-    return frontmatter + markdown
+    const newFrontmatter = generateFrontmatter(frontmatterOptions)
+    return newFrontmatter + markdown
   }
 
   // If frontmatter exists but options are provided, update it
-  if (options && (options.status || options.tags)) {
+  if (options && (options.status || options.tags || options.frontmatter)) {
     return updateFrontmatterInMarkdown(markdown, options)
   }
 
