@@ -490,7 +490,7 @@
 }
 
 .mdxeditor a:hover {
-  color: var(--primary-foreground);
+  color: var(--muted-foreground);
 }
 
 /* Dialog styles */
