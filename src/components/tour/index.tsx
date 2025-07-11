@@ -67,7 +67,7 @@ export default function FirstTimeTour() {
           popover: {
             title: 'Synchronizing your file',
             description:
-              'If the file already exists in the repository, you can synchronize any changes by pulling from the repository with the "syncrhonize" button. Keep in mind that all local changes will be overwritten!',
+              'If the file already exists in the repository, you can synchronize any changes by pulling from the repository with the "synchronize" button. Keep in mind that all local changes will be overwritten!',
           },
         },
       ],
