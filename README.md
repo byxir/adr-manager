@@ -149,6 +149,7 @@ If you do not want to use this instance, you can easily set up your own by follo
    * **Scopes (check these):**
      * ✅ `read_user` (required to read profile data)
      * ✅ `api` (required to access repositories, push files, and manage content)
+     * ✅ `write_repository` (required to access repositories, push files, and manage content)
 3. After creation, **copy the `Application ID` and `Secret`**.
 4. Add these to your `.env` file:
    ```dotenv

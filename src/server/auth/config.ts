@@ -36,7 +36,7 @@ declare module 'next-auth/jwt' {
  */
 
 const gitHubUrl = process.env.GITHUB_ENTERPRISE_URL ?? undefined
-const gitLabUrl = process.env.GITLAB_URL ?? undefined
+const gitLabUrl = process.env.GITLAB_HOST_URL ?? undefined
 const GITLAB_AUTH_URL = 'https://gitlab.com/oauth/authorize'
 
 export const authConfig = {
