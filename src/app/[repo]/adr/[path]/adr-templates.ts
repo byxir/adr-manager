@@ -361,7 +361,7 @@ const Y_STATEMENT_SECTIONS: AdrTemplateSection[] = [
   },
 ]
 
-const FREE_FORM_SECTIONS: AdrTemplateSection[] = [
+export const FREE_FORM_SECTIONS: AdrTemplateSection[] = [
   {
     id: 'content',
     title: 'Free Form Content',

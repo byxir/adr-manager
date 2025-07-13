@@ -13,7 +13,8 @@
     "lint:fix": "next lint --fix",
     "preview": "next build && next start",
     "start": "next start -p 3005",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test"
   },
   "dependencies": {
     "@auth/core": "^0.40.0",
@@ -59,6 +60,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.54.1",
     "@tailwindcss/postcss": "^4.1.10",
     "@types/node": "^24.0.3",
     "@types/react": "^19.1.8",
