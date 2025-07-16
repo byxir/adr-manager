@@ -30,8 +30,8 @@ Currently, the tool has been successfully tested in Chrome, Safari and Firefox.
 
 ### Prerequisites
 
-* Node.js and pnpm
-* A GitHub or Gitlab account with access to a repository with MADRs
+- Node.js and pnpm
+- A GitHub or Gitlab account with access to a repository with MADRs
 
 ### Installation
 
@@ -49,7 +49,7 @@ Please copy the `.env.example` file and create a `.env` file filling in the requ
 
 ```dotenv
 AUTH_URL="https://example.com" # Your site's domain, necessary for auth to work
-AUTH_SECRET="" # This is the secret used for signing jwt tokens, do not share this secret, and make it secure. 
+AUTH_SECRET="" # This is the secret used for signing jwt tokens, do not share this secret, and make it secure.
 
 # GitHub Integration
 NEXT_PUBLIC_GITHUB_LOGIN_ENABLED="true" # Set this to false to disable logins of this provider
@@ -83,35 +83,9 @@ The value of `OAUTH_E2E_AUTH_ID` and `USER` needs to be a valid `authId` and `us
 The involved GitHub account also needs to have developer access to the repo `adr/adr-test-repository-empty`.
 Lastly, don't forget to start the app before running the e2e tests (`npm start`).
 
-### Useful Commands
+### Testing
 
-The following commands are useful for development:
-
-```bash
-# install dependencies
-pnpm install
-
-# build and start with hot-reload for development
-pnpm start
-
-# build and minify for production
-pnpm run build
-
-# run unit tests
-pnpm test
-
-# run e2e tests
-pnpm run e2e:test
-
-# open cypress GUI for e2e tests
-pnpm cypress open
-
-# run a single e2e test
-pnpm cypress run --spec ./cypress/e2e/adrManagerTest/<file-name>
-
-# format code with prettier (do this before you commit and push)
-pnpm run format:write
-```
+to run tests, run `npm test`
 
 ### Authentication Setup
 
@@ -123,10 +97,10 @@ If you do not want to use this instance, you can easily set up your own by follo
 1. Go to the [GitHub Developer Settings](https://github.com/settings/developers)
    → Navigate to **OAuth Apps** → **New OAuth App**.
 2. Create a **new OAuth application** with the following settings:
-   * **Application Name:** Your App Name (e.g., ADR Manager)
-   * **Homepage URL:**
+   - **Application Name:** Your App Name (e.g., ADR Manager)
+   - **Homepage URL:**
      [`http://example.com`](http://example.com)
-   * **Authorization callback URL:**
+   - **Authorization callback URL:**
      [`http://example.com/api/auth/callback/github`](http://example.com/api/auth/callback/github)
 3. After creation, **copy the `Client ID` and `Client Secret`**.
 4. Add these to your `.env` file:
@@ -143,13 +117,13 @@ If you do not want to use this instance, you can easily set up your own by follo
 1. Go to your GitLab instance (e.g., [https://gitlab.com](https://gitlab.com) or your self-managed instance)
    → Navigate to **User Settings → Applications** or the [GitLab Applications Page](https://gitlab.com/-/profile/applications).
 2. Create a **new OAuth application** with the following settings:
-   * **Name:** Your App Name (e.g., ADR Manager)
-   * **Redirect URI:**
+   - **Name:** Your App Name (e.g., ADR Manager)
+   - **Redirect URI:**
      [`http://example.com/api/auth/callback/gitlab`](http://example.com/api/auth/callback/gitlab)
-   * **Scopes (check these):**
-     * ✅ `read_user` (required to read profile data)
-     * ✅ `api` (required to access repositories, push files, and manage content)
-     * ✅ `write_repository` (required to access repositories, push files, and manage content)
+   - **Scopes (check these):**
+     - ✅ `read_user` (required to read profile data)
+     - ✅ `api` (required to access repositories, push files, and manage content)
+     - ✅ `write_repository` (required to access repositories, push files, and manage content)
 3. After creation, **copy the `Application ID` and `Secret`**.
 4. Add these to your `.env` file:
    ```dotenv
