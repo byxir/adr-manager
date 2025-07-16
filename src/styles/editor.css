@@ -304,6 +304,11 @@
   padding: 1rem;
 }
 
+/* Dark mode quote styles */
+.dark .mdxeditor blockquote {
+  color: #000000;
+}
+
 /* Paragraph styles */
 .mdxeditor p {
   margin-top: 0.5em;

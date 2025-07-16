@@ -94,13 +94,13 @@ const RepoPage = () => {
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-2">
                       <RiFileTextLine className="size-4 text-blue-600" />
-                      <CardTitle className="text-sm font-medium truncate">
+                      <CardTitle className="text-sm font-medium w-48 truncate">
                         {adr.name}
                       </CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-xs">
+                    <CardDescription className="text-xs font-medium w-48 truncate">
                       {adr.source === 'database' ? 'ADR' : 'MD'} • {adr.path}
                     </CardDescription>
                   </CardContent>

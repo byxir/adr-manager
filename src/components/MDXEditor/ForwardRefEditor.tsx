@@ -24,9 +24,6 @@ export const ForwardRefEditor = forwardRef<
     editorRef={ref}
     className={props.className}
     onEditorReady={props.onEditorReady}
-    placeholder={
-      <span className="text-muted-foreground/30">Write your ADR here...</span>
-    }
     markdown={props.markdown}
     readOnly={props.readOnly}
     diffMarkdown={props.diffMarkdown}

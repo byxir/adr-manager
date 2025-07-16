@@ -49,6 +49,11 @@ import {
   ensureFrontmatterInMarkdown,
   type AdrStatus,
 } from '@/app/[repo]/adr/[path]/adr-templates'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface ExtendedSection extends AdrTemplateSection {
   items?: string[]
@@ -829,25 +834,42 @@ export default function AdrTemplateSidebar({
                 </p>
               </div>
               <div className="flex flex-col gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTemplateChangeWithWarning}
-                  className="flex items-center gap-1"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  {selectedTemplate ? 'Change' : 'Select Template'}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTemplateChangeWithWarning}
+                      className="flex items-center gap-1"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      {selectedTemplate ? 'Change' : 'Select Template'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Change the template</p>
+                  </TooltipContent>
+                </Tooltip>
                 {showSynchronizeButton && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSynchronize}
-                    className="flex items-center gap-1 text-xs synchronizeButton"
-                  >
-                    <RefreshCw className="w-3 h-3" />
-                    Synchronize
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSynchronize}
+                        className="flex items-center gap-1 text-xs synchronizeButton"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Synchronize
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Synchronize with the latest version of the template from
+                        GitHub
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </div>
