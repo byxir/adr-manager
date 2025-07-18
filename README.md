@@ -65,27 +65,9 @@ AUTH_GITLAB_SECRET=""
 GITLAB_HOST_URL="" # Set this to use your own GitLab instance, this will override GitLab's default url.
 ```
 
-### Using End-2-End Tests Locally
-
-We use [Cypress](https://www.cypress.io/) for e2e testing.
-The CI pipeline provides the necessary Oauth `authId` as an ENV variable.
-Locally, however, you'll need to provide one yourself.
-You can either set `CYPRESS_OAUTH_E2E_AUTH_ID` and `CYPRESS_USER` containing the `authId` and `user` or create a `cypress.env.json` file and fill it with the following content:
-
-```json
-{
-  "OAUTH_E2E_AUTH_ID": "*********",
-  "USER": "***********"
-}
-```
-
-The value of `OAUTH_E2E_AUTH_ID` and `USER` needs to be a valid `authId` and `user` from an active OAuth session, which you can obtain in the local storage (Chrome developer console -> Application -> Storage -> Local Storage -> `http://localhost:8080` -> `authId`, `user`)
-The involved GitHub account also needs to have developer access to the repo `adr/adr-test-repository-empty`.
-Lastly, don't forget to start the app before running the e2e tests (`npm start`).
-
 ### Testing
 
-to run tests, run `npm test`
+to run tests, run `pnpm test`
 
 ### Authentication Setup
 
